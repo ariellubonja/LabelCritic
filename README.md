@@ -4,7 +4,7 @@
 
 Install
 ```bash
-conda create -n lmdeploy python=3.11cond -y
+conda create -n lmdeploy python=3.11
 conda activate lmdeploy
 conda install ipykernel
 conda install pip
