@@ -8,12 +8,7 @@ conda create -n lmdeploy python=3.11cond -y
 conda activate lmdeploy
 conda install ipykernel
 conda install pip
-pip install lmdeploy==0.6.0
-pip install timm
-pip install nibabel
-pip install matplotlib
-pip install opencv-python
-pip install scipy
+pip install -r requirements.txt
 ```
 
 Deploy API locally (tp should be the number of GPUs)
