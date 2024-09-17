@@ -1,0 +1,6 @@
+lmdeploy==0.6.0
+timm
+nibabel
+matplotlib
+opencv-python
+scipy
