@@ -4,6 +4,8 @@
 
 Install
 ```bash
+git clone https://github.com/PedroRASB/AnnotationVLM
+cd AnnotationVLM
 conda create -n lmdeploy python=3.11
 conda activate lmdeploy
 conda install ipykernel
