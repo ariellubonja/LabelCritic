@@ -17,6 +17,7 @@ mkdir HFCache
 export TRANSFORMERS_CACHE=./HFCache
 export HF_HOME=./HFCache
 CUDA_VISIBLE_DEVICES=0,1,2,3 lmdeploy serve api_server OpenGVLab/InternVL2-40B-AWQ --backend turbomind --server-port 23333 --model-format awq --tp 4 --session-len 8192
+#use --cache-max-entry-count 0.5 to reduce memory cost
 ```
 
 Run label comparison code
