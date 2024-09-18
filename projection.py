@@ -105,74 +105,6 @@ def resample_image(image, original_spacing, target_spacing=(1, 1, 1),order=1):
 
     return resampled_image   
 
-import torch
-import torch.nn.functional as F
-
-def resample_image_cuda(image, original_spacing, target_spacing=(1, 1, 1), order=1):
-    """
-    Resample the image to the target spacing using GPU acceleration with PyTorch.
-
-    Parameters:
-    image (numpy.ndarray or nibabel.Nifti1Image): Input image to resample.
-    original_spacing (tuple or list): Original spacing in x, y, z directions.
-    target_spacing (tuple): Target spacing in x, y, z directions.
-    order (int): Interpolation order (0=nearest, 1=linear)
-
-    Returns:
-    numpy.ndarray: Resampled image data.
-    """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    # Get image data
-    try:
-        image = image.get_fdata()
-    except AttributeError:
-        pass  # Image is already a NumPy array
-
-    # Convert image to torch tensor and move to device
-    image = torch.from_numpy(image).float().to(device)
-
-    # Add batch and channel dimensions: (N, C, D, H, W)
-    image = image.unsqueeze(0).unsqueeze(0)
-
-    # Reverse the spacings to match the image axes (D, H, W)
-    resize_factor = np.array(original_spacing)[::-1] / np.array(target_spacing)[::-1]
-
-    # Compute new shape
-    new_shape = np.round(np.array(image.shape[2:]) * resize_factor).astype(int)
-
-    # Choose interpolation mode based on order
-    if order == 0:
-        mode = 'nearest'
-    elif order == 1:
-        mode = 'trilinear'
-    else:
-        raise ValueError('Order must be 0 (nearest) or 1 (linear)')
-
-    # Perform interpolation
-    if mode == 'nearest':
-        resampled_image = F.interpolate(
-            image,
-            size=new_shape.tolist(),
-            mode=mode,
-            recompute_scale_factor=False
-        )
-    else:
-        resampled_image = F.interpolate(
-            image,
-            size=new_shape.tolist(),
-            mode=mode,
-            align_corners=False,
-            recompute_scale_factor=False
-        )
-
-    # Remove batch and channel dimensions
-    resampled_image = resampled_image.squeeze(0).squeeze(0)
-
-    # Convert back to numpy array
-    resampled_image = resampled_image.cpu().numpy()
-
-    return resampled_image
 
 def load_ct_and_mask(pid, organ, datapath,
                      ct_path=None, mask_path=None):
@@ -600,4 +532,4 @@ def create_composite_image_2figs(pth, organ, axis=1):
     print(f'Composite image saved to {save_path}')
     plt.close()
 
-# to improve speed: project ct just once. Then you project the masks using lower precision and overlay them.
+# to improve speed: project ct just once. Then you project the masks using lower precision and overlay them. Use torch for resampling (current function has bug)
