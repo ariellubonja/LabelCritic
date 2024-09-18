@@ -22,8 +22,15 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 lmdeploy serve api_server OpenGVLab/InternVL2-40B-A
 #use --cache-max-entry-count 0.5 to reduce memory cost
 ```
 
-Run label comparison code
-```bash
-python RunAPI.py
+Make Call to API (Python)
+```python
+import ErrorDetector as ed
+
+ct='path/to/ct.nii.gz'
+y1='path/to/segmentation_1.nii.gz'
+y2='path/to/segmentation_2.nii.gz'
+
+answer=ed.project_and_compare(ct,y1,y2)
 ```
+
 
