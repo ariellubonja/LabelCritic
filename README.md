@@ -22,7 +22,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 lmdeploy serve api_server OpenGVLab/InternVL2-40B-A
 #play with --cache-max-entry-count to change memory cost. It varies between 0 and 1, and higher numbers increase memory consumption. Default: --cache-max-entry-count 0.8
 ```
 
-Make Call to API (Python)
+Call API (Python)
 ```python
 import ErrorDetector as ed
 
