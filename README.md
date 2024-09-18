@@ -19,7 +19,7 @@ mkdir HFCache
 export TRANSFORMERS_CACHE=./HFCache
 export HF_HOME=./HFCache
 CUDA_VISIBLE_DEVICES=0,1,2,3 lmdeploy serve api_server OpenGVLab/InternVL2-40B-AWQ --backend turbomind --server-port 23333 --model-format awq --tp 4 --session-len 8192
-#play with --cache-max-entry-count 0.5 to change memory cost. It varies between 0 and 1, and higher numbers increase memory consumption. Default: 0.8.
+#play with --cache-max-entry-count to change memory cost. It varies between 0 and 1, and higher numbers increase memory consumption. Default: --cache-max-entry-count 0.8
 ```
 
 Make Call to API (Python)
