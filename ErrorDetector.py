@@ -1607,7 +1607,7 @@ def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1',
                     organ=organ)
     
     print('Answer:',answer)
-    #shutil.rmtree(temp_dir)
+    shutil.rmtree(temp_dir)
     return answer
 
     
