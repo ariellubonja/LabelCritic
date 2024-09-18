@@ -32,5 +32,5 @@ y2='path/to/segmentation_2.nii.gz'
 
 answer=ed.project_and_compare(ct,y1,y2)
 ```
-
+Example: see MyAPITest.ipynb
 
