@@ -13,7 +13,7 @@ conda install pip
 pip install -r requirements.txt
 ```
 
-Deploy API locally (tp should be the number of GPUs)
+Deploy API locally (tp should be the number of GPUs, and it accepts only powers of 2)
 ```bash
 mkdir HFCache
 export TRANSFORMERS_CACHE=./HFCache
