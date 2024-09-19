@@ -4,3 +4,4 @@ nibabel
 matplotlib
 opencv-python
 scipy
+openai
