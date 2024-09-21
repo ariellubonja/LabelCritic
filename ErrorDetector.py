@@ -10,9 +10,14 @@ import gc
 import io
 import base64
 import gc
-import projection as prj
+try:
+    from . import projection as prj
+except:
+    import projection as prj
 import tempfile
 import shutil
+
+import matplotlib.pyplot as plt
 
 ZeroShotInstructions=("The image I am sending is a frontal projection of a CT scan. "
                       "It is not a CT slice, we have transparency and can see through the entire body, "
@@ -59,6 +64,7 @@ OneShotSecondPart=("I am sending you now the image for evaluaiton. Check if it h
 FewShotSecondPart=("I am sending you now the image for evaluaiton. Check if the red overlay on it is a 'good annotation' or a 'bad annotation'. "
                   "The example images should help you evaluate it. Think throughly and provide a detailed explanation for "
                   "why the last image represents a 'good annotation' or a 'bad annotation'.")
+                  
 
 #OneShotInstructions=("The image I am sending are a frontal projections of a CT scans. "
 #                     "It is not CT slices, instead, they have transparency and let you see throgh "
@@ -97,6 +103,23 @@ liver_describe=(" Consider the following anatomical information: the liver is a 
       " into the left upper quadrant. "
       "The liver position is primarily under the rib cage. \n"
       "Throuhgly describe the overlay: what is its shape? where is it? Then you say if it corresponds to the liver or not. ")
+
+KidneysDescriptionED=("Consider the following anatomical information:\n"
+                   "a) A person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney.  \n"
+                   "b) Each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. \n"
+                   "c) The kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. \n")
+
+
+AdrenalGlandDescriptionED=("Consider the following anatomical information:\n"
+                   "a) Number: a person usually has two adrenal glands, one on top of each kidney.\n"
+                   "b) Location: the adrenal glands are located on the superior aspect of each kidney, in the retroperitoneal space.\n"
+                   "c) Right Adrenal Gland Shape (right side of the body): triangular shape.\n"
+                   "d) Left Adrenal Gland Shape (left side of the body): Generally crescent-shaped or semilunar. May appear as a curved line or elongated structure above the kidney.\n"
+                   "e) Size: adrenal glands are relatively small compared to the kidneys.\n")
+
+DescriptionsED={"liver":liver_no_question,
+              "kidneys":KidneysDescriptionED,
+              "adrenal_glands":AdrenalGlandDescriptionED}
 
 
 organ_descriptions={'liver':liver}
@@ -1227,8 +1250,57 @@ def get_image_size_from_base64(base64_string):
     img_file_size = len(image_data)
     return img_size, img_file_size
 
+clt=None
+mdl=None
+
+def InitializeOpenAIClient(base_url='http://0.0.0.0:23333/v1'):
+    from openai import OpenAI
+    global clt, mdl
+    if clt is not None:
+        return clt,mdl
+    else:
+        # Initialize the client with the API key and base URL
+        clt = OpenAI(api_key='YOUR_API_KEY', base_url=base_url)
+
+        # Define the model name and the image path
+        mdl = clt.models.list().data[0].id# Update this with the actual path to your PNG image
+        print('Initialized model and client.')
+        return clt,mdl
+
+def CreateConversation(img_file_list, text, conver,size=None,prt=False):
+    #if no previous conversation, send conver=[]. Do not automatically define conver above.
+    
+    conver.append({
+            'role': 'user',
+            'content': [{
+                'type': 'text',
+                'text': text,
+            }],
+        })
+    
+    imgs=[]
+    for i,img in enumerate(img_file_list,0):
+        if isinstance(size, list):
+            s=size[i]
+        else:
+            s=size
+        if s!=None:
+            img = resize_and_encode_image(img, s)
+        else:
+            img = encode_image(img)
+        conver[-1]['content'].append({
+                                            "type": "image_url",
+                                            "image_url": {
+                                                "url": f"data:image/png;base64,{img}"
+                                            },
+                                        })
+        if prt:
+            image_size, file_size = get_image_size_from_base64(f"data:image/png;base64,{img}")
+            print(f"Image Size (WxH) in prompt: {image_size}, File Size: {file_size} bytes")
+    return conver
+
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23333/v1',  
-                            size=None,prt=True,print_conversation=False,max_tokens=None):
+                        size=None,prt=True,print_conversation=False,max_tokens=None):
     """
     Sends a message to the LM deploy API.
 
@@ -1246,34 +1318,9 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
         tuple: A tuple containing the updated conversation and the answer from the LM deploy API.
     """
     #if no previous conversation, send conver=[]. Do not automatically define conver above.
-    from openai import OpenAI
+    client,model_name=InitializeOpenAIClient(base_url)
 
-    # Initialize the client with the API key and base URL
-    client = OpenAI(api_key='YOUR_API_KEY', base_url=base_url)
-
-    # Define the model name and the image path
-    model_name = client.models.list().data[0].id# Update this with the actual path to your PNG image
-
-    conver.append({
-            'role': 'user',
-            'content': [{
-                'type': 'text',
-                'text': text,
-            }],
-        })
-    
-    imgs=[]
-    for img in img_file_list:
-        if size!=None:
-            img = resize_and_encode_image(img, size)
-        else:
-            img = encode_image(img)
-        conver[-1]['content'].append({
-                                            "type": "image_url",
-                                            "image_url": {
-                                                "url": f"data:image/png;base64,{img}"
-                                            },
-                                        })
+    conver=CreateConversation(img_file_list=img_file_list, text=text, conver=conver,size=size)
 
     # Print the conversation with truncated base64 data
     if print_conversation:
@@ -1286,16 +1333,12 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
                     image_url = content['image_url']['url']
                     truncated_url = truncate_base64(image_url)
                     # Extract image size from the base64 string
-                    image_size, file_size = get_image_size_from_base64(image_url)
-                    print(f"Image URL: {truncated_url}")
-                    print(f"Image Size (WxH): {image_size}, File Size: {file_size} bytes")
             
     # Create the request with the base64-encoded image data
     if max_tokens is None:
         response = client.chat.completions.create(
             model=model_name,
             messages=conver,
-            #max_tokens=150,
             temperature=0,
             top_p=1)
     else:
@@ -1322,32 +1365,91 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
 
 BodyRegionText=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. Answer the questions below:\n"
 "Q1- Look at it carefully, tell me which body region it represents and where the image limits are. Present a complete list of all organs usually present in this body region (just list their names).\n"
-"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
-"Q2 = _\n"
-"Include the filled templeate in the end of your answer.\n")
+"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
+"Q2 = _\n")
 
 ComparisonText=("I am now sending you a figure with 4 images inside of it. They are all frontal projections of the same CT scan I sent before. "
                 "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
-                "The letters R (blue) and L (green) inside the images represent the right and left sides of the human body. Here is the description of each image:\n"
+                "The letters R (blue) and L (green) inside the images represent the right and left sides of the human body. Here is the description of each image (image titles are above the images):\n"
 "Image 1: frontal projection of the CT scan using a wide window (2000 UI), tuned for better bone visualization. The image is superposed with %(organ)s overlay 1 (in red).\n"
 "Image 2: frontal projection of a CT scan using a less wide window (400 UI), tuned for better abdominal organ visualization. The image is also superposed with %(organ)s overlay 1 (like image 1).\n"
-"Image 3: frontal projection of the CT scan using a wide window (2000 UI), tuned for better bone visualization. The image is superposed with %(organ)s overlay 2 (in red).\n"
-"Image 4: frontal projection of a CT scan using a less wide window (400 UI), tuned for better abdominal organ visualization. The image is also superposed with %(organ)s overlay 2 (like image 3).\n"
+"Image 3: frontal projection of the CT scan using a wide window (2000 UI). The image is superposed with %(organ)s overlay 2 (in red).\n"
+"Image 4: frontal projection of a CT scan using a less wide window (400 UI). The image is also superposed with %(organ)s overlay 2 (like image 3).\n"
 "Compare overlay 1 (shown in images 1 and 2) to overlay 2 (shown in images 3 and 4) and tell me which one is a better overlay for the %(organ)s.\n")
+
+ComparisonTextContinued=("I am now sending you a figure with 4 images inside of it. They are all frontal projections of the same CT scan I sent before. "
+                "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
+                "The letters R (blue) and L (green) inside the images represent the right and left sides of the human body. Here is the description of each image (image titles are above the images):\n"
+"Image 1: frontal projection of the CT scan using a wide window (2000 UI), tuned for better bone visualization. The image is superposed with %(organ)s overlay 1 (in red).\n"
+"Image 2: frontal projection of a CT scan using a less wide window (400 UI), tuned for better abdominal organ visualization. The image is also superposed with %(organ)s overlay 1 (like image 1).\n"
+"Image 3: frontal projection of the CT scan using a wide window (2000 UI). The image is superposed with %(organ)s overlay 2 (in red).\n"
+"Image 4: frontal projection of a CT scan using a less wide window (400 UI). The image is also superposed with %(organ)s overlay 2 (like image 3).\n"
+"Compare overlay 1 (shown in images 1 and 2) to overlay 2 (shown in images 3 and 4) and tell me which one is a better overlay for the %(organ)s.\n")
+
+ComparisonText2Classes=("I am sending you a figure with 4 images inside of it. They are all frontal projections of the same CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray. "
+                "The %(organ)s in the images should be marked using overlays. "
+                "Each overlay should mark the right %(organ_singular)s in blue, and the left %(organ_singular)s in green. However, the two overlays may correctly or incorrectly mark the %(organ)s. "
+                "One possible type of overlay error is overlapping the left and right %(organ_singular)s. These undesirable overlaps (if present) are marked in red in each overlay. "
+                "The letters R (blue) and L (green) inside the images represent the right and left sides of the human body. Here is the description of each image (image titles are above the images):\n"
+"Image 1 (top right): frontal projection of the CT scan using a wide window (2000 UI), tuned for better bone visualization. The image is superposed with %(organ)s overlay 1 \n"
+"Image 2 (top left): frontal projection of a CT scan using a less wide window (400 UI), tuned for better abdominal organ visualization. The image is also superposed with %(organ)s overlay 1 (like image 1).\n"
+"Image 3 (bottom left): frontal projection of the CT scan using a wide window (2000 UI). The image is superposed with %(organ)s overlay 2 (in red).\n"
+"Image 4 (bottom right): frontal projection of a CT scan using a less wide window (400 UI). The image is also superposed with %(organ)s overlay 2 (like image 3).\n"
+"Compare overlay 1 (images 1 and 2, top) to overlay 2 (images 3 and 4, bottom) and tell me which one is a better overlay for the %(organ)s.\n")
+
 
 ComparisonText6Figs=("I am now sending you a figure with 6 images inside of it. They are all frontal projections of the same CT scan I sent before. "
                 "The %(organ)s region in the images should be marked with colored overlays. However, the overlays may correctly or incorrectly mark the %(organ)s. "
                 "Images 1 and 4 (column 1, left), show overlay 1 in red. Images 2 and 5 (column 2, middle), show overlay 2 in yellow. Images 3 and 6 (column 3, right), show the superposition of overlay 1 (red) and 2 (yellow), their intersection is in organge. "
                 "The only difference from the images in the first row (1, 2 and 3) and in the second row (images 4, 5 and 6) is contrast, the first row more clearly shows the bones."
-                "The letters R (blue) and L (green) inside the images represent the right and left sides of the human body.\n"
+                "The letter R in blue inside the images represent the right side of the human body. The letter L in blue represents the left side of the human body. \n"
                 "Compare overlay 1 (red) to overlay 2 (yellow) and tell me which one is a better overlay for the %(organ)s.\n")
 
-ComparisonText2Figs=("I am now sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan I sent before. "
+ComparisonText2Figs=("I am now sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan. "
+                     "They are not a CT slices, instead, they have transparency and let you see through the entire human body, like an X-ray. "
                 "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
-                "If there is only one overlay color present (red or yellow), the other overlay is an empty overlay (meaning %(organ)s is not present). "
-                "If there are only 2 cores, orange and red or orange and yellow, one overlay is completely overlapping the other. "
-                "The letters R (blue) and L (green) inside the images represent the right and left sides of the human body. Although the images represent the same CT scan, the overlays are different. \n"
+                "The letters R (in blue) and L (in green) inside the images represent the right and left sides of the human body. "
+                "The left side of each image represents the right side of the human body. The right side of each image represents the left side of the human body. "
                 "Compare overlay 1 (shown in Image 1) to overlay 2 (shown in Images 2) and tell me which one is a better overlay for the %(organ)s.\n")
+
+
+ComparisonText2FigsContinued=("I am sending you a figure with 2 images inside of it. The one on the left, Image 1, is the first image I sent you in this conversation, and the one on the right, Image 2, is the second one. " 
+                            " As I previously explained, they are frontal projections of the same CT scan. "
+                     "They are not a CT slices, instead, they have transparency and let you see through the entire human body, like an X-ray. "
+                "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
+                "The letters R (in blue) and L (in green) inside the images represent the right and left sides of the human body. "
+                "The left side of each image represents the right side of the human body. The right side of each image represents the left side of the human body. "
+                "Compare overlay 1, shown in Image 1, to overlay 2, shown in Images 2, and tell me which one is a better overlay for the %(organ)s.\n")
+
+
+ComparisonText2Classes2Figs=("I am sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan. "
+                             " They are not a CT slices, they have transparency and let you see through the entire human body, like an X-ray. "
+                             "The letters R (in blue) and L (in green) inside the images represent the right and left sides of the human body, which is NOT the right and left sides of the images. "
+                "The %(organ)s in the images should be marked using overlays. "
+                "Each overlay should mark the right %(organ_singular)s in blue, and the left %(organ_singular)s in green. However, the two overlays may correctly or incorrectly mark the %(organ)s. "
+                "One possible error is the absence of one of the %(organ)s, in this case one of the collors will be missing. "
+                "Another one is marking the left %(organ_singular)s in the right side of the human body or vice-versa. "
+                "In these cases, it is possible to observe an undesired overlap between the left and right %(organ_singular)s, any overlap is marked in red. If one %(organ_singular)s is wrongly marked totally inside the other, we will have only red and blue or red and green overlays."
+                "You may also encounter errors in the %(organ)s shape and position."
+"Your task: Compare overlay 1 in image 1 to overlay 2 in image 2 and tell me which one is a better overlay for the %(organ)s.\n")
+
+ComparisonText2Classes2FigsV2=("I am sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan. "
+                             " They are not a CT slices, they have transparency and let you see through the entire human body, like an X-ray. "
+                             "The letters R (in blue) and L (in green) inside the images represent the right and left sides of the human body, which is NOT the right and left sides of the images. "
+                "The %(organ)s in the images should be marked using overlays. "
+                "Each overlay should mark the right %(organ_singular)s in blue, and the left %(organ_singular)s in green. However, the two overlays may correctly or incorrectly mark the %(organ)s. "
+                "One possible error is the absence of one of the %(organ)s. Another one is marking the left %(organ_singular)s in the right side of the human body or vice-versa. "
+                "In these cases, it is possible to observe an undesired overlap between the left and right %(organ_singular)s, any overlap is marked in red. You may also encounter errors in the %(organ)s shape and position."
+"Your task: Compare overlay 1 in image 1 to overlay 2 in image 2 and tell me which one is a better overlay for the %(organ)s.\n")
+
+ComparisonText2Classes2FigsV1=("I am sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan. They are not a CT slices, they have transparency and let you see through the entire human body, like an X-ray. "
+                "The %(organ)s in the images should be marked using overlays. "
+                "Each overlay should mark the right %(organ_singular)s in blue, and the left %(organ_singular)s in green. However, the two overlays may correctly or incorrectly mark the %(organ)s. "
+                "One possible type of overlay error is overlapping the left and right %(organ_singular)s. These undesirable overlaps (if present) are marked in red in each overlay. "
+                "A possible label error is when the left %(organ_singular)s is marked in the right side of the body or vice versa. In these cases, there may be overlaps be"
+                "The letters R (in blue) and L (in green) inside the images represent the right and left sides of the human body (which is not the right and left sides of the images). "
+"Your task: Compare overlay 1 in image 1 to overlay 2 in image 2 and tell me which one is a better overlay for the %(organ)s.\n")
+
 
 ComparisonText1Fig=("I am now sending you the same frontal projection of a CT as before, but now with 2 overlays. Overlay 1 is red, overlay 2 is yellow, and their superposition is orange."
                 "The overlays try to mask the %(organ)s region in the image. However, the red or the yellow overlay may mark it better %(organ)s. "
@@ -1363,10 +1465,10 @@ ComparisonText6FigsSimple=("I sending you a figure with 6 images inside of it. T
                 "Compare overlay 1 (red) to overlay 2 (yellow) and tell me which one is a better overlay for the %(organ)s.\n")
 
 LiverDescription=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
-"a) The %(organ)s is a large organ, with triangular or wedge-like shape.\n"
-"b) The %(organ)s is located in the upper right quadrant of the abdomen (right is indicated with a blue R in the figures), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. It spans across the midline, partially extending into the left upper quadrant. Looking at the bones images 1 and 3, you can easily identify if the liver should appear in the images or not. The liver is not in the pelvis.\n"
-"c) The %(organ)s is a single structure.\n"
-"d) The %(organ)s position is primarily under the rib cage.\n"
+"a) The liver is a large organ, with triangular or wedge-like shape.\n"
+"b) The liver is located in the upper right quadrant of the abdomen (right is indicated with a blue R in the figures), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. It spans across the midline, partially extending into the left upper quadrant. Looking at the bones images 1 and 3, you can easily identify if the liver should appear in the images or not. The liver is not in the pelvis.\n"
+"c) The liver is a single structure.\n"
+"d) The liver position is primarily under the rib cage.\n"
 "e) If the CT scan does not include the %(organ)s region (for example, a scan showing just the pelvis), the correct overlay is actually the one showing no red region (or as little as possible).\n")
 
 NoOrganText=("I am now sending you a figure with 4 images inside of it. They are all frontal projections of the same CT scan I sent before. "
@@ -1374,6 +1476,9 @@ NoOrganText=("I am now sending you a figure with 4 images inside of it. They are
                 "Compare overlay 1 (shown in images 1 and 2) to overlay 2 (shown in images 3 and 4) and tell me which one has the smallest red area (ideally none).\n")
 
 NoOrganSimple=("I am sending you 2 images, 'Image 1' on the left, and 'Image 2' on the right. Which of them has the least ammount of red color?\n"
+             "Answer only 'Image 1' or 'Image 2'.\n")
+
+NoOrganSimple2Classes=("I am sending you 2 images, 'Image 1' on the left, and 'Image 2' on the right. Which of them has the least ammount of red, blue and green colors?\n"
              "Answer only 'Image 1' or 'Image 2'.\n")
 
 CompareSummarize=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
@@ -1384,7 +1489,7 @@ CompareSummarize=("The text below represents a comparisons of 2 overlays, 'Overl
 
 CompareSummarize2Figs=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 " Image 1 showed Overlay 1, and Image 2 showed Overlay 2. "
-                "A LVLM like you compared the 2 overlays by analyzing the 2 images. Its answer is the text below."
+                "A VLM like you compared the 2 overlays by analyzing the 2 images. Its answer is the text below."
                 "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "The text is:\n")
 
@@ -1400,24 +1505,46 @@ CompareSummarize1Fig=("The text below represents a comparisons of 2 overlays, 'O
                 "The text explains which overlay is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "If the text does not mention any overlay or if it is blank, answer 'none'. The text is:\n")
 
-def Prompt3MessagesLMDeploy(img1, img2, img3, base_url='http://0.0.0.0:23333/v1', size=512,
-                    text1=BodyRegionText, 
-                    textOrganPresent=ComparisonText+LiverDescription, 
-                    textOrganNotPresent=NoOrganSimple, summarize=CompareSummarize, organ='liver'):
+KidneysDescription=("Answer each one of the following questions before drawing a conclusion of which overlay is better:\n"
+                   "a) Consider that a person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney. If only one images shows a single kidney, the image showing two kidneys should be better. \n"
+                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Are the shapes of the 2 kidneys in image 1 cottect? Are the shapes in image 2 better, worse or similar? \n"
+                   "c) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 cottect? Are the kidney locations in image 2 better, worse or similar? \n")
+
+KidneysDescriptionV0=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
+                   "a) Number and location: a person usually has two kidneys.\n"
+                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. The concave side features an indentation called the renal hilum.\n"
+                   "c) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs.\n")
+
+AdrenalGlandDescription=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
+                   "a) Number: a person usually has two adrenal glands, one on top of each kidney.\n"
+                   "b) Location: the adrenal glands are located on the superior aspect of each kidney, in the retroperitoneal space.\n"
+                   "c) Right Adrenal Gland Shape (right side of the body): triangular shape.\n"
+                   "d) Left Adrenal Gland Shape (left side of the body): Generally crescent-shaped or semilunar. May appear as a curved line or elongated structure above the kidney.\n"
+                   "e) Size: adrenal glands are relatively small compared to the kidneys.\n")
+
+Descriptions={"liver":LiverDescription,
+              "kidneys":KidneysDescription,
+              "adrenal_glands":AdrenalGlandDescription}
+
+def Prompt3MessagesLMDeploy(img1, img2, img3, 
+                            base_url='http://0.0.0.0:23333/v1', size=512,
+                            text1=BodyRegionText, 
+                            textOrganPresent=ComparisonTextContinued, 
+                            textOrganNotPresent=NoOrganSimple, 
+                            summarize=CompareSummarize, organ='liver',
+                            save_memory=False):
     
     if size>224:
-        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=text1 % {'organ': organ},
+        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=text1 % {'organ': organ.replace('_',' ')},
                                                 base_url=base_url, size=224)
     else:
-        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=text1 % {'organ': organ},
+        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=text1 % {'organ': organ.replace('_',' ')},
                                                 base_url=base_url, size=size)
     
-    
-
     AnswerNo=('no' in answer.lower()[answer.lower().rfind('q2'):answer.lower().rfind('q2')+15])
     
     if AnswerNo:
-        #text2 = NoOrganText % {'organ': organ}
+        #text2 = NoOrganText % {'organ': organ.replace('_',' ')}
         conversation, answer = SendMessageLmdeploy([img3],text=textOrganNotPresent, conver=[],
                                                base_url=base_url, size=size)
         if 'image 1' in answer.lower() and 'image 2' not in answer.lower():
@@ -1427,9 +1554,16 @@ def Prompt3MessagesLMDeploy(img1, img2, img3, base_url='http://0.0.0.0:23333/v1'
         else:
             return 0.5
     else:   
-        text2 = textOrganPresent % {'organ': organ}
+        text2 = textOrganPresent % {'organ': organ.replace('_',' ')} 
+        text2 += Descriptions[organ]
 
-    conversation, answer = SendMessageLmdeploy([img1,img2],text=text2, conver=conversation,
+    if save_memory:
+        conversation=[]
+        imgs=[img2]
+    else:
+        imgs=[img1,img2]
+
+    conversation, answer = SendMessageLmdeploy(imgs,text=text2, conver=conversation,
                                                 base_url=base_url, size=size)
     
     if 'overlay' not in answer.lower():
@@ -1444,25 +1578,143 @@ def Prompt3MessagesLMDeploy(img1, img2, img3, base_url='http://0.0.0.0:23333/v1'
         return 2
     else:
         return 0.5
-    
-def Prompt3MessagesQwen(img1, img2, model, processor,process_vision_info,
-                    text1=BodyRegionText, 
-                    textOrganPresent=ComparisonText+LiverDescription, 
-                    textOrganNotPresent=NoOrganText, summarize=CompareSummarize, organ='liver'):
-    
-    conversation, answer = SendMessageQwen([img1], model, processor, process_vision_info=process_vision_info, text=text1 % {'organ': organ})
 
+
+def MultiTurnMultiImageComparisonLMDeploy(clean, y1, y2, compImg, 
+                            base_url='http://0.0.0.0:23333/v1', size=448,
+                            text1=BodyRegionText, 
+                            textOrganPresent=ComparisonText, 
+                            textOrganNotPresent=NoOrganSimple, 
+                            summarize=CompareSummarize, organ='liver',
+                            save_memory=False):
+    '''
+    Idea: send one image, check for errors. Send another one, check for errors. Send both, compare.
+    '''
+    
+    
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=text1 % {'organ': organ.replace('_',' ')},
+                                                base_url=base_url, size=256)
     
     AnswerNo=('no' in answer.lower()[answer.lower().rfind('q2'):answer.lower().rfind('q2')+15])
     
     if AnswerNo:
-        text2 = textOrganNotPresent % {'organ': organ}
+        #text2 = NoOrganText % {'organ': organ.replace('_',' ')}
+        conversation, answer = SendMessageLmdeploy([compImg],text=textOrganNotPresent, conver=[],
+                                               base_url=base_url, size=size)
+        if 'image 1' in answer.lower() and 'image 2' not in answer.lower():
+            return 1
+        elif 'image 2' in answer.lower() and 'image 1' not in answer.lower():
+            return 2
+        else:
+            return 0.5
     else:   
-        text2 = textOrganPresent % {'organ': organ}
+        comp = textOrganPresent % {'organ': organ.replace('_',' ')} 
+        comp += Descriptions[organ]
 
-    conversation, answer = SendMessageQwen([img1,img2], model, processor, process_vision_info=process_vision_info, text=text2, conversation=conversation)
+    textED=ZeroShotInstructions%{'organ':organ.replace('_',' ')}
+    textED+=DescriptionsED[organ]
+    textED+='Justify your answer but answer concisely.'
 
-    conversation, answer = SendMessageQwen([], model, processor, process_vision_info=process_vision_info, text=summarize+answer, conversation=[])
+    conversation1, answer1 = SendMessageLmdeploy([y1], text='This is Image 1. '+textED, conver=[],
+                                               base_url=base_url, size=size//2)
+    
+    conversation2, answer2 = SendMessageLmdeploy([y2], text='This is Image 2. '+textED, conver=[],
+                                               base_url=base_url, size=size//2)
+    
+    conversation, answer = SendMessageLmdeploy([y1,y2,compImg],text=comp, conver=conversation1+conversation2,
+                                                base_url=base_url, size=[size//4,size//4,size])
+    
+    if 'overlay' not in answer.lower():
+        return 0.5
+
+    conversation, answer = SendMessageLmdeploy([], text=summarize+answer, conver=[],
+                                               base_url=base_url, size=size)
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+
+def SimpleMultiImageComparisonLMDeploy(clean, y1, y2, compImg, 
+                            base_url='http://0.0.0.0:23333/v1', size=448,
+                            text1=BodyRegionText, 
+                            textOrganPresent=ComparisonText2FigsContinued, 
+                            textOrganNotPresent=NoOrganSimple, 
+                            summarize=CompareSummarize, organ='liver',
+                            save_memory=False):
+    '''
+    Idea: send one image, check for errors. Send another one, check for errors. Send both, compare.
+    '''
+    
+    
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=text1 % {'organ': organ.replace('_',' ')},
+                                                base_url=base_url, size=256)
+    
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind('q2'):answer.lower().rfind('q2')+15])
+    
+    if AnswerNo:
+        #text2 = NoOrganText % {'organ': organ.replace('_',' ')}
+        conversation, answer = SendMessageLmdeploy([compImg],text=textOrganNotPresent, conver=[],
+                                               base_url=base_url, size=size)
+        if 'image 1' in answer.lower() and 'image 2' not in answer.lower():
+            return 1
+        elif 'image 2' in answer.lower() and 'image 1' not in answer.lower():
+            return 2
+        else:
+            return 0.5
+    else:   
+        comp = textOrganPresent % {'organ': organ.replace('_',' ')} 
+        comp += Descriptions[organ]
+
+    textED=ZeroShotInstructions%{'organ':organ.replace('_',' ')}
+    textED+=DescriptionsED[organ]
+    textED+='Justify your answer but answer concisely.'
+
+    conversation=CreateConversation([clean], 'This is Image 0, a frontal projection of a CT scan, it has some transparency and looks like an X-ray. ',
+                                    conver=[],size=size//4)
+    
+    #if no previous conversation, send conver=[]. Do not automatically define conver above.
+    
+    conversation.append({
+            'role': 'assistant',
+            'content': [{
+                'type': 'text',
+                'text': 'Indeed, this is a frontal projection of a CT scan. It is not a CT slice, instead, it has transparency and lets you see through the entire human body, like an X-ray. ',
+            }],
+        })
+    
+    conversation=CreateConversation([y1], 'This is Image 1, it is the same frontal projection of a CT scan I shown in image 0, but now there is a red overlay, overlay 1, which tries to display the {organ}. ',
+                                    conver=conversation,size=size//4)
+    
+    conversation.append({
+            'role': 'assistant',
+            'content': [{
+                'type': 'text',
+                'text': 'Indeed, this is the same frontal projection of a CT scan, but now there is a red overlay, overlay 1.',
+            }],
+        })
+    
+    conversation=CreateConversation([y2], 'This is Image 2, it is the same frontal projection of a CT scan I shown in Image 0 and Image 1, but now there is another red overlay, overlay 2, which is different from overlay 1, but also tries to display the {organ}. ',
+                                    conver=conversation,size=size//4)
+    
+    conversation.append({
+            'role': 'assistant',
+            'content': [{
+                'type': 'text',
+                'text': 'Indeed, this is the same frontal projection of a CT scan, but now there is a red overlay, overlay 2. Overlay 2 is different from overlay 1.',
+            }],
+        })
+    
+    conversation, answer = SendMessageLmdeploy([y1,y2,compImg],text=comp, conver=conversation,
+                                                base_url=base_url, size=[size//4,size//4,size])
+    
+    if 'overlay' not in answer.lower():
+        return 0.5
+
+    conversation, answer = SendMessageLmdeploy([], text=summarize+answer, conver=[],
+                                               base_url=base_url, size=size)
 
     if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
         return 1
@@ -1472,72 +1724,60 @@ def Prompt3MessagesQwen(img1, img2, model, processor,process_vision_info,
         return 0.5
     
 
-    
-def SystematicComparison3MessagesQwen(pth,model,processor,process_vision_info,
-                            text1=BodyRegionText, 
-                    textOrganPresent=ComparisonText+LiverDescription, 
-                    textOrganNotPresent=NoOrganText, 
-                    summarize=CompareSummarize, organ='liver'):
-        answers=[]
-
-        for target in os.listdir(pth):
-            if 'overlay_axis_1' not in target or 'BestIs' in target:
-                continue
-            print(target)
-
-            anno=os.path.join(pth,target)
-            clean=anno.replace('overlay','ct')
-            #consider that the correct answer is 2
-            answer=Prompt3MessagesQwen(
-                            img1=clean,img2=anno,
-                            model=model,processor=processor,
-                            process_vision_info=process_vision_info,
-                            text1=text1,
-                            textOrganPresent=textOrganPresent,
-                            textOrganNotPresent=textOrganNotPresent,
-                            summarize=summarize,
-                            organ=organ)
-            print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
-            if answer==1:
-                answers.append(0)
-            elif answer==2:
-                answers.append(1)
-            
-            # Clean up
-            del answer
-            torch.cuda.empty_cache()
-            gc.collect()
-        acc=np.array(answers).sum()/len(answers)
-        acc=np.round(100*acc,1)
-        print('Accuracy: ',acc, '(',np.array(answers).sum(),'/',len(answers), ')')
-
-
-def SystematicComparison3MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy4ImageSequence(pth,base_url='http://0.0.0.0:23333/v1', 
                                           size=512,
                             text1=BodyRegionText, 
-                    textOrganPresent=ComparisonText+LiverDescription, 
+                    textOrganPresent='auto', 
                     textOrganNotPresent=NoOrganSimple, 
-                    summarize=CompareSummarize, organ='liver'):
+                    summarize=CompareSummarize, organ='liver',
+                    file_structure='original',
+                    dice_check=False,pth1=None,pth2=None,save_memory=False):
+        
         answers=[]
         outputs={}
 
+        if textOrganPresent=='auto':
+            textOrganPresent=ComparisonText2FigsContinued
+            textOrganNotPresent=NoOrganSimple
+
         for target in os.listdir(pth):
-            if 'overlay_axis_1' not in target or 'BestIs' in target:
+            if '_ct_' not in target:
                 continue
+            clean=os.path.join(pth,target)
+            twoImages=clean.replace('ct_window_bone','composite_image_2_figs')
+            y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
+            y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
+            #print(target)
+            #print('clean:',clean)
+            #print('y1:',y1)
+            #print('y2:',y2)
+            #print('twoImages:',twoImages)
+
+
             print(target)
 
-            anno=os.path.join(pth,target)
-            clean=anno.replace('overlay','ct')
-            twoImages=anno.replace('overlay_','2BoneImages')
+            if dice_check:
+                #print('pth:',pth)
+                pid=target[:target.rfind('_ct')]
+                #print(os.listdir(pth1))
+                #print('pid:',pid)
+                dice=check_dice(y1,y2)
+                #dice=check_dice_on_composite_2_figs(twoImages)
+                print('2D dice coefficient between 2 projections on axis 1:',dice)
+                if dice>0.9:
+                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
+                    continue
+
             #consider that the correct answer is 2
-            answer=Prompt3MessagesLMDeploy(
-                            img1=clean,img2=anno,img3=twoImages,
+            answer=SimpleMultiImageComparisonLMDeploy(
+                            clean=clean,y1=y1,y2=y2,compImg=twoImages,
                             base_url=base_url,size=size,
                             text1=text1,
                             textOrganPresent=textOrganPresent,
                             textOrganNotPresent=textOrganNotPresent,
                             summarize=summarize,
-                            organ=organ)
+                            organ=organ,save_memory=save_memory)
+            
             print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
             if answer==1:
                 answers.append(0)
@@ -1557,43 +1797,334 @@ def SystematicComparison3MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1'
             print(k,v)
 
 
-def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1', 
-                        size=512, organ='liver', temp_dir='random',
-                        text1=BodyRegionText, 
-                        textOrganPresent=ComparisonText+LiverDescription, 
-                        textOrganNotPresent=NoOrganSimple, 
-                        summarize=CompareSummarize):
+
+
+
+
+            
+def SystematicComparison3MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1', 
+                                          size=512,
+                            text1=BodyRegionText, 
+                    textOrganPresent='auto', 
+                    textOrganNotPresent='auto', 
+                    summarize=CompareSummarize, organ='liver',
+                    file_structure='original',
+                    dice_check=False,pth1=None,pth2=None,
+                    save_memory=False):
+        
+        answers=[]
+        outputs={}
+
+        if textOrganPresent=='auto':
+            if organ[-1]!='s':
+                textOrganPresent=ComparisonText
+                textOrganNotPresent=NoOrganSimple
+
+            else:
+                #textOrganPresent=ComparisonText2Classes%{'organ_singular':organ[:-1],'organ':organ}
+                #textOrganNotPresent=NoOrganSimple2Classes
+                textOrganPresent=ComparisonText
+                textOrganNotPresent=NoOrganSimple
+
+        for target in os.listdir(pth):
+            if file_structure=='original':
+                if 'overlay_axis_1' not in target or 'BestIs' in target:
+                    continue
+                anno=os.path.join(pth,target)
+                clean=anno.replace('overlay','ct')
+                twoImages=anno.replace('overlay_','2BoneImages')
+            else:
+                if 'ct_window_bone_axis_1' not in target:
+                    continue
+                clean=os.path.join(pth,target)
+                anno=clean.replace('ct_window_bone','composite_image')
+                twoImages=clean.replace('ct_window_bone','composite_image_2_figs')
+                print('anno:',anno)
+
+            print(target)
+
+            if dice_check:
+                #print('pth:',pth)
+                pid=target[:target.rfind('_ct')]
+                #print(os.listdir(pth1))
+                #print('pid:',pid)
+                #dice=check_dice(os.path.join(pth1,pid,pid+'_overlay_window_bone_axis_1_'+organ+'.png'),
+                #                os.path.join(pth2,pid,pid+'_overlay_window_bone_axis_1_'+organ+'.png'))
+                dice=check_dice_on_composite_2_figs(twoImages)
+                print('2D dice coefficient between 2 projections on axis 1:',dice)
+                if dice>0.9:
+                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
+                    continue
+
+            #consider that the correct answer is 2
+            answer=Prompt3MessagesLMDeploy(
+                            img1=clean,img2=anno,img3=twoImages,
+                            base_url=base_url,size=size,
+                            text1=text1,
+                            textOrganPresent=textOrganPresent,
+                            textOrganNotPresent=textOrganNotPresent,
+                            summarize=summarize,
+                            organ=organ, save_memory=save_memory)
+            
+            print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
+            if answer==1:
+                answers.append(0)
+            elif answer==2:
+                answers.append(1)
+            outputs[target]=answer
+        
+            # Clean up
+            del answer
+            torch.cuda.empty_cache()
+            gc.collect()
+        acc=np.array(answers).sum()/len(answers)
+        acc=np.round(100*acc,1)
+        print('Accuracy: ',acc, '(',np.array(answers).sum(),'/',len(answers), ')')
+
+        for k,v in outputs.items():
+            print(k,v)
+
+def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:23333/v1', 
+                                          size=512,
+                            text1=BodyRegionText, 
+                    textOrganPresent='auto', 
+                    textOrganNotPresent=NoOrganSimple, 
+                    summarize=CompareSummarize, organ='liver',
+                    file_structure='original',
+                    dice_check=False,pth1=None,pth2=None,save_memory=False):
+        
+        answers=[]
+        outputs={}
+
+        if textOrganPresent=='auto':
+            if organ[-1]!='s':
+                textOrganPresent=ComparisonText2Figs
+                textOrganNotPresent=NoOrganSimple
+            else:
+                #textOrganPresent=ComparisonText2Classes2Figs%{'organ_singular':organ[:-1],'organ':organ}
+                #textOrganNotPresent=NoOrganSimple2Classes
+                textOrganPresent=ComparisonText2Figs
+                textOrganNotPresent=NoOrganSimple
+
+        for target in os.listdir(pth):
+            if file_structure=='original':
+                if 'overlay_axis_1' not in target or 'BestIs' in target:
+                    continue
+                anno=os.path.join(pth,target)
+                clean=anno.replace('overlay','ct')
+                twoImages=anno.replace('overlay_','2BoneImages')
+            else:
+                if 'ct_window_bone_axis_1' not in target:
+                    continue
+                clean=os.path.join(pth,target)
+                anno=clean.replace('ct_window_bone','composite_image')
+                twoImages=clean.replace('ct_window_bone','composite_image_2_figs')
+                print('anno:',anno)
+
+            print(target)
+
+            if dice_check:
+                #print('pth:',pth)
+                pid=target[:target.rfind('_ct')]
+                #print(os.listdir(pth1))
+                #print('pid:',pid)
+                #dice=check_dice(os.path.join(pth1,pid,pid+'_overlay_window_bone_axis_1_'+organ+'.png'),
+                #                os.path.join(pth2,pid,pid+'_overlay_window_bone_axis_1_'+organ+'.png'))
+                dice=check_dice_on_composite_2_figs(twoImages)
+                print('2D dice coefficient between 2 projections on axis 1:',dice)
+                if dice>0.9:
+                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
+                    continue
+
+            #consider that the correct answer is 2
+            answer=Prompt3MessagesLMDeploy(
+                            img1=clean,img2=twoImages,img3=twoImages,
+                            base_url=base_url,size=size,
+                            text1=text1,
+                            textOrganPresent=textOrganPresent,
+                            textOrganNotPresent=textOrganNotPresent,
+                            summarize=summarize,
+                            organ=organ,save_memory=save_memory)
+            
+            print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
+            if answer==1:
+                answers.append(0)
+            elif answer==2:
+                answers.append(1)
+            outputs[target]=answer
+        
+            # Clean up
+            del answer
+            torch.cuda.empty_cache()
+            gc.collect()
+        acc=np.array(answers).sum()/len(answers)
+        acc=np.round(100*acc,1)
+        print('Accuracy: ',acc, '(',np.array(answers).sum(),'/',len(answers), ')')
+
+        for k,v in outputs.items():
+            print(k,v)
+
+
+
+
+organ_list=['adrenal_gland_left',
+ 'adrenal_gland_right',
+ 'aorta',
+ 'bladder',
+ 'celiac_trunk',
+ 'colon',
+ 'duodenum',
+ 'esophagus',
+ 'femur_left',
+ 'femur_right',
+ 'gall_bladder',
+ 'hepatic_vessel',
+ 'intestine',
+ 'kidney_left',
+ 'kidney_right',
+ 'liver',
+ 'lung_left',
+ 'lung_right',
+ 'pancreas',
+ 'portal_vein_and_splenic_vein',
+ 'postcava',
+ 'prostate',
+ 'rectum',
+ 'spleen',
+ 'stomach']
+
+# Function to calculate Dice coefficient
+def calculate_dice(mask1, mask2):
+    intersection = torch.sum(mask1 & mask2)
+    total = torch.sum(mask1) + torch.sum(mask2)
+    dice = (2.0 * intersection) / (total+1e-6)
+    return dice.item()
+
+# Function to process the image
+def check_dice_on_composite_2_figs(image_path):
+    import cv2
+    # 1- Load the image
+    img = np.array(Image.open(image_path))
     
+    # Convert image to grayscale to simplify background detection
+    gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+    # Threshold to create a binary image (X-rays are darker, so we invert the threshold)
+    _, binary_img = cv2.threshold(gray_img, 240, 255, cv2.THRESH_BINARY_INV)
+
+    # Find contours to detect the X-ray areas
+    contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Sort contours by area and get the largest two (assuming these are the X-rays)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:2]
+
+    # Extract bounding boxes for the two largest contours
+    xray_imgs = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        xray_imgs.append(img[y:y+h, x:x+w])  # Crop the X-ray based on bounding box
+
+    # Ensure we have two sub-images (left and right X-rays)
+    img1, img2 = xray_imgs
+
+    # Create masks for each sub-image
+    def create_mask(sub_img):
+        # The red color in the image has high values for the red channel and low values for the other channels
+        lower_red = np.array([150, 0, 0])  # Lower bound for red
+        upper_red = np.array([255, 100, 100])  # Upper bound for red
+        mask = cv2.inRange(sub_img, lower_red, upper_red)
+        return mask // 255  # Normalize mask to binary (0 and 1)
+
+    mask1 = create_mask(img1)
+    mask2 = create_mask(img2)
+
+    # Calculate Dice coefficient
+    intersection = np.sum(mask1 * mask2)
+    dice = (2. * intersection) / (np.sum(mask1) + np.sum(mask2))
+    
+    return dice
+
+def check_dice(image_path1, image_path2):
+    # Load images using PIL and convert to RGB
+    img1 = Image.open(image_path1).convert('RGB')
+    img2 = Image.open(image_path2).convert('RGB')
+
+    # Convert images to NumPy arrays
+    np_img1 = np.array(img1)
+    np_img2 = np.array(img2)
+
+    # Convert images to PyTorch tensors and move to GPU
+    tensor1 = torch.from_numpy(np_img1).to('cuda')
+    tensor2 = torch.from_numpy(np_img2).to('cuda')
+
+    # Create binary mask where image is not greyscale
+    mask1 = (tensor1[:, :, 0] != tensor1[:, :, 1]).to(torch.uint8)
+    mask2 = (tensor2[:, :, 0] != tensor2[:, :, 1]).to(torch.uint8)
+
+    # Calculate the Dice coefficient
+    intersection = torch.sum(mask1 & mask2)
+    total = torch.sum(mask1) + torch.sum(mask2)
+
+    dice = (2.0 * intersection) / total
+
+    return dice.item()
+
+def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1', 
+                        size=512, organ=None, temp_dir='random',
+                        text1=BodyRegionText, 
+                        textOrganPresent=ComparisonText, 
+                        textOrganNotPresent=NoOrganSimple, 
+                        summarize=CompareSummarize,axis=1,
+                        checkDice=True):
+    
+    if organ is None:
+        for org in organ_list:
+            if org in y1[y1.rfind('/')+1:]:
+                organ=org
+                break
+        if organ is None:
+            raise ValueError('Organ not found in annotation filenames. Please set it explicitly using the organ parameter.')
+        print('Organ inferenced automatically from the annotation filename:', organ)
+
     # Project the CT scan
     if temp_dir=='random':
         temp_dir='./tmp'+str(random.randint(0,10000))
     os.makedirs(temp_dir, exist_ok=True)
 
-    prj.overlay_projection_fast(pid='ct', organ=organ, datapath=None, save_path=temp_dir,
-                           ct_path=ct,mask_path=y1,
-                           ct_only=True,window='bone')
-    
     prj.overlay_projection_fast(pid='y1_bone', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y1,
-                           ct_only=False,window='bone')
+                           ct_only=False,window='bone',axis=axis)
+    
+    prj.overlay_projection_fast(pid='y2_bone', organ=organ, datapath=None, save_path=temp_dir,
+                           ct_path=ct,mask_path=y2,
+                           ct_only=False,window='bone',axis=axis)
+    
+    if checkDice:
+        dice=check_dice(os.path.join(temp_dir,'y1_bone_overlay_window_bone_axis_1_liver.png'),
+                        os.path.join(temp_dir,'y2_bone_overlay_window_bone_axis_1_liver.png'))
+        print('2D dice coefficient between 2 projections on axis '+str(axis)+':',dice)
+        if dice>0.9:
+            print('The projections are too similar, skipping the comparison and returning 1.5. Try another axis or ct compare slices (holes?).')
+            return 1.5
+
+    prj.overlay_projection_fast(pid='ct', organ=organ, datapath=None, save_path=temp_dir,
+                           ct_path=ct,mask_path=y1,
+                           ct_only=True,window='bone',axis=axis)
     
     prj.overlay_projection_fast(pid='y1_organs', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y1,
-                           ct_only=False,window='organs')
+                           ct_only=False,window='organs',axis=axis)
 
-    prj.overlay_projection_fast(pid='y2_bone', organ=organ, datapath=None, save_path=temp_dir,
-                           ct_path=ct,mask_path=y2,
-                           ct_only=False,window='bone')
     
     prj.overlay_projection_fast(pid='y2_organs', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y2,
-                           ct_only=False,window='organs')
+                           ct_only=False,window='organs',axis=axis)
     
-    prj.create_composite_image(temp_dir, organ)
-    prj.create_composite_image_2figs(temp_dir, organ)
+    prj.create_composite_image(temp_dir, organ,axis=axis)
+    prj.create_composite_image_2figs(temp_dir, organ,axis=axis)
     
     #API call to LLM
-    ct=os.path.join(temp_dir,'ct_ct_axis_1_liver.png')
+    ct=os.path.join(temp_dir,'ct_ct_window_bone_axis_1_liver.png')
     fourImages=os.path.join(temp_dir,'composite_image_axis_1_liver.png')
     twoImages=os.path.join(temp_dir,'composite_image_2_figs_axis_1_liver.png')
     #consider that the correct answer is 2
@@ -1657,13 +2188,13 @@ def SystematicComparison3MessagesLMDeploy6Figs(pth,base_url='http://0.0.0.0:2333
         for k,v in outputs.items():
             print(k,v)
 
-def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy2FigsOld(pth,base_url='http://0.0.0.0:23333/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent=ComparisonText2Figs+LiverDescription, 
                     textOrganNotPresent=NoOrganSimple, 
                     summarize=CompareSummarize2Figs, organ='liver',
-                    mode='Tissue'):
+                    mode='Tissue',save_memory=True):
         answers=[]
         outputs={}
 
@@ -1686,7 +2217,7 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                             textOrganPresent=textOrganPresent,
                             textOrganNotPresent=textOrganNotPresent,
                             summarize=summarize,
-                            organ=organ)
+                            organ=organ,save_memory=save_memory)
             print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
             if answer==1:
                 answers.append(0)
@@ -1809,7 +2340,7 @@ def Prompt2MessagesLMDeploy(img, base_url='http://0.0.0.0:23333/v1', size=512,
         organDescription=DescribeLiver
 
     _, answer = SendMessageLmdeploy([img], base_url=base_url, size=size ,conver=[],
-                                    text=text1 % {'organ': organ}+organDescription)
+                                    text=text1 % {'organ': organ.replace('_',' ')}+organDescription)
     
     if answer=='':
         return 0.5
@@ -1831,7 +2362,7 @@ def Prompt2MessagesMultiImageLMDeploy(img1,img2,img3, base_url='http://0.0.0.0:2
         organDescription=DescribeLiver
 
     _, answer = SendMessageLmdeploy([img1,img2,img3], base_url=base_url, size=size ,conver=[],
-                                    text=text1 % {'organ': organ}+organDescription)
+                                    text=text1 % {'organ': organ.replace('_',' ')}+organDescription)
     
     if answer=='':
         return 0.5
@@ -1969,3 +2500,69 @@ def SystematicComparison2MessagesLMDeploySimple(pth,base_url='http://0.0.0.0:233
         
 
 
+
+def Prompt3MessagesQwen(img1, img2, model, processor,process_vision_info,
+                    text1=BodyRegionText, 
+                    textOrganPresent=ComparisonText+LiverDescription, 
+                    textOrganNotPresent=NoOrganText, summarize=CompareSummarize, organ='liver'):
+    
+    conversation, answer = SendMessageQwen([img1], model, processor, process_vision_info=process_vision_info, text=text1 % {'organ': organ.replace('_',' ')})
+
+    
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind('q2'):answer.lower().rfind('q2')+15])
+    
+    if AnswerNo:
+        text2 = textOrganNotPresent % {'organ': organ.replace('_',' ')}
+    else:   
+        text2 = textOrganPresent % {'organ': organ.replace('_',' ')}
+
+    conversation, answer = SendMessageQwen([img1,img2], model, processor, process_vision_info=process_vision_info, text=text2, conversation=conversation)
+
+    conversation, answer = SendMessageQwen([], model, processor, process_vision_info=process_vision_info, text=summarize+answer, conversation=[])
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+    
+
+    
+def SystematicComparison3MessagesQwen(pth,model,processor,process_vision_info,
+                            text1=BodyRegionText, 
+                    textOrganPresent=ComparisonText+LiverDescription, 
+                    textOrganNotPresent=NoOrganText, 
+                    summarize=CompareSummarize, organ='liver'):
+        answers=[]
+
+        for target in os.listdir(pth):
+            if 'overlay_axis_1' not in target or 'BestIs' in target:
+                continue
+            print(target)
+
+            anno=os.path.join(pth,target)
+            clean=anno.replace('overlay','ct')
+            #consider that the correct answer is 2
+            answer=Prompt3MessagesQwen(
+                            img1=clean,img2=anno,
+                            model=model,processor=processor,
+                            process_vision_info=process_vision_info,
+                            text1=text1,
+                            textOrganPresent=textOrganPresent,
+                            textOrganNotPresent=textOrganNotPresent,
+                            summarize=summarize,
+                            organ=organ)
+            print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
+            if answer==1:
+                answers.append(0)
+            elif answer==2:
+                answers.append(1)
+            
+            # Clean up
+            del answer
+            torch.cuda.empty_cache()
+            gc.collect()
+        acc=np.array(answers).sum()/len(answers)
+        acc=np.round(100*acc,1)
+        print('Accuracy: ',acc, '(',np.array(answers).sum(),'/',len(answers), ')')

@@ -8,11 +8,14 @@ import importlib
 import os
 importlib.reload(ed)
 
-annos='CompositeComparison4Images/'
+#annos='CompositeComparison4Images/'
+annos='/mnt/sdc/pedro/ErrorDetection/projections_good_n_bad_liver_best_is_2'
+
+
 #ed.SystematicComparison3MessagesLMDeploy2Figs(pth=annos,size=512)
 #512 p; 10/12, 2 out-of-tokens. 83.33% accuracy.
 #224p: 8/12, still out of token.
-ed.SystematicComparison3MessagesLMDeploy(pth=annos,size=512)
+ed.SystematicComparison3MessagesLMDeploy(pth=annos,size=512,file_structure='new')
 #40B model: 91.7% (11/12)
 #26B model: 66.7%
 #ed.SystematicComparison3MessagesLMDeploy(pth=annos,size=224)

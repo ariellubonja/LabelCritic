@@ -8,6 +8,7 @@ import scipy.ndimage as ndimage
 import ast
 import torch
 from PIL import Image
+import shutil
 
 def plot_organ_projection(list_of_array, organ_name, pid, axis=2,
                            pngpath=None, th=0.5, ct=False, save=True,
@@ -138,8 +139,13 @@ def load_ct_and_mask(pid, organ, datapath,
 
     # Load the mask using the same transformation
     if mask_path is None:
-        mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
+        try:
+            mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
+        except:
+            mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
+
     mask_nii = nib.load(mask_path)
+
     resampled = resample_image(mask_nii, spacing, target_spacing=(1, 1, 1),order=0)
     if not np.array_equal(resampled, resampled.astype(bool)):
         resampled = np.where(resampled > 0.5, 1, 0)
@@ -403,15 +409,17 @@ def overlay_projection_fast(pid, organ, datapath, save_path, th=0.5,
         name = '_mask'
     if ct_only:
         name = '_ct'
-    filename = os.path.join(save_path, f"{pid}{name}_axis_{axis}_{organ}.png")
+    filename = os.path.join(save_path, f"{pid}{name}_window_{window}_axis_{axis}_{organ}.png")
     cv2.imwrite(filename, overlay_np)
     print(f'Organ projection of {organ} for patient {pid} is saved to {filename}')
 
-def create_composite_image(pth, organ, axis=1):
-    y1_bone = os.path.join(pth, f'y1_bone_overlay_axis_{axis}_{organ}.png')
-    y1_organs = os.path.join(pth, f'y1_organs_overlay_axis_{axis}_{organ}.png')
-    y2_bone = os.path.join(pth, f'y2_bone_overlay_axis_{axis}_{organ}.png')
-    y2_organs = os.path.join(pth, f'y2_organs_overlay_axis_{axis}_{organ}.png')
+def create_composite_image(pth, organ, axis=1, y1_bone=None, y2_bone=None, y1_organs=None, y2_organs=None,name=''):
+
+    if y1_bone is None:
+        y1_bone = os.path.join(pth, f'y1_bone_overlay_window_bone_axis_{axis}_{organ}.png')
+        y1_organs = os.path.join(pth, f'y1_organs_overlay_window_organs_axis_{axis}_{organ}.png')
+        y2_bone = os.path.join(pth, f'y2_bone_overlay_window_bone_axis_{axis}_{organ}.png')
+        y2_organs = os.path.join(pth, f'y2_organs_overlay_window_organs_axis_{axis}_{organ}.png')
 
     # Load the images
     image_paths = [y1_bone, y1_organs, y2_bone, y2_organs]
@@ -447,7 +455,7 @@ def create_composite_image(pth, organ, axis=1):
     axes = axes.flatten()
 
     # Use your original titles
-    titles = ["Image 1", "Image 2", "Image 3", "Image 4"]
+    titles = ["Image 1 - Overlay 1", "Image 2 - Overlay 1", "Image 3 - Overlay 2", "Image 4 - Overlay 2"]
 
     for ax, img, title in zip(axes, images, titles):
         ax.imshow(img)
@@ -465,15 +473,17 @@ def create_composite_image(pth, organ, axis=1):
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=wspace, hspace=hspace)
 
     # Save the figure
-    save_path = os.path.join(pth, f'composite_image_axis_{axis}_{organ}.png')
+    save_path = os.path.join(pth, name+f'composite_image_axis_{axis}_{organ}.png')
     plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1)
 
     print(f'Composite image saved to {save_path}')
     plt.close()
     
-def create_composite_image_2figs(pth, organ, axis=1):
-    y1_bone = os.path.join(pth, f'y1_bone_overlay_axis_{axis}_{organ}.png')
-    y2_bone = os.path.join(pth, f'y2_bone_overlay_axis_{axis}_{organ}.png')
+def create_composite_image_2figs(pth, organ, axis=1, y1_bone=None, y2_bone=None,name=''):
+
+    if y1_bone is None:
+        y1_bone = os.path.join(pth, f'y1_bone_overlay_window_bone_axis_{axis}_{organ}.png')
+        y2_bone = os.path.join(pth, f'y2_bone_overlay_window_bone_axis_{axis}_{organ}.png')
 
     # Load the images
     image_paths = [y1_bone, y2_bone]
@@ -526,10 +536,241 @@ def create_composite_image_2figs(pth, organ, axis=1):
     plt.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05, wspace=wspace)
 
     # Save the figure
-    save_path = os.path.join(pth, f'composite_image_2_figs_axis_{axis}_{organ}.png')
+    save_path = os.path.join(pth, name+f'composite_image_2_figs_axis_{axis}_{organ}.png')
     plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1)
 
     print(f'Composite image saved to {save_path}')
     plt.close()
 
 # to improve speed: project ct just once. Then you project the masks using lower precision and overlay them. Use torch for resampling (current function has bug)
+
+def composite_dataset_liver(output_dir='projections',path='projections_bad_liver_overlay_bone/', axis=1, organ='liver'):
+    os.makedirs(output_dir, exist_ok=True)
+    for file in os.listdir(path):
+        if 'overlay_axis_'+str(axis) not in file:
+            continue
+        ct='projections_bad_liver_overlay_bone/'+file.replace('overlay_','ct_')
+        y1_bone='projections_bad_liver_overlay_bone/'+file
+        y1_organs='projections_bad_liver_overlay/'+file
+        y2_bone='projections_improved_liver_overlay_bone/'+file
+        y2_organs='projections_improved_liver_overlay/'+file
+
+        shutil.copy(ct, os.path.join(output_dir,file.split('.')[0]+'_ct_axis_1_liver.png'))
+        create_composite_image(output_dir, organ, axis, y1_bone=y1_bone, y2_bone=y2_bone, y1_organs=y1_organs, y2_organs=y2_organs,name=file.split('.')[0]+'_')
+        create_composite_image_2figs(output_dir, organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
+
+
+def project_files(pth, destin, organ, file_list, axis=1,device='cuda:0',skip_existing=True):
+    file_list=[f for f in file_list if f in os.listdir(pth)]
+    for pid in file_list:
+        os.makedirs(os.path.join(destin,pid), exist_ok=True)
+        if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')):          
+            print(f'Skipping {pid}, already exists')
+            continue
+        
+        overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                save_path=os.path.join(destin,pid), 
+                                th=0.5,mask_only=False, ct_only=False, window='organs',
+                                ct_path=None, mask_path=None, axis=1, device=device,
+                                precision=32)
+        
+        overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                save_path=os.path.join(destin,pid), 
+                                th=0.5,mask_only=False, ct_only=False, window='bone',
+                                ct_path=None, mask_path=None, axis=1, device=device,
+                                precision=32)
+        
+
+        overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                save_path=os.path.join(destin,pid), 
+                                th=0.5,mask_only=False, ct_only=True, window='bone',
+                                ct_path=None, mask_path=None, axis=1, device=device,
+                                precision=32)
+        
+def composite_dataset(output_dir, good_path, bad_path, axis=1):
+    path1=bad_path
+    path2=good_path
+    for organ in os.listdir(path1):
+        os.makedirs(os.path.join(output_dir,organ), exist_ok=True)
+        for file in os.listdir(os.path.join(path1,organ)):
+            
+            ct=os.path.join(path1,organ,file,file+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')
+            y1_bone=os.path.join(path1,organ,file,file+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')
+            y1_organs=os.path.join(path1,organ,file,file+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')
+            y2_bone=os.path.join(path2,organ,file,file+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')
+            y2_organs=os.path.join(path2,organ,file,file+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')
+
+            if not os.path.exists(ct):
+                print(f'File {file} does not exist in {path2}')
+                continue
+            
+            shutil.copy(ct, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png'))
+            shutil.copy(y1_bone, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'_y1.png'))
+            shutil.copy(y1_organs, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'_y1.png'))
+            shutil.copy(y2_bone, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'_y2.png'))
+            shutil.copy(y2_organs, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'_y2.png'))
+
+            create_composite_image(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone, y1_organs=y1_organs, y2_organs=y2_organs,name=file.split('.')[0]+'_')
+            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
+
+
+def join_left_and_right_colorful(image_path1, image_path2):
+    # Load images using PIL
+    image1 = Image.open(image_path1)
+    image2 = Image.open(image_path2)
+
+    # Convert images to numpy arrays
+    image1_array = np.array(image1)
+    image2_array = np.array(image2)
+
+    print(image1_array.shape, image2_array.shape)
+
+    # Check if images have 4 channels (RGBA)
+    if image1_array.shape[-1] == 4:
+        image1_array = image1_array[:, :, :3]  # Drop alpha channel if present
+    if image2_array.shape[-1] == 4:
+        image2_array = image2_array[:, :, :3]  # Drop alpha channel if present
+
+    # Ensure the images have 3 channels (RGB)
+    if image1_array.shape[-1] != 3 or image2_array.shape[-1] != 3:
+        raise ValueError("Both images must be RGB with 3 channels.")
+
+    # Get red, green, and blue channels from image 1 and image 2
+    red1 = image1_array[:, :, 0]  # Red channel of image 1
+    green1 = image1_array[:, :, 1]  # Green channel of image 1
+    blue1 = image1_array[:, :, 2]   # Blue channel of image 1
+
+    red2 = image2_array[:, :, 0]  # Red channel of image 2
+    green2 = image2_array[:, :, 1]  # Green channel of image 2
+    blue2 = image2_array[:, :, 2]   # Blue channel of image 2
+
+    # Create a mask where green and blue channels in image 1 are zero
+    mask1 = (red1 != green1) & (red1 != blue1)
+    mask2 = (red2 != green2) & (red2 != blue2)
+    overlap = mask1 & mask2
+
+    #remove red overlay from image 2
+    image2_array[mask2,1] = image2_array[mask2,0]
+    image2_array[mask2,2] = image2_array[mask2,0]
+
+    grey=image2_array.copy()
+
+    #Make right kidney blue (mask1: set red and green to 0, keep blue)
+    image2_array[mask1, 0] = 0  # Set red to 0
+    image2_array[mask1, 1] = 0  # Set green to 0
+    image2_array[mask1, 2] = grey[mask1, 2] 
+    # Keep blue channel as is (preserving the details in the blue channel)
+
+    # Make left kidney green (mask2: set red and blue to 0, keep green)
+    image2_array[mask2, 0] = 0  # Set red to 0
+    image2_array[mask2, 1] = grey[mask2, 1]  # Set blue to 0
+    image2_array[mask2, 2] = 0  # Set blue to 0
+    # Keep green channel as is (preserving the details in the green channel)
+
+    # Make overlap red (overlap mask: set green and blue to 0, keep red)
+    image2_array[overlap, 0] = grey[overlap, 0]  # Set red to 0
+    image2_array[overlap, 1] = 0    # Set green to 0
+    image2_array[overlap, 2] = 0    # Set blue to 0
+    # Keep red channel as is (preserving the details in the red channel)
+
+    # Convert the modified array back to an image
+    result_image = Image.fromarray(image2_array)
+
+    return result_image
+
+def join_left_and_right(image_path1, image_path2):
+    # Load images using PIL
+    image1 = Image.open(image_path1)
+    image2 = Image.open(image_path2)
+
+    # Convert images to numpy arrays
+    image1_array = np.array(image1)
+    image2_array = np.array(image2)
+
+    print(image1_array.shape, image2_array.shape)
+
+    # Check if images have 4 channels (RGBA)
+    if image1_array.shape[-1] == 4:
+        image1_array = image1_array[:, :, :3]  # Drop alpha channel if present
+    if image2_array.shape[-1] == 4:
+        image2_array = image2_array[:, :, :3]  # Drop alpha channel if present
+
+    # Ensure the images have 3 channels (RGB)
+    if image1_array.shape[-1] != 3 or image2_array.shape[-1] != 3:
+        raise ValueError("Both images must be RGB with 3 channels.")
+
+    # Get red, green, and blue channels from image 1 and image 2
+    red1 = image1_array[:, :, 0]  # Red channel of image 1
+    green1 = image1_array[:, :, 1]  # Green channel of image 1
+    blue1 = image1_array[:, :, 2]   # Blue channel of image 1
+
+    red2 = image2_array[:, :, 0]  # Red channel of image 2
+    green2 = image2_array[:, :, 1]  # Green channel of image 2
+    blue2 = image2_array[:, :, 2]   # Blue channel of image 2
+
+    # Create a mask where green and blue channels in image 1 are zero
+    mask1 = (red1 != green1) & (red1 != blue1)
+    mask2 = (red2 != green2) & (red2 != blue2)
+    overlap = mask1 & mask2
+
+    #remove red overlay from image 2
+    image2_array[mask2,1] = image2_array[mask2,0]
+    image2_array[mask2,2] = image2_array[mask2,0]
+
+    grey=image2_array.copy()
+
+    #Make right kidney blue (mask1: set red and green to 0, keep blue)
+    image2_array[mask1, 0] = grey[mask1, 0]  # Set red to 0
+    image2_array[mask1, 1] = 0  # Set green to 0
+    image2_array[mask1, 2] = 0 
+    # Keep blue channel as is (preserving the details in the blue channel)
+
+    # Make left kidney green (mask2: set red and blue to 0, keep green)
+    image2_array[mask2, 0] = grey[mask2, 0]  # Set red to 0
+    image2_array[mask2, 1] = 0  # Set blue to 0
+    image2_array[mask2, 2] = 0  # Set blue to 0
+    # Keep green channel as is (preserving the details in the green channel)
+
+    # Make overlap red (overlap mask: set green and blue to 0, keep red)
+    image2_array[overlap, 0] = grey[overlap, 0]  # Set red to 0
+    image2_array[overlap, 1] = 0    # Set green to 0
+    image2_array[overlap, 2] = 0    # Set blue to 0
+    # Keep red channel as is (preserving the details in the red channel)
+
+    # Convert the modified array back to an image
+    result_image = Image.fromarray(image2_array)
+
+    return result_image
+
+def join_left_and_right_dataset(folder1, folder2, destination):
+    if 'right' not in folder1:
+        tmp=folder1
+        folder1=folder2
+        folder2=tmp
+
+    print(folder1, folder2)
+
+    os.makedirs(destination, exist_ok=True)
+
+    # Get the list of files in folder1
+    files_in_folder1 = os.listdir(folder1)
+
+    for file_name in files_in_folder1:
+        if '_ct_' in file_name:
+            shutil.copy(os.path.join(folder1, file_name), os.path.join(destination, file_name.replace('kidney_right', 'kidneys')))
+            continue
+        # Construct the full paths for the images in folder1 and folder2
+        image1_path = os.path.join(folder1, file_name)
+        image2_path = os.path.join(folder2, file_name.replace('right', 'left'))
+
+        print(image1_path, image2_path)
+
+        # Process the images using the previously defined function
+        result_image = join_left_and_right(image1_path, image2_path)
+
+        # Save the result to folder3
+        result_image_path = os.path.join(destination, file_name)
+        result_image.save(result_image_path.replace('kidney_right', 'kidneys'))
+        print(f"Processed and saved: {result_image_path.replace('kidney_right', 'kidneys')}")
