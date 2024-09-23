@@ -261,12 +261,18 @@ def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=2,
             lower_limit = -500.0
             offset = 500.0
             divisor = 2000.0
+        elif window == 'skeleton':
+            upper_limit = 2000.0
+            lower_limit = 300.0
+            offset = -300.0
+            divisor = 1700.0
         else:
-            raise ValueError('Window should be "organs" or "bone"')
+            raise ValueError('Window should be "organs" "skeleton" or "bone"')
 
         # Apply the windowing to the stacked tensor
         stacked_x = torch.clamp(stacked_x, min=lower_limit, max=upper_limit)
         stacked_x = (stacked_x + offset) / divisor
+
 
     # Sum over the specified axis (adjusted for batch dimension)
     organ_projection = torch.sum(stacked_x, dim=axis+1)
@@ -286,6 +292,14 @@ def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=2,
         projection = torch.where(projection > 0,
                                  projection / (1 / (1 - th)) + th,
                                  torch.tensor(0.0).type_as(projection))
+        
+    
+    if window == 'skeleton' and ct:
+        #contrast enhancement
+        gamma=0.5
+        projection = torch.pow(projection, gamma)
+        projection = (projection-projection.min())/(projection.max()-projection.min())
+        projection = torch.clamp(projection, min=0, max=1)
 
     # Scale to 255 for image representation
     projection *= 255.0
@@ -365,12 +379,6 @@ def overlay_projection_fast(pid, organ, datapath, save_path, th=0.5,
     ct_projection = ct_projection.to(device)
     mask_projection = mask_projection.to(device)
 
-    # Print max and min values for debugging
-    #print('max ct proj:', ct_projection.max().item())
-    #print('min ct proj:', ct_projection.min().item())
-    #print('max mask proj:', mask_projection.max().item())
-    #print('min mask proj:', mask_projection.min().item())
-
     # Prepare overlay
     if mask_only:
         # Overlay only the mask in the blue channel
@@ -383,12 +391,20 @@ def overlay_projection_fast(pid, organ, datapath, save_path, th=0.5,
         # Overlay only the CT in all channels
         overlay = ct_projection.unsqueeze(-1).repeat(1, 1, 3)
     else:
-        # Overlay CT and subtract mask from R and G channels
-        overlay = torch.stack([
-            ct_projection - mask_projection,  # R channel
+        if window!='skeleton':
+            overlay = torch.stack([
+            ct_projection - mask_projection,  # B channel
             ct_projection - mask_projection,  # G channel
-            ct_projection  # B channel
+            ct_projection  # R channel
         ], dim=2)
+            
+        else:
+            overlay = torch.stack([
+                ct_projection - mask_projection,  # B channel
+                ct_projection - mask_projection,  # G channel
+                ct_projection + (mask_projection*0.8)  # R channel
+            ], dim=2)
+
 
     # Clamp values to [0, 255] and convert to uint8
     overlay = torch.clamp(overlay, 0, 255).byte()
@@ -479,11 +495,12 @@ def create_composite_image(pth, organ, axis=1, y1_bone=None, y2_bone=None, y1_or
     print(f'Composite image saved to {save_path}')
     plt.close()
     
-def create_composite_image_2figs(pth, organ, axis=1, y1_bone=None, y2_bone=None,name=''):
+def create_composite_image_2figs(pth, organ, axis=1, y1_bone=None, y2_bone=None,name='',window='bone',
+                                 just_ct_name=False):
 
     if y1_bone is None:
-        y1_bone = os.path.join(pth, f'y1_bone_overlay_window_bone_axis_{axis}_{organ}.png')
-        y2_bone = os.path.join(pth, f'y2_bone_overlay_window_bone_axis_{axis}_{organ}.png')
+        y1_bone = os.path.join(pth, f'y1_bone_overlay_window_{window}_axis_{axis}_{organ}.png')
+        y2_bone = os.path.join(pth, f'y2_bone_overlay_window_{window}_axis_{axis}_{organ}.png')
 
     # Load the images
     image_paths = [y1_bone, y2_bone]
@@ -536,7 +553,16 @@ def create_composite_image_2figs(pth, organ, axis=1, y1_bone=None, y2_bone=None,
     plt.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05, wspace=wspace)
 
     # Save the figure
-    save_path = os.path.join(pth, name+f'composite_image_2_figs_axis_{axis}_{organ}.png')
+    if just_ct_name:
+        if window=='skeleton':
+            save_path = os.path.join(pth, name+f'composite_ct_2_figs_axis_{axis}_skeleton.png')
+        else:
+            save_path = os.path.join(pth, name+f'composite_ct_2_figs_axis_{axis}.png')
+    else:
+        if window=='skeleton':
+            save_path = os.path.join(pth, name+f'composite_image_2_figs_axis_{axis}_{organ}_skeleton.png')
+        else:
+            save_path = os.path.join(pth, name+f'composite_image_2_figs_axis_{axis}_{organ}.png')
     plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1)
 
     print(f'Composite image saved to {save_path}')
@@ -566,26 +592,44 @@ def project_files(pth, destin, organ, file_list, axis=1,device='cuda:0',skip_exi
         os.makedirs(os.path.join(destin,pid), exist_ok=True)
         if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
                                             and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')):          
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):          
             print(f'Skipping {pid}, already exists')
             continue
         
+        if not os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')):
+            overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                    save_path=os.path.join(destin,pid), 
+                                    th=0.5,mask_only=False, ct_only=False, window='organs',
+                                    ct_path=None, mask_path=None, axis=1, device=device,
+                                    precision=32)
+        
+        if not os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')):
+            overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                    save_path=os.path.join(destin,pid), 
+                                    th=0.5,mask_only=False, ct_only=False, window='bone',
+                                    ct_path=None, mask_path=None, axis=1, device=device,
+                                    precision=32)
+        
+        if not os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')):
+            overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                    save_path=os.path.join(destin,pid), 
+                                    th=0.5,mask_only=False, ct_only=True, window='bone',
+                                    ct_path=None, mask_path=None, axis=1, device=device,
+                                    precision=32)
+        
+        #if not os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
         overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
                                 save_path=os.path.join(destin,pid), 
-                                th=0.5,mask_only=False, ct_only=False, window='organs',
+                                th=0.5,mask_only=False, ct_only=True, window='skeleton',
                                 ct_path=None, mask_path=None, axis=1, device=device,
                                 precision=32)
         
+        #if not os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
         overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
                                 save_path=os.path.join(destin,pid), 
-                                th=0.5,mask_only=False, ct_only=False, window='bone',
-                                ct_path=None, mask_path=None, axis=1, device=device,
-                                precision=32)
-        
-
-        overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
-                                save_path=os.path.join(destin,pid), 
-                                th=0.5,mask_only=False, ct_only=True, window='bone',
+                                th=0.5,mask_only=False, ct_only=False, window='skeleton',
                                 ct_path=None, mask_path=None, axis=1, device=device,
                                 precision=32)
         
@@ -601,6 +645,9 @@ def composite_dataset(output_dir, good_path, bad_path, axis=1):
             y1_organs=os.path.join(path1,organ,file,file+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')
             y2_bone=os.path.join(path2,organ,file,file+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')
             y2_organs=os.path.join(path2,organ,file,file+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')
+            skeleton=os.path.join(path1,organ,file,file+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
+            y1_seleton=os.path.join(path1,organ,file,file+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
+            y2_seleton=os.path.join(path2,organ,file,file+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
 
             if not os.path.exists(ct):
                 print(f'File {file} does not exist in {path2}')
@@ -611,9 +658,16 @@ def composite_dataset(output_dir, good_path, bad_path, axis=1):
             shutil.copy(y1_organs, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'_y1.png'))
             shutil.copy(y2_bone, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'_y2.png'))
             shutil.copy(y2_organs, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'_y2.png'))
+            shutil.copy(skeleton, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png'))
+            shutil.copy(y1_seleton, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y1.png'))
+            shutil.copy(y2_seleton, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y2.png'))
 
             create_composite_image(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone, y1_organs=y1_organs, y2_organs=y2_organs,name=file.split('.')[0]+'_')
             create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
+            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_seleton, y2_bone=y2_seleton,name=file.split('.')[0]+'_',window='skeleton')
+            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=ct, y2_bone=skeleton,name=file.split('.')[0]+'_',window='skeleton',just_ct_name=True)
+            highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=True)
+            highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=False)
 
 
 def join_left_and_right_colorful(image_path1, image_path2):
@@ -743,6 +797,56 @@ def join_left_and_right(image_path1, image_path2):
     result_image = Image.fromarray(image2_array)
 
     return result_image
+
+def highlight_skeleton(ct_path, skeleton_path, pth, name, device='cuda:0',red=True):
+    # Load images using PIL
+    ct = Image.open(ct_path)
+    skeleton = Image.open(skeleton_path)
+
+    # Convert images to numpy arrays
+    ct = torch.from_numpy(np.array(ct)).to(device).float()
+    skeleton = torch.from_numpy(np.array(skeleton)).to(device).float()
+
+
+    # Check if images have 4 channels (RGBA)
+    if ct.shape[-1] == 4:
+        ct = ct[:, :, :3]  # Drop alpha channel if present
+    if skeleton.shape[-1] == 4:
+        skeleton = skeleton[:, :, :3]  # Drop alpha channel if present
+
+    # Ensure the images have 3 channels (RGB)
+    if ct.shape[-1] != 3 or skeleton.shape[-1] != 3:
+        raise ValueError("Both images must be RGB with 3 channels.")
+
+    if red:
+        red_skeleton = skeleton.clone()
+        red_skeleton[:,:,1] = red_skeleton[:,:,1]+0.3*red_skeleton.max()
+        red_skeleton[:,:,1] = 0
+        red_skeleton[:,:,2] = 0
+        red_ct = ct.clone()
+        red_ct[:,:,1] = red_ct[:,:,1]
+        red_ct[:,:,1] = 0
+        red_ct[:,:,2] = 0
+        red_skeleton = torch.clamp(red_skeleton,0,255)
+        # Get red, green, and blue channels from image 1 and image 2
+        highlighted=torch.where(skeleton>0.0,red_ct,ct)
+    else:
+        #increase gamma over bones
+        ct=ct/255.0
+        skeleton=skeleton/255.0
+        gamma=0.7
+        highlighted=torch.where(skeleton>0,ct*1.5,ct)
+        highlighted=torch.clamp(highlighted,0,1)
+        highlighted=highlighted*255.0
+
+    highlighted=highlighted.cpu().numpy().astype(np.uint8)
+    highlighted=Image.fromarray(highlighted)
+    if red:
+        save_path = os.path.join(pth, name+f'highlighted_skeleton_red.png')
+    else:
+        save_path = os.path.join(pth, name+f'highlighted_skeleton.png')
+    highlighted.save(save_path)
+    print(f'Highlighted skeleton saved to {save_path}')
 
 def join_left_and_right_dataset(folder1, folder2, destination):
     if 'right' not in folder1:

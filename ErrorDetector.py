@@ -1363,10 +1363,135 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
 
     return conver, answer
 
-BodyRegionText=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. Answer the questions below:\n"
-"Q1- Look at it carefully, tell me which body region it represents and where the image limits are. Present a complete list of all organs usually present in this body region (just list their names).\n"
+BodyRegionTextV0=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It looks like an AP (anterior-to-posterior) X-ray. Answer the questions below:\n"
+"Q1- Look at the image carefully, tell me which body region it represents and where the image limits are. Present a complete list of all organs usually present in this body region (just list their names).\n"
 "Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
 "Q2 = _\n")
+
+BodyRegionTextV1=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It looks like an AP (anterior-to-posterior) X-ray. Answer the questions below:\n"
+"Q1- Look at the image carefully, tell me which body region it represents and which organs inside this region are touching the image's upper boundary and its lower boundary. Present a complete list of all organs usually present in the body region contained in the image (just list their names).\n"
+"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
+"Q2 = _\n")
+#seem to give maybe more accurate answers
+BodyRegionText=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It looks like an AP (anterior-to-posterior) X-ray. Answer the questions below:\n"
+"Q1- Look at the image carefully, tell me which body region it represents and which organs and bones inside this region are crossing the image's upper boundary and its lower boundary. Present a complete list of all organs usually present in the body region contained in the image (just list their names).\n"
+"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
+"Q2 = _\n")
+
+#touching became crossing
+
+BodyRegionTextHighlightedSkeleton=("The image I am sending is frontal projections of one CT scan. "
+                "Is it not a CT slices but a transparent view of the entire body, similar to an X-ray that allows a see-through visualization of internal structures. It looks like an AP (anterior-to-posterior) X-ray."
+                "The image focuses on the bones. \n"
+"Q1- Look at the image carefully, tell me very precisely where in the body the image lower and upper limits are. Present a complete list of all organs usually present in the body area within the image (just list their names).\n"
+"Q2- Which of these organs are partially contained in the image? In other words, which organs touch the image uper or lower limits.\n"
+"Q3- Based on your answer to Q1, is the %(organ)s usually present (even if partially) in this area and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
+"Q3 = _\n")
+
+BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT scan, focusing on showing the skeleton. Look at it carefully, and answer the questions below:\n"
+"Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
+"Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"skull = _"
+"neck = _"
+"trachea = _"
+"ribs = _"
+"lumbar spine = _"
+"pelvis = _"
+"femurs = _"
+"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs usually contained within this image limits (just list their names).\n"
+"Q4- Based on your answer to Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"Q4 = _\n")
+
+BodyRegionTextSkeletonV0=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It highlights major bones, not soft tissue. Answer the questions below:\n"
+"Q1- Look at the image carefully, tell me which body region it represents and where the image limits are. Present a complete list of all organs usually present in this body region (just list their names).\n"
+"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"Q2 = _\n")
+
+
+BodyRegionTextSkeletonV1 = ("I am sending you a figure with 2 images inside it, Image 1 (left) and Image 2 (right). The images are two frontal projections from the same CT scan. "
+"They are not CT slices but a transparent view of the entire body, similar to an X-ray that allows a see-through visualization of internal structures. They look like AP (anterior-to-posterior) X-rays."
+"Image 1 uses a window that displays soft tissue, while Image 2 focuses on the skeleton, but they show exactly the same body region. "
+"Please carefully analyze the image and follow the steps below to ensure accuracy:\n\n"
+"Step 1: Describe exactly which parts of the body are visible in the image, including where the image starts and ends. Focus on the visible boundaries, and if the image is cropped, mention where the cropping occurs. "
+"Do not include parts of the body that are not visible in the image.\n\n"
+"Step 2: Based on the visible region described in Step 1, provide a list of organs that are actually visible within the image boundaries. "
+"Only include organs that are fully or partially visible in the image, and avoid general assumptions about what should be present.\n\n"
+"Step 3: Based on your findings from Step 1 and Step 2, is the %(organ)s visible in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by 'Yes' or 'No':\n"
+"Step 3 = _\n")
+
+BodyRegionTextBad=("The image I am sending is a frontal projection of one CT scan. It is not a CT slice but a projection similar to an X-ray, allowing you to see through the body. Please answer the following questions carefully:\n"
+                "Q1- Identify the body region shown in the image. Specifically, indicate if it includes the **upper chest**, **mid chest**, **lower chest**, **abdominal regions** and **pelvic regions**. List all organs that are typically found in the body region(s) you identify, including whether the **trachea** is normally visible in this region.\n"
+                "Q2- Based on your answer to Q1, is the %(organ)s normally present in this body region? Provide a 'yes' or 'no' answer using the template below, substituting _ with Yes or No.:\n"
+                "Q2 = _\n")
+
+
+AorticArchTextSkeletonV0=("If you answered no to Step 3, skip Step 4. If you answered yes, continue:\n"
+                "Step 4: Are heart and aoric arch fully contained within image bondaries? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by 'yes' or 'no':\n"
+                "Step 4 = _\n")
+
+AorticArchTextSkeleton=("If you answered no to Q3, skip Q4 and Q5. If you answered yes, continue:\n"
+                "Q4- What parts of the respiratory system are contained in the image region?\n"
+                "Q5- Based on your answer to Q3, is the trachea usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+                "Q5 = _\n")
+
+AorticArchTextV5=("If you answered no to Q2, skip Q3 and Q4. If you answered yes, continue:\n"
+                "Q3- What parts of the respiratory system are usually presentusually present in this region and in your list?\n"
+                "Q4- Based on your answer to Q3, is the trachea usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+                "Q4 = _\n")
+#80% accuracy but there is a better one below!
+
+AorticArchTextV4=("If you answered no to Q2, skip Q3 and Q4. If you answered yes, continue:\n"
+                "Q3- The **trachea** is part of the respiratory system, and it is located **only in the upper chest**, near the midline of the body. It appears as a **vertical air-filled tube**, running from the neck down to the top of the lungs and connecting to the bronchi. Importantly, if **upper chest** organs and the **top of the lungs** are not visible in the image, the trachea cannot be present.\n"
+                "Look at the image and determine if the **upper chest** is visible, specifically focusing on the area above the lungs. If only the lower parts of the lungs are visible, the trachea should not be visible. Identify which parts of the respiratory system are visible.\n"
+                "Q4- Based on your answer to Q3, is the **trachea** visible in this image? Answer 'yes' or 'no' using the template below, substituting _ with Yes or No. Be sure to consider that the trachea cannot be present without the **upper chest** being visible, and it should appear as a distinct air-filled tube above the lungs:\n"
+                "Q4 = _\n")
+
+AorticArchTextV3=("If you answered no to Q2, skip Q3 and Q4. If you answered yes, continue:\n"
+                "Q3- Look closely at the image. The **trachea** is part of the respiratory system and should appear as a **vertical air-filled tube in the upper chest**, located in the midline, above the lungs. It is positioned just below the neck and above the heart. If only the lower parts of the lungs are visible, the trachea is unlikely to be present. Based on this information, identify which parts of the respiratory system (if any) are visible in this image.\n"
+                "Q4- Based on your answer to Q3, is the **trachea** visible in this image? Answer 'yes' or 'no' using the template below, substituting _ with Yes or No. Be sure to consider whether the upper chest is visible and whether the trachea’s position is above the lungs in this image:\n"
+                "Q4 = _\n")
+#bad
+
+AorticArchTextV2=("Q3- If you answered no to Q2, skip this question (Q3). If you answered yes, continue:\n"
+                "In this image, you should identify whether the **upper part of the lungs** is visible, not just the base. The **upper lungs** are located near the top of the ribcage.\n"
+                "Pay attention to this distinction: If **only the base of the lungs** is visible, the aortic arch is not in the image.\n"
+                "Remember, the **aortic arch** is located in the **upper chest**, near the top of the lungs. Therefore, the presence of the aortic arch depends on whether the upper portion of the lungs is visible in the scan.\n"
+                "Now answer this: Are the **upper parts of the lungs** fully visible (not just the base)? If yes, the aortic arch should be visible.\n"
+                "Based on your observation, fill in the template below by substituting _ with Yes or No:\n"
+                "Q3 = _\n"
+                "Please explain briefly whether the upper lungs are visible and why this leads to the conclusion about the aortic arch's presence.")
+
+AorticArchTextV1=("Q3- If you answered no to Q2, ignore this question (Q3). If you answered yes, answer whis new question: the lungs should be two large dark regions in the image. Are the lungs present and fully visible, from top to bottom, in the image? Think carefully, and provide a complete answer with justification. \n"
+                "Based on your answer to Q3, fill the template below substituting  _ by Yes or No.:\n"
+                "Q3 = _\n")
+
+AorticArchTextV0=("Q3- If you answered no to Q2, ignore this question (Q3). If you answered yes, describe the image's upper limit: does in include the aortic arch? The aortic arch is placed just above the heart, and it will be present if the top of the lungs are visible in the image. Think carefully, and provide a complete answer with justification.\n"
+                "Based on your answer to Q3, fill the template below substituting  _ by Yes or No.:\n"
+                "Q3 = _\n")
+
+AorticArchTextV6=("Q3- If you answered no to Q2, ignore this question (Q3). If you answered yes, describe the image's upper limit: does it include the aortic arch? The aortic arch is placed just above the heart, and it will be presnt if the top of the lungs are visible in the image. Think carefully, and provide a complete answer with justification.\n"
+                "Based on your answer to Q3, fill the template below substituting  _ by Yes or No.:\n"
+                "Q3 = _\n")
+#80% accuracy
+
+AorticArchTextV7=("Q3- If you answered no to Q2, ignore this question (Q3). If you answered yes, describe the image's upper limit: does it include the aortic arch? The aortic arch is placed just above the heart.\n"
+                "Carefully analyze the image and your answer to Q1 to respond Q3, justifying your answer. Moreover, consider the following tips:\n"
+                "- The aortic arch is presnt only if the top of the lungs and the trachea are present in the image.\n" 
+                "Based on your answer to Q3, fill the template below substituting  _ by Yes or No.:\n"
+                "Q3 = _\n")
+
+AorticArchText=(
+    "If you answered 'no' to Q2, skip Q3, Q4 and Q5. If you answered 'yes', continue.\n"
+    "Q3: Based on your answer to Q1, are the lungs present in the image? \n"
+    "Answer 'yes' or 'no' using the template below, substituting _ with Yes or No.\n"
+    "Q3 = _\n"
+    "If you answered 'no' to Q3, skip Q4 and Q5. If you answered 'yes', continue.\n"
+    "Q4: Repeat from you answer to Q1, which organs and bones are crossing the image upper boundary (none, brain, neck, lungs, heart or others)? \n"
+    "Q5: Considering your answer to Q3 and Q4, does the image include the aortic arch? The aortic arch is placed just above the heart. It is not present if you listed the heart, lower ribs, or lower lungs in Q4. It is present if you listed none, brain or neck. \n"#It is probably not present if you listed the lungs. \n"
+    "Answer 'yes' or 'no' using the template below, substituting _ with Yes or No.\n"
+    "Q5 = _\n"
+)
+#90% localization accuracy
 
 ComparisonText=("I am now sending you a figure with 4 images inside of it. They are all frontal projections of the same CT scan I sent before. "
                 "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
@@ -1405,7 +1530,15 @@ ComparisonText6Figs=("I am now sending you a figure with 6 images inside of it. 
                 "The letter R in blue inside the images represent the right side of the human body. The letter L in blue represents the left side of the human body. \n"
                 "Compare overlay 1 (red) to overlay 2 (yellow) and tell me which one is a better overlay for the %(organ)s.\n")
 
-ComparisonText2Figs=("I am now sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan. "
+ComparisonText2Figs=("I am sending you a figure that contains two images, Image 1 on the left and Image 2 on the right. "
+                     "These images are frontal projections from the same CT scan, displayed with transparency similar to X-rays. "
+                     "In these images, a red overlay has been applied to highlight the %(organ)s region. However, the accuracy of the red overlays in marking the %(organ)s may vary between the two images. "
+                     "The letters R (blue) and L (green) are visual markers indicating the right and left sides of the human body, respectively. "
+                     "Note that the left side of each image corresponds to the right side of the body, and the right side of the image corresponds to the left side of the body, like AP (anterior-to-posterior) X-rays. "
+                     "Please compare Overlay 1 (Image 1) to Overlay 2 (Image 2) and determine which overlay provides a more accurate representation of the %(organ)s. "
+                     "You will need to assess the overlays based on the following specific criteria related to the %(organ)s in the next part.")#GPT revised
+
+ComparisonText2FigsV0=("I am now sending you a figure with 2 images inside of it. They are frontal projections of the same CT scan. "
                      "They are not a CT slices, instead, they have transparency and let you see through the entire human body, like an X-ray. "
                 "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
                 "The letters R (in blue) and L (in green) inside the images represent the right and left sides of the human body. "
@@ -1505,10 +1638,11 @@ CompareSummarize1Fig=("The text below represents a comparisons of 2 overlays, 'O
                 "The text explains which overlay is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "If the text does not mention any overlay or if it is blank, answer 'none'. The text is:\n")
 
+
 KidneysDescription=("Answer each one of the following questions before drawing a conclusion of which overlay is better:\n"
                    "a) Consider that a person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney. If only one images shows a single kidney, the image showing two kidneys should be better. \n"
-                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Are the shapes of the 2 kidneys in image 1 cottect? Are the shapes in image 2 better, worse or similar? \n"
-                   "c) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 cottect? Are the kidney locations in image 2 better, worse or similar? \n")
+                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Are the shapes of the 2 kidneys in image 1 correct? Are the shapes in image 2 better, worse or similar? \n"
+                   "c) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 correct? Are the kidney locations in image 2 better, worse or similar? \n")
 
 KidneysDescriptionV0=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
                    "a) Number and location: a person usually has two kidneys.\n"
@@ -1522,7 +1656,50 @@ AdrenalGlandDescription=("When evaluating and comparing the overlays, consider t
                    "d) Left Adrenal Gland Shape (left side of the body): Generally crescent-shaped or semilunar. May appear as a curved line or elongated structure above the kidney.\n"
                    "e) Size: adrenal glands are relatively small compared to the kidneys.\n")
 
-Descriptions={"liver":LiverDescription,
+AortaDescriptionV0=("Answer each one of the following questions before drawing a conclusion of which overlay is better:\n"
+                     "a) Shape: In a CT projection, the aorta should be marked as a long vertical red line, with a curve on its top, similar to the shape of a question mark (?). Does the shape of the red region in image 1 match the shape of the aorta? Does the shape of the red region in image 2 match the shape of the aorta? If the shape of the aorta is better represented in one of the images, that image should be better. \n"
+                     "b) Location: after the small curve on its top (aortic arch), the aorta should be parallel to the spine. Usually it is a long vertical line in the midline of the body. The aorta can be curved if the spine is also curved. Is the aorta correctly positioned in image 1? Is it correctly positioned in image 2? \n"
+                     "c) Completeness: the aorta should be visible from the heart to the pelvis. Is the aorta complete in image 1? Is it complete in image 2? \n")
+#Acc: 2/3
+AortaDescription = (
+    "Analyze the two images to determine which overlay represents the aorta more accurately, based on the following criteria:\n"
+    "1. Shape: The aorta should appear as a long vertical red line with a curve at the top, resembling a question mark (?).\n"
+    "- In Image 1, does the shape of the red region resemble this description?\n"
+    "- In Image 2, does the shape of the red region resemble this description?\n"
+    "- Which image has a shape closer to the expected form of the aorta?\n"
+    "2. Location: After the small curve at the top (aortic arch), the aorta should run parallel to the spine, which usually appears as a vertical line along the midline of the body.\n"
+    "- Is the aorta correctly positioned in Image 1 relative to the spine?\n"
+    "- Is the aorta correctly positioned in Image 2 relative to the spine?\n"
+    "- Which image shows a better location for the aorta?\n"
+    "3. Completeness: The aorta should be visible from the heart down to the pelvis (or down to the image bottom, if the pelvis is not visible).\n"
+    "- Is the aorta fully visible and complete in Image 1?\n"
+    "- Is the aorta fully visible and complete in Image 2?\n"
+    "- Which image shows a more complete representation of the aorta?\n"
+    "Based on the shape, location, and completeness, indicate which overlay (Image 1 or Image 2) provides a better representation of the aorta."
+)
+#Acc: 3/3
+DescendingAortaDescriptionV0=("Answer each one of the following questions before drawing a conclusion of which overlay is better:\n"
+                     "a) Shape: The aortic arch is not visible in this CT projection, Thus, the aorta should be a long vertical red line (tubular structure), clearly visible at the very top of the image. A common overlay error is not displaying the aorta at the very top of the image. Is the red overlay in Image 2 visible at the very top of the image? Is the red overlay in Image 2 visible at the very top of the image? \n"
+                     "b) Location: the aorta should be parallel to the spine. Usually it is a long vertical line in the midline of the body. The aorta can be curved if the spine is also curved. Is the aorta correctly positioned in image 1? Is it correctly positioned in image 2? \n"
+                     "c) Completeness: the aorta should be visible from the top of the image to the pelvis (if the pelvis is present in the ct). Is the aorta complete in image 1? Is it complete in image 2? \n")
+#Accuracy:  62.5 ( 5 / 8 )
+
+DescendingAortaDescriptionV1=("Answer the following questions before concluding which overlay is a better annotation for the aorta:\n"
+                            "a) **Upper Edge**: The aortic arch is not visible in this CT projection. Therefore, the aorta should appear as a long, vertical red line (tubular structure), extending from the **top edge** of the image. A common mistake is the aorta overlay not reaching the very top of the image. Does the red overlay in Image 1 touch the **upper edge** of the image? Does the red overlay in Image 2 touch the **upper edge** of the image? Compare the two images and identify which one, if either, has the red overlay reaching the top edge more accurately.\n"
+                            "b) **Location and Shape**: The aorta should be parallel to the spine, typically as a long vertical line in the midline of the body. The aorta may curve if the spine is also curved. Is the aorta correctly positioned in Image 1? Is it correctly positioned in Image 2? Compare both images and explain which overlay follows the correct position better.\n"
+                            "c) **Completeness**: The aorta should extend from the top of the image to the pelvis (if the pelvis is visible in the scan). Is the aorta visible from the top edge to the pelvis in Image 1? Is it complete in Image 2? Compare the completeness of both images.")
+#Accuracy:  80%, but errors were only in the trachea detection
+
+DescendingAortaDescription=("Answer the following questions before concluding which overlay is a better annotation for the aorta:\n"
+                            "a) **Upper Edge**: The aortic arch is not visible in this CT projection. Therefore, the aorta should appear as a long, vertical red line (tubular structure), extending from the **top edge** of the image. The overlay must display the aorta at the very top of the image. Does the red overlay in Image 1 touch the **upper edge** of the image? Does the red overlay in Image 2 touch the **upper edge** of the image? Compare the two images and identify which one, if either, has the red overlay reaching the top edge more accurately.\n"
+                            "b) **Location and Shape**: The aorta should be parallel to the spine, typically as a long vertical line in the midline of the body. The aorta may curve if the spine is also curved. Is the aorta correctly positioned in Image 1? Is it correctly positioned in Image 2? Compare both images and explain which overlay follows the correct position better.\n"
+                            "c) **Completeness**: The aorta should extend from the top of the image to the pelvis (if the pelvis is visible in the scan). Is the aorta visible from the top edge to the pelvis in Image 1? Is it complete in Image 2? Compare the completeness of both images.")
+#Accuracy:  80%, but errors were only in the trachea detection
+
+Descriptions={
+              "aorta":AortaDescription,
+              "descending aorta":DescendingAortaDescription,
+              "liver":LiverDescription,
               "kidneys":KidneysDescription,
               "adrenal_glands":AdrenalGlandDescription}
 
@@ -1532,16 +1709,31 @@ def Prompt3MessagesLMDeploy(img1, img2, img3,
                             textOrganPresent=ComparisonTextContinued, 
                             textOrganNotPresent=NoOrganSimple, 
                             summarize=CompareSummarize, organ='liver',
-                            save_memory=False):
+                            save_memory=False, window='bone'):
     
+    organRegion=text1 % {'organ': organ.replace('_',' ')}
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
     if size>224:
-        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=text1 % {'organ': organ.replace('_',' ')},
+        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=organRegion,
                                                 base_url=base_url, size=224)
     else:
-        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=text1 % {'organ': organ.replace('_',' ')},
+        conversation, answer = SendMessageLmdeploy([img1], conver=[], text=organRegion,
                                                 base_url=base_url, size=size)
-    
-    AnswerNo=('no' in answer.lower()[answer.lower().rfind('q2'):answer.lower().rfind('q2')+15])
+    q='q2'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+            else:
+                organ='descending aorta'
     
     if AnswerNo:
         #text2 = NoOrganText % {'organ': organ.replace('_',' ')}
@@ -1889,10 +2081,13 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                             text1=BodyRegionText, 
                     textOrganPresent='auto', 
                     textOrganNotPresent=NoOrganSimple, 
-                    summarize=CompareSummarize, organ='liver',
+                    summarize=CompareSummarize2Figs, organ='liver',
                     file_structure='original',
-                    dice_check=False,pth1=None,pth2=None,save_memory=False):
+                    dice_check=False,pth1=None,pth2=None,save_memory=False,
+                    window='bone'):
         
+        if window=='skeleton':
+            text1=BodyRegionTextHighlightedSkeleton
         answers=[]
         outputs={}
 
@@ -1919,7 +2114,6 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                 clean=os.path.join(pth,target)
                 anno=clean.replace('ct_window_bone','composite_image')
                 twoImages=clean.replace('ct_window_bone','composite_image_2_figs')
-                print('anno:',anno)
 
             print(target)
 
@@ -1928,13 +2122,21 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                 pid=target[:target.rfind('_ct')]
                 #print(os.listdir(pth1))
                 #print('pid:',pid)
-                #dice=check_dice(os.path.join(pth1,pid,pid+'_overlay_window_bone_axis_1_'+organ+'.png'),
-                #                os.path.join(pth2,pid,pid+'_overlay_window_bone_axis_1_'+organ+'.png'))
-                dice=check_dice_on_composite_2_figs(twoImages)
+                dice=check_dice(clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png'),
+                                clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png'))
+                #dice=check_dice_on_composite_2_figs(twoImages)
                 print('2D dice coefficient between 2 projections on axis 1:',dice)
                 if dice>0.9:
                     print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
                     continue
+
+            if window=='skeleton':
+                #clean=clean[:clean.rfind('ct_window_bone')]+'composite_ct_2_figs_axis_1_skeleton.png'
+                #clean=clean.replace('ct_window_bone','composite')
+                clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
+                #clean=clean.replace('ct_window_bone','ct_window_skeleton')
+                print('anno:',anno)
+                print('clean:',clean)
 
             #consider that the correct answer is 2
             answer=Prompt3MessagesLMDeploy(
@@ -1944,7 +2146,8 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                             textOrganPresent=textOrganPresent,
                             textOrganNotPresent=textOrganNotPresent,
                             summarize=summarize,
-                            organ=organ,save_memory=save_memory)
+                            organ=organ,save_memory=save_memory,
+                            window=window)
             
             print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
             if answer==1:
@@ -2072,10 +2275,10 @@ def check_dice(image_path1, image_path2):
 def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1', 
                         size=512, organ=None, temp_dir='random',
                         text1=BodyRegionText, 
-                        textOrganPresent=ComparisonText, 
+                        textOrganPresent=ComparisonText2Figs, 
                         textOrganNotPresent=NoOrganSimple, 
-                        summarize=CompareSummarize,axis=1,
-                        checkDice=True):
+                        summarize=CompareSummarize2Figs,axis=1,
+                        checkDice=True,window='bone'):
     
     if organ is None:
         for org in organ_list:
@@ -2093,15 +2296,15 @@ def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1',
 
     prj.overlay_projection_fast(pid='y1_bone', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y1,
-                           ct_only=False,window='bone',axis=axis)
+                           ct_only=False,window=window,axis=axis)
     
     prj.overlay_projection_fast(pid='y2_bone', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y2,
-                           ct_only=False,window='bone',axis=axis)
+                           ct_only=False,window=window,axis=axis)
     
     if checkDice:
-        dice=check_dice(os.path.join(temp_dir,'y1_bone_overlay_window_bone_axis_1_liver.png'),
-                        os.path.join(temp_dir,'y2_bone_overlay_window_bone_axis_1_liver.png'))
+        dice=check_dice(os.path.join(temp_dir,'y1_bone_overlay_window_'+window+'_axis_1_liver.png'),
+                        os.path.join(temp_dir,'y2_bone_overlay_window_'+window+'_axis_1_liver.png'))
         print('2D dice coefficient between 2 projections on axis '+str(axis)+':',dice)
         if dice>0.9:
             print('The projections are too similar, skipping the comparison and returning 1.5. Try another axis or ct compare slices (holes?).')
@@ -2109,7 +2312,7 @@ def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1',
 
     prj.overlay_projection_fast(pid='ct', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y1,
-                           ct_only=True,window='bone',axis=axis)
+                           ct_only=True,window=window,axis=axis)
     
     prj.overlay_projection_fast(pid='y1_organs', organ=organ, datapath=None, save_path=temp_dir,
                            ct_path=ct,mask_path=y1,
@@ -2120,16 +2323,16 @@ def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1',
                            ct_path=ct,mask_path=y2,
                            ct_only=False,window='organs',axis=axis)
     
-    prj.create_composite_image(temp_dir, organ,axis=axis)
-    prj.create_composite_image_2figs(temp_dir, organ,axis=axis)
+    #prj.create_composite_image(temp_dir, organ,axis=axis,window=window)
+    prj.create_composite_image_2figs(temp_dir, organ,axis=axis,window=window)
     
     #API call to LLM
-    ct=os.path.join(temp_dir,'ct_ct_window_bone_axis_1_liver.png')
+    ct=os.path.join(temp_dir,'ct_ct_window_'+window+'_axis_1_liver.png')
     fourImages=os.path.join(temp_dir,'composite_image_axis_1_liver.png')
     twoImages=os.path.join(temp_dir,'composite_image_2_figs_axis_1_liver.png')
     #consider that the correct answer is 2
     answer=Prompt3MessagesLMDeploy(
-                    img1=ct,img2=fourImages,img3=twoImages,
+                    img1=ct,img2=twoImages,img3=twoImages,
                     base_url=base_url,size=size,
                     text1=text1,
                     textOrganPresent=textOrganPresent,
