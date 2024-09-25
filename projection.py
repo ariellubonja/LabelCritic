@@ -242,6 +242,51 @@ def overlay_projection(pid, organ, datapath,save_path,th=0.5,
         print('Organ projection of ' + save_path + ' for patient ' + pid + \
             ' is saved to ' + os.path.join(save_path, pid + '.png'))
         
+def apply_clahe_to_tensor(image_tensor, clip_limit=2.0, tile_grid_size=(8, 8),apply_erosion=True,erosion_kernel_size=9):
+    """
+    Apply CLAHE to a PyTorch tensor image normalized between 0 and 1.
+
+    Args:
+        image_tensor (torch.Tensor): Input tensor of shape (C, H, W) or (H, W) with values between 0 and 1.
+        clip_limit (float): Threshold for contrast limiting.
+        tile_grid_size (tuple): Size of grid for histogram equalization.
+
+    Returns:
+        torch.Tensor: Processed image tensor with values between 0 and 1.
+    """
+
+    # Ensure the image is a 2D grayscale tensor (H, W) or (1, H, W)
+    if len(image_tensor.shape) == 3:
+        image_tensor = image_tensor.squeeze(0)  # Remove channel dimension if it exists
+    
+    # Convert the PyTorch tensor to a NumPy array and scale to [0, 255]
+    image_np = (image_tensor.cpu().numpy() * 255).astype(np.uint8)
+
+    # Create a CLAHE object with the desired parameters
+    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+
+    # Apply CLAHE to the image
+    clahe_image_np = clahe.apply(image_np)
+
+    # Convert the processed image back to a PyTorch tensor and scale to [0, 1]
+    clahe_image_tensor = torch.from_numpy(clahe_image_np.astype(np.float32) / 255.0)
+
+    # Add back the channel dimension if it was initially present
+    if len(image_tensor.shape) == 2:  # if the original tensor was 3D
+        clahe_image_tensor = clahe_image_tensor.unsqueeze(0)
+
+    if apply_erosion:
+        _, binary_image = cv2.threshold(clahe_image_np, 0, 1, cv2.THRESH_BINARY)
+        kernel = np.ones((erosion_kernel_size, erosion_kernel_size), np.uint8)  # Create a square kernel
+        eroded_image = cv2.erode(binary_image, kernel, iterations=1)
+        binary_image = eroded_image
+        binary_tensor = torch.tensor(binary_image)
+        if len(image_tensor.shape) == 2:  # if the original tensor was 3D
+            binary_tensor = binary_tensor.unsqueeze(0)
+        clahe_image_tensor = clahe_image_tensor * binary_tensor
+
+
+    return clahe_image_tensor
 
 def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=2,
                                pngpath=None, th=0.5, ct=False, save=True,
@@ -296,9 +341,14 @@ def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=2,
     
     if window == 'skeleton' and ct:
         #contrast enhancement
-        gamma=0.5
+        #projection[projection > 0]+=0.05
+        projection=apply_clahe_to_tensor(projection.unsqueeze(0),clip_limit=5,apply_erosion=False).squeeze(0)
+        gamma=0.3
         projection = torch.pow(projection, gamma)
         projection = (projection-projection.min())/(projection.max()-projection.min())
+        # Apply threshold to preserve background
+        threshold = 0.03  # Adjust as needed
+        projection[projection < threshold] = 0
         projection = torch.clamp(projection, min=0, max=1)
 
     # Scale to 255 for image representation
@@ -666,6 +716,7 @@ def composite_dataset(output_dir, good_path, bad_path, axis=1):
             create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
             create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_seleton, y2_bone=y2_seleton,name=file.split('.')[0]+'_',window='skeleton')
             create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=ct, y2_bone=skeleton,name=file.split('.')[0]+'_',window='skeleton',just_ct_name=True)
+            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y2_bone, y2_bone=y1_bone,name=file.split('.')[0]+'_best1_')#invert y1 and y2
             highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=True)
             highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=False)
 
@@ -834,7 +885,7 @@ def highlight_skeleton(ct_path, skeleton_path, pth, name, device='cuda:0',red=Tr
         #increase gamma over bones
         ct=ct/255.0
         skeleton=skeleton/255.0
-        gamma=0.7
+        gamma=0.5
         highlighted=torch.where(skeleton>0,ct*1.5,ct)
         highlighted=torch.clamp(highlighted,0,1)
         highlighted=highlighted*255.0

@@ -26,6 +26,15 @@ ZeroShotInstructions=("The image I am sending is a frontal projection of a CT sc
                       "using an overlay. However, I am not sure if the red overlay correctly "
                       "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
                       "the expected shape and location of a %(organ)s.")
+
+FindErrors=("The image I am sending now, we can call it Image %(number)s, is a frontal projection of a CT scan. "
+                      "It is not a CT slice, we have transparency and can see through the entire body, "
+                      "like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. "
+                      "The %(organ)s region in the image should be marked in red, "
+                      "using an overlay. However, I am not sure if the red overlay correctly "
+                      "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
+                      "the expected shape and location of a %(organ)s, and analyze potential mistakes, if any.")
+
 SummarizeInstructions=("Summarize your last answer, using only 2 words: "
                        "'good annotation' or 'bad annotation'.")
 SummarizeInstructionsFewShot=("Summarize your last answer, using only 2 words: "
@@ -93,6 +102,15 @@ liver=(" Consider the following anatomical information: the liver is a large, tr
       "1. Is the red overlay a single contiguous object? \n"
       "2. Does the shape of the red overlay resemble the typical triangular or wedge-like shape of the liver? \n"
       "3. Is the red overlay primarily located in the upper right quadrant of the abdomen, just below the diaphragm? \n")
+      
+kidneys_questions=("Consider the following anatomical information: the kidneys are two bean-shaped organs located on either side of the spine. "
+         "Each kidney should appear as a distinct structure. "
+         "The kidneys are located around the T12 to L3 vertebrae, primarily in the upper abdomen."
+         "In assessing the annotation and finding potential errors on it, I want you to answer the following questions: \n"
+         "1. Is the red overlay divided into two distinct regions, one for each kidney? \n"
+         "2. Does the shape of the red overlay resemble the typical bean shape of each kidney? \n"
+         "3. Is the red overlay located in the correct anatomical region, on either side of the spine and close to the posterior wall? \n")
+
 liver_no_question=(" Consider the following anatomical information: the liver is a large, triangular organ located in the upper right quadrant of the abdomen, "
       "just below the diaphragm. It is a single structure. It spans across the midline, partially extending"
       " into the left upper quadrant. "
@@ -104,10 +122,9 @@ liver_describe=(" Consider the following anatomical information: the liver is a 
       "The liver position is primarily under the rib cage. \n"
       "Throuhgly describe the overlay: what is its shape? where is it? Then you say if it corresponds to the liver or not. ")
 
-KidneysDescriptionED=("Consider the following anatomical information:\n"
-                   "a) A person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney.  \n"
-                   "b) Each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. \n"
-                   "c) The kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. \n")
+KidneysDescriptionED=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects. "
+                      "Each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Check if the red objects resemble this shape and are complete. "
+                      " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
 
 AdrenalGlandDescriptionED=("Consider the following anatomical information:\n"
@@ -116,6 +133,34 @@ AdrenalGlandDescriptionED=("Consider the following anatomical information:\n"
                    "c) Right Adrenal Gland Shape (right side of the body): triangular shape.\n"
                    "d) Left Adrenal Gland Shape (left side of the body): Generally crescent-shaped or semilunar. May appear as a curved line or elongated structure above the kidney.\n"
                    "e) Size: adrenal glands are relatively small compared to the kidneys.\n")
+
+AortaDescription = (
+    "Analyze the two images to determine which overlay represents the aorta more accurately, based on the following criteria:\n"
+    "1. Shape: The aorta should appear as a long vertical red line with a curve at the top, resembling a question mark (?).\n"
+    "- In Image 1, does the shape of the red region resemble this description?\n"
+    "- In Image 2, does the shape of the red region resemble this description?\n"
+    "- Which image has a shape closer to the expected form of the aorta?\n"
+    "2. Location: After the small curve at the top (aortic arch), the aorta should run parallel to the spine, which usually appears as a vertical line along the midline of the body.\n"
+    "- Is the aorta correctly positioned in Image 1 relative to the spine?\n"
+    "- Is the aorta correctly positioned in Image 2 relative to the spine?\n"
+    "- Which image shows a better location for the aorta?\n"
+    "3. Completeness: The aorta should be visible from the heart down to the pelvis (or down to the image bottom, if the pelvis is not visible).\n"
+    "- Is the aorta fully visible and complete in Image 1?\n"
+    "- Is the aorta fully visible and complete in Image 2?\n"
+    "- Which image shows a more complete representation of the aorta?\n"
+    "Based on the shape, location, and completeness, indicate which overlay (Image 1 or Image 2) provides a better representation of the aorta."
+)
+
+DescendingAortaDescription=("Consider the following anatomical information:\n"
+                  "a) **Upper Edge**: The aortic arch is not visible in this CT projection, so the aorta should appear as a long, vertical red line (tubular structure), extending from the **top edge** of the image. Check if the red overlay touchs the **upper edge** of the image. \n"
+                  "b) **Location and Shape**: The aorta should be parallel to the spine, typically as a long vertical line in the midline of the body. It may curve if the spine is curved. Check if the red overlay has the correct position and shape of the aorta relative to the spine. \n"
+                  "c) **Completeness**: The aorta should extend from the **top of the image to the pelvis** (if the pelvis is visible in the scan). Check if the red overlay accurately shows the full length of the aorta from the top of the image to the pelvis. \n")
+
+IVCDescription=("Answer the following questions before concluding which overlay is a better annotation for the Inferior Vena Cava (IVC or postcava):\n"
+                "a) **Upper Edge**: The IVC is not visible in the upper chest, but it should appear as a long vertical red line (tubular structure), running **parallel to the aorta** and extending from the mid-abdomen upward to the diaphragm. The overlay must display the IVC near the **top of the abdomen** (but not the very top of the image). Does the red overlay in Image 1 extend close to the top of the abdomen? Does the red overlay in Image 2 reach this region more accurately? Compare the two images and identify which one more accurately represents the upper portion of the IVC.\n"
+                "b) **Location and Shape**: The IVC is a vertical structure located slightly to the **right of the spine**, running parallel to the descending aorta. It should appear as a vertical tubular structure, without the curves seen in the aorta. Does the red overlay in Image 1 show the IVC in the correct position relative to the spine and the aorta? Does Image 2 show the IVC correctly positioned? Compare both images and explain which overlay is more accurately positioned.\n"
+                "c) **Completeness**: The IVC should extend from the **diaphragm down to the pelvis**, collecting blood from the lower body. The overlay should represent the IVC from its uppermost part in the abdomen (below the heart) to its lowermost part at the pelvis. Does Image 1 show the IVC from the diaphragm to the pelvis? Does Image 2? Compare the completeness of the IVC from top to bottom in both images.")
+#created with gpt from the arta description
 
 DescriptionsED={"liver":liver_no_question,
               "kidneys":KidneysDescriptionED,
@@ -1333,7 +1378,13 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
                     image_url = content['image_url']['url']
                     truncated_url = truncate_base64(image_url)
                     # Extract image size from the base64 string
-            
+    i=0
+    for entry in conver:
+        for content in entry['content']:
+            if content['type'] == 'image_url':
+                i+=1
+    print('Number of images in the conversation:',i)
+    print('Length of img_file_list:',len(img_file_list))
     # Create the request with the base64-encoded image data
     if max_tokens is None:
         response = client.chat.completions.create(
@@ -1398,7 +1449,7 @@ BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT
 "lumbar spine = _"
 "pelvis = _"
 "femurs = _"
-"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs usually contained within this image limits (just list their names).\n"
+"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names).\n"
 "Q4- Based on your answer to Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
 "Q4 = _\n")
 
@@ -1690,18 +1741,132 @@ DescendingAortaDescriptionV1=("Answer the following questions before concluding 
                             "c) **Completeness**: The aorta should extend from the top of the image to the pelvis (if the pelvis is visible in the scan). Is the aorta visible from the top edge to the pelvis in Image 1? Is it complete in Image 2? Compare the completeness of both images.")
 #Accuracy:  80%, but errors were only in the trachea detection
 
-DescendingAortaDescription=("Answer the following questions before concluding which overlay is a better annotation for the aorta:\n"
+DescendingAortaDescriptionV2=("Answer the following questions before concluding which overlay is a better annotation for the aorta:\n"
                             "a) **Upper Edge**: The aortic arch is not visible in this CT projection. Therefore, the aorta should appear as a long, vertical red line (tubular structure), extending from the **top edge** of the image. The overlay must display the aorta at the very top of the image. Does the red overlay in Image 1 touch the **upper edge** of the image? Does the red overlay in Image 2 touch the **upper edge** of the image? Compare the two images and identify which one, if either, has the red overlay reaching the top edge more accurately.\n"
                             "b) **Location and Shape**: The aorta should be parallel to the spine, typically as a long vertical line in the midline of the body. The aorta may curve if the spine is also curved. Is the aorta correctly positioned in Image 1? Is it correctly positioned in Image 2? Compare both images and explain which overlay follows the correct position better.\n"
                             "c) **Completeness**: The aorta should extend from the top of the image to the pelvis (if the pelvis is visible in the scan). Is the aorta visible from the top edge to the pelvis in Image 1? Is it complete in Image 2? Compare the completeness of both images.")
-#Accuracy:  80%, but errors were only in the trachea detection
+#Accuracy:  100%-Seems biased to say image 2!
 
-Descriptions={
-              "aorta":AortaDescription,
+DescendingAortaDescription=("Answer the following questions before concluding which overlay is a better annotation for the aorta:\n"
+                  "a) **Upper Edge**: The aortic arch is not visible in this CT projection, so the aorta should appear as a long, vertical red line (tubular structure), extending from the **top edge** of the image. Compare Image 1 and Image 2: Does either red overlay touch the **upper edge** of the image more accurately? Which overlay better represents the aorta from the top edge of the image?\n"
+                  "b) **Location and Shape**: The aorta should be parallel to the spine, typically as a long vertical line in the midline of the body. It may curve if the spine is curved. Compare Image 1 and Image 2: Which red overlay better represents the correct position and shape of the aorta relative to the spine? Is one overlay more accurately following the spine than the other?\n"
+                  "c) **Completeness**: The aorta should extend from the **top of the image to the pelvis** (if the pelvis is visible in the scan). Compare Image 1 and Image 2: Which red overlay more accurately shows the full length of the aorta from the top of the image to the pelvis? Which image is more complete?\n")
+
+IVCDescription=("Answer the following questions before concluding which overlay is a better annotation for the Inferior Vena Cava (IVC or postcava):\n"
+                "a) **Upper Edge**: The IVC is not visible in the upper chest, but it should appear as a long vertical red line (tubular structure), running **parallel to the aorta** and extending from the mid-abdomen upward to the diaphragm. The overlay must display the IVC near the **top of the abdomen** (but not the very top of the image). Does the red overlay in Image 1 extend close to the top of the abdomen? Does the red overlay in Image 2 reach this region more accurately? Compare the two images and identify which one more accurately represents the upper portion of the IVC.\n"
+                "b) **Location and Shape**: The IVC is a vertical structure located slightly to the **right of the spine**, running parallel to the descending aorta. It should appear as a vertical tubular structure, without the curves seen in the aorta. Does the red overlay in Image 1 show the IVC in the correct position relative to the spine and the aorta? Does Image 2 show the IVC correctly positioned? Compare both images and explain which overlay is more accurately positioned.\n"
+                "c) **Completeness**: The IVC should extend from the **diaphragm down to the pelvis**, collecting blood from the lower body. The overlay should represent the IVC from its uppermost part in the abdomen (below the heart) to its lowermost part at the pelvis. Does Image 1 show the IVC from the diaphragm to the pelvis? Does Image 2? Compare the completeness of the IVC from top to bottom in both images.")
+#created with gpt from the arta description
+
+Descriptions={"aorta":AortaDescription,
               "descending aorta":DescendingAortaDescription,
+              "postcava":IVCDescription,
               "liver":LiverDescription,
               "kidneys":KidneysDescription,
               "adrenal_glands":AdrenalGlandDescription}
+
+def RedArea(image_path):
+    # Open the image
+    image = Image.open(image_path)
+
+    # Ensure the image is in RGB mode
+    image = image.convert('RGB')
+
+    # Convert image data to a NumPy array
+    data = np.array(image)
+
+    # Separate the red, green, and blue channels
+    red_channel = data[:, :, 0]
+    green_channel = data[:, :, 1]
+    blue_channel = data[:, :, 2]
+
+    # Create a boolean mask where both green and blue channels are less than the red channel
+    mask = (green_channel < red_channel) & (blue_channel < red_channel)
+
+    # Calculate the number of pixels where the condition is True
+    area = np.sum(mask)
+
+    return area
+
+def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2, 
+                            base_url='http://0.0.0.0:23333/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=DescriptionsED,
+                            text_y1=ZeroShotInstructions, 
+                            text_y2=ZeroShotInstructions,
+                            text_compare='Based on your previous answers, which of the overlays I previously sent you is better, the first one (overlay 1) or the second one (overlay 2)? Justify your answer.',
+                            text_summarize=CompareSummarize, organ='liver',
+                            save_memory=False, window='bone'):
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ')}
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero, choosing annotation with smallest overlay')
+        if a1<a2:
+            return 1
+        elif a2<=a1:
+            return 2
+    
+    
+    text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
+    text_y1 += organ_descriptions[organ]
+
+    text_y2 = text_y2 % {'organ': organ.replace('_',' '), 'number': 2} 
+    text_y2 += organ_descriptions[organ]
+
+    if save_memory:
+        conversation=[]
+
+    #Analyze image 1
+    imgs=[y1]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_y1, conver=conversation,
+                                                base_url=base_url, size=size)
+    
+    #Analyze image 2
+    imgs=[y2]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_y2, conver=conversation,
+                                                base_url=base_url, size=size)
+
+    #comapre
+    imgs=[]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_compare, conver=conversation,
+                                                base_url=base_url, size=size)
+    
+    if 'image' not in answer.lower() and 'overlay' not in answer.lower():
+        return 0.5
+    
+    conversation, answer = SendMessageLmdeploy([], text=text_summarize+answer, conver=[],
+                                               base_url=base_url, size=size)
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+
 
 def Prompt3MessagesLMDeploy(img1, img2, img3, 
                             base_url='http://0.0.0.0:23333/v1', size=512,
@@ -2084,7 +2249,7 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                     summarize=CompareSummarize2Figs, organ='liver',
                     file_structure='original',
                     dice_check=False,pth1=None,pth2=None,save_memory=False,
-                    window='bone'):
+                    window='bone',shuffle=True):
         
         if window=='skeleton':
             text1=BodyRegionTextHighlightedSkeleton
@@ -2101,8 +2266,17 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                 textOrganPresent=ComparisonText2Figs
                 textOrganNotPresent=NoOrganSimple
 
+        
+
         for target in os.listdir(pth):
+            if shuffle:
+                best=random.randint(1,2)
+            else:
+                best=2
             if file_structure=='original':
+                best=2
+                if shuffle:
+                    raise ValueError('Shuffle is not implemented for original file structure.')
                 if 'overlay_axis_1' not in target or 'BestIs' in target:
                     continue
                 anno=os.path.join(pth,target)
@@ -2112,10 +2286,16 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                 if 'ct_window_bone_axis_1' not in target:
                     continue
                 clean=os.path.join(pth,target)
-                anno=clean.replace('ct_window_bone','composite_image')
-                twoImages=clean.replace('ct_window_bone','composite_image_2_figs')
+                if best==2:
+                    twoImages=clean.replace('ct_window_bone','composite_image_2_figs')
+                else:
+                    twoImages=clean.replace('ct_window_bone','best1_composite_image_2_figs')
+            
+                
 
             print(target)
+            print('Best is:',best)
+            print('Annotation:',twoImages) 
 
             if dice_check:
                 #print('pth:',pth)
@@ -2129,6 +2309,7 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                 if dice>0.9:
                     print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
                     continue
+            
 
             if window=='skeleton':
                 #clean=clean[:clean.rfind('ct_window_bone')]+'composite_ct_2_figs_axis_1_skeleton.png'
@@ -2149,11 +2330,11 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
                             organ=organ,save_memory=save_memory,
                             window=window)
             
-            print('Traget:',target,'Answer:',answer,'Label: Overlay 2')
-            if answer==1:
-                answers.append(0)
-            elif answer==2:
+            print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best))
+            if answer==best:
                 answers.append(1)
+            else:
+                answers.append(0)
             outputs[target]=answer
         
             # Clean up
@@ -2167,7 +2348,87 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
         for k,v in outputs.items():
             print(k,v)
 
+def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:23333/v1', 
+                                          size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=DescriptionsED,
+                            text_y1=FindErrors, 
+                            text_y2=FindErrors,
+                            text_compare='Based on your previous answers, which of the overlays I previously sent you is better, the first one (overlay 1) or the second one (overlay 2)? Justify your answer.',
+                            text_summarize=CompareSummarize2Figs, organ='liver',
+                    dice_check=False,pth1=None,pth2=None,save_memory=False,
+                    window='bone',shuffle=True,best=None):
+        
+        if window=='skeleton':
+            text_region=BodyRegionTextSkeleton
+        answers=[]
+        labels=[]
+        outputs={}
+        
 
+        for target in os.listdir(pth):
+            if shuffle:
+                best=random.randint(1,2)
+            
+            if 'ct_window_bone_axis_1' not in target:
+                continue
+            clean=os.path.join(pth,target)
+            if best==2:
+                y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
+                y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
+            else:
+                y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
+                y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
+
+            print(target)
+            print('Best is:',best)
+
+            if dice_check:
+                dice=check_dice(y1,y2)
+                print('2D dice coefficient between 2 projections on axis 1:',dice)
+                if dice>0.9:
+                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
+                    continue
+            
+            if window=='skeleton':
+                #clean=clean[:clean.rfind('ct_window_bone')]+'composite_ct_2_figs_axis_1_skeleton.png'
+                #clean=clean.replace('ct_window_bone','composite')
+                #clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
+                clean=clean.replace('ct_window_bone','ct_window_skeleton')
+                print('clean:',clean)
+
+            answer=Prompt4MessagesSepFiguresLMDeploy(
+                            clean=clean,y1=y1,y2=y2,
+                            base_url=base_url,size=size,
+                            text_region=text_region, 
+                            organ_descriptions=organ_descriptions,
+                            text_y1=text_y1, 
+                            text_y2=text_y2,
+                            text_compare=text_compare,
+                            text_summarize=text_summarize,
+                            organ=organ,save_memory=save_memory,
+                            window=window)
+            
+            print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
+            answers.append(answer)
+            labels.append(best)
+            outputs[target]=(best==answer)
+        
+            # Clean up
+            del answer
+            torch.cuda.empty_cache()
+            gc.collect()
+        #calculate accuracy based on answers and labels
+        answers=np.array(answers)
+        labels=np.array(labels)
+        acc=(answers==labels).sum()/len(answers)
+        print('Accuracy: ',acc)
+        print('answers:',answers)
+        print('labels:',labels)
+        print()
+
+        for k,v in outputs.items():
+            print(k,v)
 
 
 organ_list=['adrenal_gland_left',
