@@ -849,6 +849,7 @@ def join_left_and_right(image_path1, image_path2):
 
     return result_image
 
+
 def highlight_skeleton(ct_path, skeleton_path, pth, name, device='cuda:0',red=True):
     # Load images using PIL
     ct = Image.open(ct_path)
