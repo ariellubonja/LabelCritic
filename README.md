@@ -1,4 +1,4 @@
-# Use LVLM to compare the per-voxel organ annotations of 2 semantic segmenters
+# Use VLM to compare the per-voxel organ annotations of 2 semantic segmenters
 
 ### Installation and running
 
