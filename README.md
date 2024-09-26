@@ -6,13 +6,13 @@ Install
 ```bash
 git clone https://github.com/PedroRASB/AnnotationVLM
 cd AnnotationVLM
-conda conda create -n vllm python=3.10 -y
+conda create -n vllm python=3.10 -y
 conda activate vllm
 conda install ipykernel
-conda install pip
+conda install pip==24.0
 pip install vllm
 pip install git+https://github.com/huggingface/transformers@21fac7abba2a37fae86106f87fcf9974fd1e3830
-
+pip install -r requirements.txt
 ```
 
 Deploy API locally (tp should be the number of GPUs, and it accepts only powers of 2)
