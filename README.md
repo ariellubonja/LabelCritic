@@ -9,7 +9,7 @@ cd AnnotationVLM
 conda create -n vllm python=3.10 -y
 conda activate vllm
 conda install ipykernel
-conda install pip==24.0
+conda install pip
 pip install vllm
 pip install git+https://github.com/huggingface/transformers@21fac7abba2a37fae86106f87fcf9974fd1e3830
 pip install -r requirements.txt
