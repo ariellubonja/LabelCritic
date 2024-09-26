@@ -35,6 +35,16 @@ FindErrors=("The image I am sending now, we can call it Image %(number)s, is a f
                       "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
                       "the expected shape and location of a %(organ)s, and analyze potential mistakes, if any.")
 
+
+FindErrorsSkeleton=("The image I am sending now, we can call it Image %(number)s, is a frontal projection of a CT scan. "
+                      "It is not a CT slice, we have transparency and can see through the entire body, "
+                      "like a X-ray. However, I have confugured the image to mostly display the bones. "
+                      "The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. "
+                      "The %(organ)s region in the image should be marked in red, "
+                      "using an overlay. However, I am not sure if the red overlay correctly "
+                      "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
+                      "the expected shape and location of a %(organ)s, and analyze potential mistakes, if any.")
+
 SummarizeInstructions=("Summarize your last answer, using only 2 words: "
                        "'good annotation' or 'bad annotation'.")
 SummarizeInstructionsFewShot=("Summarize your last answer, using only 2 words: "
@@ -123,7 +133,7 @@ liver_describe=(" Consider the following anatomical information: the liver is a 
       "Throuhgly describe the overlay: what is its shape? where is it? Then you say if it corresponds to the liver or not. ")
 
 KidneysDescriptionED=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects. "
-                      "Each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Check if the red objects resemble this shape and are complete. "
+                      "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
 
@@ -134,40 +144,184 @@ AdrenalGlandDescriptionED=("Consider the following anatomical information:\n"
                    "d) Left Adrenal Gland Shape (left side of the body): Generally crescent-shaped or semilunar. May appear as a curved line or elongated structure above the kidney.\n"
                    "e) Size: adrenal glands are relatively small compared to the kidneys.\n")
 
-AortaDescription = (
-    "Analyze the two images to determine which overlay represents the aorta more accurately, based on the following criteria:\n"
-    "1. Shape: The aorta should appear as a long vertical red line with a curve at the top, resembling a question mark (?).\n"
-    "- In Image 1, does the shape of the red region resemble this description?\n"
-    "- In Image 2, does the shape of the red region resemble this description?\n"
-    "- Which image has a shape closer to the expected form of the aorta?\n"
-    "2. Location: After the small curve at the top (aortic arch), the aorta should run parallel to the spine, which usually appears as a vertical line along the midline of the body.\n"
-    "- Is the aorta correctly positioned in Image 1 relative to the spine?\n"
-    "- Is the aorta correctly positioned in Image 2 relative to the spine?\n"
-    "- Which image shows a better location for the aorta?\n"
-    "3. Completeness: The aorta should be visible from the heart down to the pelvis (or down to the image bottom, if the pelvis is not visible).\n"
-    "- Is the aorta fully visible and complete in Image 1?\n"
-    "- Is the aorta fully visible and complete in Image 2?\n"
-    "- Which image shows a more complete representation of the aorta?\n"
-    "Based on the shape, location, and completeness, indicate which overlay (Image 1 or Image 2) provides a better representation of the aorta."
+AortaDescriptionED = (
+    "Consider the following anatomical information:\n"
+    "a) Shape: The aorta should appear as a long vertical red line with a curve at the top, resembling a question mark (?). The aorta should either display this curve at the top, or extend as far as possible in the top of the image, in case the heart is not visible in the image. The aorta starts considerably higher than the diaphragm and the lung bases. Check if the the shape of the red overlay resembles this description.\n"
+    "b) Location: After the small curve at the top (aortic arch), the aorta should run parallel to the spine, which usually appears as a vertical line along the midline of the body. Check if the red overlay has the correct position and shape of the aorta relative to the spine.\n"
+    "c) Completeness: The aorta should be visible from the heart down to the pelvis (or down to the image bottom, if the pelvis is not visible). Check if the red overlay accurately shows the full length of the aorta from the heart to the pelvis."
 )
 
-DescendingAortaDescription=("Consider the following anatomical information:\n"
-                  "a) **Upper Edge**: The aortic arch is not visible in this CT projection, so the aorta should appear as a long, vertical red line (tubular structure), extending from the **top edge** of the image. Check if the red overlay touchs the **upper edge** of the image. \n"
-                  "b) **Location and Shape**: The aorta should be parallel to the spine, typically as a long vertical line in the midline of the body. It may curve if the spine is curved. Check if the red overlay has the correct position and shape of the aorta relative to the spine. \n"
-                  "c) **Completeness**: The aorta should extend from the **top of the image to the pelvis** (if the pelvis is visible in the scan). Check if the red overlay accurately shows the full length of the aorta from the top of the image to the pelvis. \n")
+DescendingAortaDescriptionEDV0 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+#70%
+DescendingAortaDescriptionEDV1 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, and the aorta does NOT start at the diaphragm level. The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+#50%
 
-IVCDescription=("Answer the following questions before concluding which overlay is a better annotation for the Inferior Vena Cava (IVC or postcava):\n"
-                "a) **Upper Edge**: The IVC is not visible in the upper chest, but it should appear as a long vertical red line (tubular structure), running **parallel to the aorta** and extending from the mid-abdomen upward to the diaphragm. The overlay must display the IVC near the **top of the abdomen** (but not the very top of the image). Does the red overlay in Image 1 extend close to the top of the abdomen? Does the red overlay in Image 2 reach this region more accurately? Compare the two images and identify which one more accurately represents the upper portion of the IVC.\n"
-                "b) **Location and Shape**: The IVC is a vertical structure located slightly to the **right of the spine**, running parallel to the descending aorta. It should appear as a vertical tubular structure, without the curves seen in the aorta. Does the red overlay in Image 1 show the IVC in the correct position relative to the spine and the aorta? Does Image 2 show the IVC correctly positioned? Compare both images and explain which overlay is more accurately positioned.\n"
-                "c) **Completeness**: The IVC should extend from the **diaphragm down to the pelvis**, collecting blood from the lower body. The overlay should represent the IVC from its uppermost part in the abdomen (below the heart) to its lowermost part at the pelvis. Does Image 1 show the IVC from the diaphragm to the pelvis? Does Image 2? Compare the completeness of the IVC from top to bottom in both images.")
-#created with gpt from the arta description
 
-DescriptionsED={"liver":liver_no_question,
+DescendingAortaDescriptionEDV2 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. Therefore, the top end of the aorta shoud not visible in this image, being up from its upper boundary. The arota does NOT start on the lower chest, and the aorta does NOT start at the diaphragm level. The aorta does not have any gap or missing part, it is continuous. \n"
+)
+#60%
+
+DescendingAortaDescriptionEDV3=(
+    "The aorta runs vertically along the midline of the body, typically appearing parallel to the spine in "
+    "frontal CT projections. It closely follows the spine's curve if the spine is curved. "
+    "The descending aorta starts in the upper chest and extends into the lower abdomen. "
+    "It begins just after the arch of the aorta in the upper chest, continuing down toward the diaphragm, "
+    "but does NOT start at or below the diaphragm. "
+    "The aorta is a continuous tubular structure without gaps. "
+    "In radiology images, correct annotations should reflect this smooth, continuous path from the chest "
+    "down to the abdomen, properly aligned with the spine."
+)#GPT
+
+
+DescendingAortaDescriptionEDV4 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The aorta should start at the upper chest. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+
+
+DescendingAortaDescriptionEDV5 = (
+ "The aorta runs parallel to the spine and very close to it, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+#70% with skeleton view
+
+DescendingAortaDescriptionEDV6 = (
+ "The descending aorta  (the part of the aorta without the aortic arch) runs parallel to the spine, which usually appears as a vertical line along the midline of the body. A correct descending aorta overlay can be central and excatcly over the spine, partially over the spine, or right next to the spine. It can be curved when the spine is curved. The descending aorta does NOT start on the lower chest, and the descending aorta does NOT start at the diaphragm level, it starts HIGHER. Since this image does not reach the top of the heart, we want the red overlay to extent AS HIGH AS POSSIBLE. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+
+DescendingAortaDescriptionEDV7 = (
+    "The descending aorta (the part of the aorta without the aortic arch) runs parallel to the spine, which appears as a vertical "
+    "or slightly curved line in the midline of the body. A correct descending aorta overlay should be central, exactly over the spine, "
+    "partially over the spine, or adjacent to the spine. The overlay may follow any curvature of the spine if present. The descending aorta "
+    "starts in the upper chest, extending as high as possible in the image, as this projection does not show the descending aorta starting point. The descending aorta does NOT start near the diaphragm or the lower ribs, "
+    "which is much lower in the body. The aorta is a continuous tubular structure."
+)
+#50%
+DescendingAortaDescriptionEDV8 = (
+ "Closely follow the following instructions in evauating the image:\n"
+ "1- Do you see a red overlay in the image? \n"
+ "2- Does the red overlay resemble a long, vertical line approximatelly in the center of the body? It may be slightly curved if the spine is curved. \n" #The aortic arch is not present.
+ "3- Does the red line touch the top of the image? it MUST. This is very important, check carefully. \n"
+ "4- Does the red line extend as far as the end of the lumbar spine (if it is visible in the image)? \n"
+)
+#50 %
+
+DescendingAortaDescriptionED = (
+ "Closely follow the following instructions in evauating the image:\n"
+ "1- Do you see a red overlay in the image? \n"
+ "2- Does the red overlay resemble a long, vertical line approximatelly in the center of the body? It may be slightly curved if the spine is curved. The aortic arch is not present. \n" #
+ "3- Does the red line touch the top of the image? it MUST touch. This is very important, check carefully. \n"
+ "4- Does the red line extend as far as the end of the lumbar spine (if it is visible in the image)? \n"
+)
+#50 %
+
+
+DescendingAortaDescriptionEDSanity = (
+ "To verify if the overlay is right or not, ignore anything you already know about aorta. Do just ONE SIMPLE THING: check if the red color TOUCHES the top of the image or not. That is the only thing you should car about when analyzing or comparing images. \n"
+)
+
+DescendingAortaDescriptionED = [(""
+),
+   (
+    "When comparing the 2 images, do just one thing: check which red overlay gets closer to the top of the heart and the head. ")]
+
+DescriptionsED={
+    "aorta":AortaDescriptionED,
+    "descending aorta":DescendingAortaDescriptionED,
+    "liver":liver_no_question,
               "kidneys":KidneysDescriptionED,
               "adrenal_glands":AdrenalGlandDescriptionED}
 
 
 organ_descriptions={'liver':liver}
+
+def superpose_images(image1, image2):
+    # Load images using PIL
+    image1 = Image.open(image1)
+    image2 = Image.open(image2)
+
+    # Convert images to numpy arrays
+    image1_array = np.array(image1)
+    image2_array = np.array(image2)
+    # Check if images have 4 channels (RGBA)
+    if image1_array.shape[-1] == 4:
+        image1_array = image1_array[:, :, :3]  # Drop alpha channel if present
+    if image2_array.shape[-1] == 4:
+        image2_array = image2_array[:, :, :3]  # Drop alpha channel if present
+
+    # Ensure the images have 3 channels (RGB)
+    if image1_array.shape[-1] != 3 or image2_array.shape[-1] != 3:
+        raise ValueError("Both images must be RGB with 3 channels.")
+
+    # Get red, green, and blue channels from image 1 and image 2
+    red1 = image1_array[:, :, 0]  # Red channel of image 1
+    green1 = image1_array[:, :, 1]  # Green channel of image 1
+    blue1 = image1_array[:, :, 2]   # Blue channel of image 1
+
+    red2 = image2_array[:, :, 0]  # Red channel of image 2
+    green2 = image2_array[:, :, 1]  # Green channel of image 2
+    blue2 = image2_array[:, :, 2]   # Blue channel of image 2
+
+    # Annotation masks for image 1 and image 2
+    mask1 = (red1 != green1) & (red1 != blue1)
+    mask2 = (red2 != green2) & (red2 != blue2)
+    overlap = mask1 & mask2
+
+    #create grey image
+    image2_array[mask2,1] = image2_array[mask2,0]
+    image2_array[mask2,2] = image2_array[mask2,0]
+    grey=image2_array.copy()
+
+
+    #annotation 1 red
+    image2_array[mask1, 0] = grey[mask1, 0]  
+    image2_array[mask1, 1] = 0  
+    image2_array[mask1, 2] = 0 
+
+    #annotation 2 yellow
+    image2_array[mask2, 0] = grey[mask2, 0]  
+    image2_array[mask2, 1] = grey[mask2, 1]  
+    image2_array[mask2, 2] = 0 
+
+    # Annotation overlap: red + yellow = orange
+    image2_array[overlap, 0] = grey[overlap, 0]  
+    image2_array[overlap, 1] = grey[overlap, 1] / 2   
+    image2_array[overlap, 2] = 0    
+
+    # Convert the modified array back to an image
+    result_image = Image.fromarray(image2_array)
+
+    return result_image
+
+def SolidOverlay(image1):
+    if isinstance(image1, Image.Image):
+        image1_array = np.array(image1)
+    else:
+        image1_array=image1
+    # Check if images have 4 channels (RGBA)
+    if image1_array.shape[-1] == 4:
+        image1_array = image1_array[:, :, :3]  # Drop alpha channel if present
+
+
+    # Get red, green, and blue channels from image 1 and image 2
+    red1 = image1_array[:, :, 0]  # Red channel of image 1
+    green1 = image1_array[:, :, 1]  # Green channel of image 1
+    blue1 = image1_array[:, :, 2]   # Blue channel of image 1
+
+    # Annotation masks for image 1 and image 2
+    mask1 = (red1 != green1) & (red1 != blue1)
+
+    image1_array[mask1,0]=255
+    image1_array[mask1,1]=0
+    image1_array[mask1,2]=0
+
+    # Convert the modified array back to an image
+    result_image = Image.fromarray(image1_array)
+
+    return result_image
 
 def resize_image(img, size):
     # Get the original dimensions
@@ -1245,7 +1399,7 @@ def SendMessageQwen(img_file_list, model, processor,  process_vision_info,text, 
 
     return conversation, answer
 
-def resize_and_encode_image(image_path, size=512):
+def resize_and_encode_image(image_path, size=512, solid_overlay=False):
     # Open the image using PIL
     with Image.open(image_path) as img:
         # Get the original width and height of the image
@@ -1264,6 +1418,9 @@ def resize_and_encode_image(image_path, size=512):
         # Resize the image while maintaining aspect ratio
         img = img.resize((new_width, new_height))
 
+        if solid_overlay:
+            img=SolidOverlay(img)
+
         # Save the resized image to a temporary buffer
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
@@ -1272,9 +1429,15 @@ def resize_and_encode_image(image_path, size=512):
         # Encode the image as base64
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
     
-def encode_image(image_path):
+def encode_image(image_path,solid_overlay=False):
   with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
+    if solid_overlay:
+        img=SolidOverlay(Image.open(image_path))
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode('utf-8')
+    else:
+        return base64.b64encode(image_file.read()).decode('utf-8')
 
 
 def truncate_base64(data, max_length=30):
@@ -1289,16 +1452,36 @@ def get_image_size_from_base64(base64_string):
     image_data = base64.b64decode(base64_data)
     # Load image using PIL
     image = Image.open(io.BytesIO(image_data))
+
+    # Create a figure with no margins or padding
+    fig = plt.figure(frameon=False)
+
+    # Set the figure size to match the image size
+    fig.set_size_inches(image.width / fig.dpi, image.height / fig.dpi)
+
+    # Add the image to the figure without axes, borders, or whitespace
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    ax.imshow(image)
+
+    # Show the image
+    plt.show()
+
+    # Check the pixel value at the top-left corner
+    print('Top pixel:', image.getpixel((0, 0)))
+
     # Get image size (width, height)
     img_size = image.size
     # Get file size in bytes
     img_file_size = len(image_data)
+
     return img_size, img_file_size
 
 clt=None
 mdl=None
 
-def InitializeOpenAIClient(base_url='http://0.0.0.0:23333/v1'):
+def InitializeOpenAIClient(base_url='http://0.0.0.0:8000/v1'):
     from openai import OpenAI
     global clt, mdl
     if clt is not None:
@@ -1312,7 +1495,7 @@ def InitializeOpenAIClient(base_url='http://0.0.0.0:23333/v1'):
         print('Initialized model and client.')
         return clt,mdl
 
-def CreateConversation(img_file_list, text, conver,size=None,prt=False):
+def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_overlay=False):
     #if no previous conversation, send conver=[]. Do not automatically define conver above.
     
     conver.append({
@@ -1330,9 +1513,9 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=False):
         else:
             s=size
         if s!=None:
-            img = resize_and_encode_image(img, s)
+            img = resize_and_encode_image(img, s, solid_overlay=solid_overlay)
         else:
-            img = encode_image(img)
+            img = encode_image(img, solid_overlay=solid_overlay)
         conver[-1]['content'].append({
                                             "type": "image_url",
                                             "image_url": {
@@ -1344,8 +1527,9 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=False):
             print(f"Image Size (WxH) in prompt: {image_size}, File Size: {file_size} bytes")
     return conver
 
-def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23333/v1',  
-                        size=None,prt=True,print_conversation=False,max_tokens=None):
+def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
+                        size=None,prt=True,print_conversation=False,max_tokens=None,
+                        solid_overlay=False):
     """
     Sends a message to the LM deploy API.
 
@@ -1353,7 +1537,7 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
         img_file_list (list): A list of image file paths.
         text (str): The text message to send.
         conver (list): A list of conversation objects.
-        base_url (str, optional): The base URL of the LM deploy API. Defaults to 'http://0.0.0.0:23333/v1'.
+        base_url (str, optional): The base URL of the LM deploy API. Defaults to 'http://0.0.0.0:8000/v1'.
         size (int, optional): The size to resize the images to. Defaults to None.
         prt (bool, optional): Whether to print the images and conversation. Defaults to True.
         print_conversation (bool, optional): Whether to print the conversation. Defaults to False.
@@ -1365,7 +1549,7 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
     #if no previous conversation, send conver=[]. Do not automatically define conver above.
     client,model_name=InitializeOpenAIClient(base_url)
 
-    conver=CreateConversation(img_file_list=img_file_list, text=text, conver=conver,size=size)
+    conver=CreateConversation(img_file_list=img_file_list, text=text, conver=conver,size=size,solid_overlay=solid_overlay)
 
     # Print the conversation with truncated base64 data
     if print_conversation:
@@ -1407,8 +1591,6 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:23
     conver.append({"role": "assistant","content": [{"type": "text", "text": answer}]})
 
     if prt:
-        for i in range(len(img_file_list)):
-            display(Image.open(img_file_list[i]))
         print('Text:',text)
         print('Answer:',answer)
 
@@ -1788,17 +1970,295 @@ def RedArea(image_path):
 
     return area
 
-def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2, 
-                            base_url='http://0.0.0.0:23333/v1', size=512,
+TextCompare=('Based on your analyses of the two figures, which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
+             'Consider your previous analyses, but confirm these analyses by analyzing and comparing the two images again. Consider the shape, location, and completeness of the %(organ)s in each overlay. Think thorughly and justify your answer.')
+
+TextCompareAdd=('First, analyze possible errors in overlay 2, in doing so, directly compare it to overlay 1. In this comparison, you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
+                'After analyzing overlay 2, answer me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
+                'Think thorughly and justify your answer. If both overlays have mistakes, choose the one whith less mistakes or smaller mistakes. You must always choose one of the overlays, one is for sure better than the other, and they are different. You cannot just say they are both equally good or equally bad, they are not. ')# If you you are sure that both are equally bad or equally good, respond "none".c
+
+TextCompareSuper=('Based on your analyses of the two figures, which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
+    'Now that you know both images, you may want to revise your previous analyses, as you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
+    'To help you in this comparison, carefully observe the image I am sending now. It shows the same CT scan frontal projection as Image 1 and Image 2, but it shows the 2 overlays. '
+    'In this new image, overlay 1 in red and overlay 2 in yellow. The superposition is in orange. '   
+    'After throughly analyzing your previous answers and the new image, tell me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
+    'Think thorughly and justify your answer. If both overlays have mistakes, choose the one whith less mistakes or smaller mistakes. If you you are sure that both are equally bad or equally good, respond "none".')
+
+def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2, 
+                            base_url='http://0.0.0.0:8000/v1', size=512,
                             text_region=BodyRegionText, 
                             organ_descriptions=DescriptionsED,
                             text_y1=ZeroShotInstructions, 
                             text_y2=ZeroShotInstructions,
-                            text_compare='Based on your previous answers, which of the overlays I previously sent you is better, the first one (overlay 1) or the second one (overlay 2)? Justify your answer.',
+                            text_compare=TextCompareAdd,
+                            text_summarize=CompareSummarize, organ='liver',
+                            save_memory=False, window='bone',solid_overlay=False):
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ')}
+    text_compare=text_compare % {'organ': organ.replace('_',' ')}
+
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero, choosing annotation with smallest overlay')
+        if a1<a2:
+            return 1
+        elif a2<=a1:
+            return 2
+    
+    
+    text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
+    if isinstance(organ_descriptions[organ], list):
+        text_y1 += organ_descriptions[organ][0]
+    else:
+        text_y1 += organ_descriptions[organ]
+
+    text_y2 = text_y2 % {'organ': organ.replace('_',' '), 'number': 2} 
+    if isinstance(organ_descriptions[organ], list):
+        text_y2 += organ_descriptions[organ][1]
+    else:
+        text_y2 += organ_descriptions[organ]
+
+    if save_memory:
+        conversation=[]
+
+    #Analyze image 1
+    imgs=[y1]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_y1, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay)
+    
+    #Analyze image 2 and compare
+    imgs=[y2]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_y2+'\n'+text_compare, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay)
+    
+    if 'image' not in answer.lower() and 'overlay' not in answer.lower():
+        return 0.5
+    
+    conversation, answer = SendMessageLmdeploy([], text=text_summarize+answer, conver=[],
+                                               base_url=base_url, size=size)
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+
+
+Compare2ImagesGOOD='Check out these 2 images. In which one does the red shape come further up, image 1 or image 2?'
+#90% accuracy!!!!!!!!!
+Compare2ImagesBad=('Check out these 2 images. The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2, or are they equal? If they are equal, answer "equal", if not, answer "the best is image 1" or "the best is image 2".')
+                #'If one of the images has a red shape that comes further up, you must say that it is better and stop here. If both images have the red shape touching the image top, move to the next step.\n'
+                #'Step 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red overlay reach the lumbar spine region? \n'
+                #'If the red overlay reaches the lumbar spine region in just one of the images, you must say that it is better and stop here. If both images reach the lumbar spine region, move to the next step.\n'
+                #'Step 3: In which image is the red overlay continuos and tubular?\n'
+                #'If just one of the images has a continuos and tubular red overlay, you must say that it is better. If both images have a continuos and tubular red overlay, move to the next step.\n'
+                #'Step 4: In which image is the red overlay more centered and parallel to the spine?\n'
+                #'If just one of the images has a more centered and parallel red overlay, you must say that it is better.')
+#Accuracy 60%
+#do this step by step, in each step you sen just the 2 images (1 standalone prompt per question)
+
+Compare2Images=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
+                'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2?'
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
+                'Point 3: In which image is the red shape continuos and tubular?')
+#100% accuracy, halleluia!!!!!!!!!!!
+
+
+Compare2ImagesFullAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. '
+                'Point 1: In which one does the red shape reach the thoracic region (high ribs), shown a curve in this area, image 1 or image 2?'
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
+                'Point 3: In which image is the red shape continuos and tubular?')
+
+                #'If one of the images has a red shape that comes further up, you must say that it is better and stop here. If both images have the red shape touching the image top, move to the next step.\n'
+                #'Step 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red overlay reach the lumbar spine region? \n'
+                #'If the red overlay reaches the lumbar spine region in just one of the images, you must say that it is better and stop here. If both images reach the lumbar spine region, move to the next step.\n'
+                #'Step 3: In which image is the red overlay continuos and tubular?\n'
+                #'If just one of the images has a continuos and tubular red overlay, you must say that it is better. If both images have a continuos and tubular red overlay, move to the next step.\n'
+                #'Step 4: In which image is the red overlay more centered and parallel to the spine?\n'
+                #'If just one of the images has a more centered and parallel red overlay, you must say that it is better.')
+
+
+def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
+                            base_url='http://0.0.0.0:8000/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=None,
+                            text_compare=Compare2Images,
+                            text_summarize=CompareSummarize, organ='liver',
+                            save_memory=False, window='bone',solid_overlay=False):
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ')}
+    text_compare=text_compare % {'organ': organ.replace('_',' ')}
+
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+                text_compare=Compare2ImagesFullAorta
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero, choosing annotation with smallest overlay')
+        if a1<a2:
+            return 1
+        elif a2<=a1:
+            return 2
+    
+    
+    
+    if save_memory:
+        conversation=[]
+
+    #Analyze image 1
+    imgs=[y1,y2]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_compare, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay)
+    
+    if 'image' not in answer.lower() and 'overlay' not in answer.lower():
+        return 0.5
+    
+    conversation, answer = SendMessageLmdeploy([], text=text_summarize+answer, conver=[],
+                                               base_url=base_url, size=size)
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+    
+
+def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
+                            base_url='http://0.0.0.0:8000/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=DescriptionsED,
+                            text_y1=ZeroShotInstructions, 
+                            text_y2=ZeroShotInstructions,
+                            text_compare=TextCompareSuper,
                             text_summarize=CompareSummarize, organ='liver',
                             save_memory=False, window='bone'):
     
     organRegion=text_region % {'organ': organ.replace('_',' ')}
+    text_compare=text_compare % {'organ': organ.replace('_',' ')}
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero, choosing annotation with smallest overlay')
+        if a1<a2:
+            return 1
+        elif a2<=a1:
+            return 2
+    
+    
+    text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
+    text_y1 += organ_descriptions[organ]
+
+    text_y2 = text_y2 % {'organ': organ.replace('_',' '), 'number': 2} 
+    text_y2 += organ_descriptions[organ]
+
+    if save_memory:
+        conversation=[]
+
+    #Analyze image 1
+    imgs=[y1]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_y1, conver=conversation,
+                                                base_url=base_url, size=size)
+    
+    #Analyze image 2
+    imgs=[y2]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_y2, conver=conversation,
+                                                base_url=base_url, size=size)
+
+    #comapre
+    imgs=[y_super]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text_compare, conver=conversation,
+                                                base_url=base_url, size=size)
+    
+    if 'image' not in answer.lower() and 'overlay' not in answer.lower():
+        return 0.5
+    
+    conversation, answer = SendMessageLmdeploy([], text=text_summarize+answer, conver=[],
+                                               base_url=base_url, size=size)
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+
+def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2, 
+                            base_url='http://0.0.0.0:8000/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=DescriptionsED,
+                            text_y1=ZeroShotInstructions, 
+                            text_y2=ZeroShotInstructions,
+                            text_compare=TextCompare,
+                            text_summarize=CompareSummarize, organ='liver',
+                            save_memory=False, window='bone'):
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ')}
+    text_compare=text_compare % {'organ': organ.replace('_',' ')}
     if organ=='aorta':
         if window=='skeleton':
             organRegion+=AorticArchTextSkeleton
@@ -1869,7 +2329,7 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
 
 
 def Prompt3MessagesLMDeploy(img1, img2, img3, 
-                            base_url='http://0.0.0.0:23333/v1', size=512,
+                            base_url='http://0.0.0.0:8000/v1', size=512,
                             text1=BodyRegionText, 
                             textOrganPresent=ComparisonTextContinued, 
                             textOrganNotPresent=NoOrganSimple, 
@@ -1938,7 +2398,7 @@ def Prompt3MessagesLMDeploy(img1, img2, img3,
 
 
 def MultiTurnMultiImageComparisonLMDeploy(clean, y1, y2, compImg, 
-                            base_url='http://0.0.0.0:23333/v1', size=448,
+                            base_url='http://0.0.0.0:8000/v1', size=448,
                             text1=BodyRegionText, 
                             textOrganPresent=ComparisonText, 
                             textOrganNotPresent=NoOrganSimple, 
@@ -1995,7 +2455,7 @@ def MultiTurnMultiImageComparisonLMDeploy(clean, y1, y2, compImg,
         return 0.5
 
 def SimpleMultiImageComparisonLMDeploy(clean, y1, y2, compImg, 
-                            base_url='http://0.0.0.0:23333/v1', size=448,
+                            base_url='http://0.0.0.0:8000/v1', size=448,
                             text1=BodyRegionText, 
                             textOrganPresent=ComparisonText2FigsContinued, 
                             textOrganNotPresent=NoOrganSimple, 
@@ -2081,7 +2541,7 @@ def SimpleMultiImageComparisonLMDeploy(clean, y1, y2, compImg,
         return 0.5
     
 
-def SystematicComparison3MessagesLMDeploy4ImageSequence(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy4ImageSequence(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent='auto', 
@@ -2159,7 +2619,7 @@ def SystematicComparison3MessagesLMDeploy4ImageSequence(pth,base_url='http://0.0
 
 
             
-def SystematicComparison3MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent='auto', 
@@ -2241,7 +2701,7 @@ def SystematicComparison3MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1'
         for k,v in outputs.items():
             print(k,v)
 
-def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent='auto', 
@@ -2348,19 +2808,26 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:2333
         for k,v in outputs.items():
             print(k,v)
 
-def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text_region=BodyRegionText, 
                             organ_descriptions=DescriptionsED,
                             text_y1=FindErrors, 
                             text_y2=FindErrors,
-                            text_compare='Based on your previous answers, which of the overlays I previously sent you is better, the first one (overlay 1) or the second one (overlay 2)? Justify your answer.',
+                            text_compare=TextCompareAdd,
                             text_summarize=CompareSummarize2Figs, organ='liver',
-                    dice_check=False,pth1=None,pth2=None,save_memory=False,
-                    window='bone',shuffle=True,best=None):
+                            dice_check=False,pth1=None,pth2=None,save_memory=False,
+                            window='skeleton',shuffle=True,best=None,
+                            superpose=False,comparison_window='bone',
+                            solid_overlay=False,multi_image_prompt_2=False,
+                            text_multi_image_prompt_2=Compare2Images):
         
         if window=='skeleton':
             text_region=BodyRegionTextSkeleton
+        if comparison_window=='skeleton':
+            text_y1=FindErrorsSkeleton
+            text_y2=FindErrorsSkeleton
+
         answers=[]
         labels=[]
         outputs={}
@@ -2373,12 +2840,23 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:23333/v1
             if 'ct_window_bone_axis_1' not in target:
                 continue
             clean=os.path.join(pth,target)
+
+
             if best==2:
-                y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
-                y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
+                y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
+                y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
             else:
-                y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
-                y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
+                y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
+                y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
+
+            if superpose:
+                text_compare=TextCompareSuper
+                y_super=superpose_images(y1,y2)
+                from io import BytesIO
+                fake_file = BytesIO()
+                y_super.save(fake_file, format='PNG')
+                fake_file.seek(0)
+
 
             print(target)
             print('Best is:',best)
@@ -2396,9 +2874,10 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:23333/v1
                 #clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
                 print('clean:',clean)
-
-            answer=Prompt4MessagesSepFiguresLMDeploy(
-                            clean=clean,y1=y1,y2=y2,
+            
+            if superpose:
+                answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
+                            clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
                             base_url=base_url,size=size,
                             text_region=text_region, 
                             organ_descriptions=organ_descriptions,
@@ -2407,12 +2886,38 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:23333/v1
                             text_compare=text_compare,
                             text_summarize=text_summarize,
                             organ=organ,save_memory=save_memory,
-                            window=window)
+                            window=window,solid_overlay=solid_overlay)
+            elif multi_image_prompt_2:
+                answer=Prompt2MessagesSepFiguresLMDeploy(
+                                clean=clean,y1=y1,y2=y2,
+                                base_url=base_url,size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_compare=text_multi_image_prompt_2,
+                                text_summarize=text_summarize,
+                                organ=organ,save_memory=save_memory,
+                                window=window,solid_overlay=solid_overlay)
+
+            else:
+                answer=Prompt3MessagesSepFiguresLMDeploy(
+                                clean=clean,y1=y1,y2=y2,
+                                base_url=base_url,size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_y1=text_y1, 
+                                text_y2=text_y2,
+                                text_compare=text_compare,
+                                text_summarize=text_summarize,
+                                organ=organ,save_memory=save_memory,
+                                window=window,solid_overlay=solid_overlay)
             
             print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
             answers.append(answer)
             labels.append(best)
             outputs[target]=(best==answer)
+
+            if superpose:
+                fake_file.close()
         
             # Clean up
             del answer
@@ -2533,7 +3038,7 @@ def check_dice(image_path1, image_path2):
 
     return dice.item()
 
-def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1', 
+def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:8000/v1', 
                         size=512, organ=None, temp_dir='random',
                         text1=BodyRegionText, 
                         textOrganPresent=ComparisonText2Figs, 
@@ -2588,9 +3093,10 @@ def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1',
     prj.create_composite_image_2figs(temp_dir, organ,axis=axis,window=window)
     
     #API call to LLM
+    raise ValueError('I must change below to compare with 2 images and skeleton.')
     ct=os.path.join(temp_dir,'ct_ct_window_'+window+'_axis_1_liver.png')
-    fourImages=os.path.join(temp_dir,'composite_image_axis_1_liver.png')
-    twoImages=os.path.join(temp_dir,'composite_image_2_figs_axis_1_liver.png')
+    y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
+    y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
     #consider that the correct answer is 2
     answer=Prompt3MessagesLMDeploy(
                     img1=ct,img2=twoImages,img3=twoImages,
@@ -2607,7 +3113,7 @@ def project_and_compare(ct, y1, y2, base_url='http://0.0.0.0:23333/v1',
 
     
 
-def SystematicComparison3MessagesLMDeploy6Figs(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy6Figs(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent=ComparisonText6Figs+LiverDescription, 
@@ -2652,7 +3158,7 @@ def SystematicComparison3MessagesLMDeploy6Figs(pth,base_url='http://0.0.0.0:2333
         for k,v in outputs.items():
             print(k,v)
 
-def SystematicComparison3MessagesLMDeploy2FigsOld(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy2FigsOld(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent=ComparisonText2Figs+LiverDescription, 
@@ -2701,7 +3207,7 @@ def SystematicComparison3MessagesLMDeploy2FigsOld(pth,base_url='http://0.0.0.0:2
             print(k,v)
 
 
-def SystematicComparison3MessagesLMDeploy1Fig(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison3MessagesLMDeploy1Fig(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=BodyRegionText, 
                     textOrganPresent=ComparisonText1Fig+LiverDescription, 
@@ -2797,7 +3303,7 @@ compareSummarizeSepImages=("The text below represents a comparisons of 2 overlay
                 "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "The text is:\n")
 
-def Prompt2MessagesLMDeploy(img, base_url='http://0.0.0.0:23333/v1', size=512,
+def Prompt2MessagesLMDeploy(img, base_url='http://0.0.0.0:8000/v1', size=512,
                     text1=SinglePrompt,
                     summarize=CompareSummarize, organ='liver'):
     if organ=='liver':
@@ -2818,7 +3324,7 @@ def Prompt2MessagesLMDeploy(img, base_url='http://0.0.0.0:23333/v1', size=512,
     else:
         return 0.5
     
-def Prompt2MessagesMultiImageLMDeploy(img1,img2,img3, base_url='http://0.0.0.0:23333/v1', size=512,
+def Prompt2MessagesMultiImageLMDeploy(img1,img2,img3, base_url='http://0.0.0.0:8000/v1', size=512,
                     text1=SinglePromptSepImages,
                     summarize=compareSummarizeSepImages, organ='liver'):
     
@@ -2840,7 +3346,7 @@ def Prompt2MessagesMultiImageLMDeploy(img1,img2,img3, base_url='http://0.0.0.0:2
     else:
         return 0.5
     
-def SystematicComparison2MessagesLMDeployMultiImage(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison2MessagesLMDeployMultiImage(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=224,
                             text1=SinglePromptSepImages, 
                     summarize=compareSummarizeSepImages, organ='liver'):
@@ -2884,7 +3390,7 @@ def SystematicComparison2MessagesLMDeployMultiImage(pth,base_url='http://0.0.0.0
     for k,v in outputs.items():
         print(k,v)
     
-def SystematicComparison2MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison2MessagesLMDeploy(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=SinglePrompt, 
                     summarize=CompareSummarize, organ='liver'):
@@ -2923,7 +3429,7 @@ def SystematicComparison2MessagesLMDeploy(pth,base_url='http://0.0.0.0:23333/v1'
     for k,v in outputs.items():
         print(k,v)
 
-def SystematicComparison2MessagesLMDeploySimple(pth,base_url='http://0.0.0.0:23333/v1', 
+def SystematicComparison2MessagesLMDeploySimple(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text1=SinglePrompt, 
                     summarize=CompareSummarize, organ='liver'):
