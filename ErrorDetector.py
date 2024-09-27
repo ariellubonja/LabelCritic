@@ -2080,6 +2080,9 @@ Compare2ImagesBad=('Check out these 2 images. The best image is the one where th
 #Accuracy 60%
 #do this step by step, in each step you sen just the 2 images (1 standalone prompt per question)
 
+
+
+
 Compare2Images=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
                 'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2?'
                 'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
@@ -2087,7 +2090,7 @@ Compare2Images=('Check out these 2 images, and answer the following questions. I
 #100% accuracy, halleluia!!!!!!!!!!!
 
 
-Compare2ImagesFullAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. '
+Compare2ImagesFullAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. I want you to conclude which image is better based on the answers to these points. '
                 'Point 1: In which one does the red shape reach the thoracic region (high ribs), shown a curve in this area, image 1 or image 2?'
                 'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
                 'Point 3: In which image is the red shape continuos and tubular?')
@@ -2100,6 +2103,18 @@ Compare2ImagesFullAorta=('Check out these 2 images, and answer the following que
                 #'Step 4: In which image is the red overlay more centered and parallel to the spine?\n'
                 #'If just one of the images has a more centered and parallel red overlay, you must say that it is better.')
 
+Compare2ImagesPostcava=(
+                'Check out these 2 images, and answer the following questions. I want you to conclude which image is better. The points represent positive qualities that the images should satisfy. '
+                'Point 1: In which one does the red shape reach the thoracic region (high ribs), image 1 or image 2?'
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
+                'Point 3: In which image is the red shape continuos and tubular?')
+
+
+Compare2Images={
+    'descending aorta':Compare2Images,
+    'aorta':Compare2ImagesFullAorta,
+    'postcava':Compare2ImagesPostcava,
+}
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
                             base_url='http://0.0.0.0:8000/v1', size=512,
@@ -2110,7 +2125,6 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
                             save_memory=False, window='bone',solid_overlay=False):
     
     organRegion=text_region % {'organ': organ.replace('_',' ')}
-    text_compare=text_compare % {'organ': organ.replace('_',' ')}
 
     if organ=='aorta':
         if window=='skeleton':
@@ -2144,6 +2158,9 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
     
     
+    if isinstance(text_compare, dict):
+        text_compare=text_compare[organ]
+    text_compare=text_compare % {'organ': organ.replace('_',' ')}
     
     if save_memory:
         conversation=[]
@@ -2820,7 +2837,8 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             window='skeleton',shuffle=True,best=None,
                             superpose=False,comparison_window='bone',
                             solid_overlay=False,multi_image_prompt_2=False,
-                            text_multi_image_prompt_2=Compare2Images):
+                            text_multi_image_prompt_2=Compare2Images,
+                            dice_th=0.8):
         
         if window=='skeleton':
             text_region=BodyRegionTextSkeleton
@@ -2864,7 +2882,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             if dice_check:
                 dice=check_dice(y1,y2)
                 print('2D dice coefficient between 2 projections on axis 1:',dice)
-                if dice>0.9:
+                if dice>dice_th:
                     print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
                     continue
             
