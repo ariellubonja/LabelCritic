@@ -6,7 +6,7 @@ Install
 ```bash
 git clone https://github.com/PedroRASB/AnnotationVLM
 cd AnnotationVLM
-conda create -n vllm python=3.10 -y
+conda create -n vllm python=3.12 -y
 conda activate vllm
 conda install ipykernel
 conda install pip
