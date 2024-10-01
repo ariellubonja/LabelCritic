@@ -178,24 +178,24 @@ def load_ct(pid, datapath, ct_path,device='cuda'):
     # Load the CT scan
     if ct_path is None:
         ct_path = os.path.join(datapath, pid, 'ct.nii.gz')
-    start=time.time()
+    #start=time.time()
     ct_nii = nib.load(ct_path)
-    print('time to nib.load:',time.time()-start)
+    #print('time to nib.load:',time.time()-start)
     spacing=ct_nii.header.get_zooms()
 
     # Calculate the orientation transformation based on the CT scan
     transform = get_orientation_transform(ct_nii, orientation=('L', 'A', 'S')) 
 
     # Apply the transformation to the CT scan data
-    start=time.time()
+    #start=time.time()
     ct = apply_transform(ct_nii.get_fdata(), transform)
-    print('time to reorient:',time.time()-start)
+    #print('time to reorient:',time.time()-start)
 
-    start=time.time()
+    #start=time.time()
     ct=torch.from_numpy(ct.copy()).float()
     if device!='cpu':
         ct=ct.to(device)
-    print('time to move to device:',time.time()-start)
+    #print('time to move to device:',time.time()-start)
 
     return ct, spacing
 
@@ -207,7 +207,7 @@ def window_ct(ct):
 
     windows={'organs':(-150.0,250.0),
              'bone':(-500.0,1500.0),
-             'skeleton':(300.0,2000.0)}
+             'skeleton':(400.0,2000.0)}
 
     cts={}
     for window in windows:
@@ -306,19 +306,19 @@ def clahe_n_gamma(ct, clip_limit=2.0, tile_grid_size=(8, 8), gamma=0.3, apply_cl
     return ct
 
 def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,device='cpu'):
-    start=time.time()
+    #start=time.time()
     ct,spacing=load_ct(pid, datapath, ct_path, device=device)
-    print('time to load:',time.time()-start)
-    start=time.time()
+    #print('time to load:',time.time()-start)
+    #start=time.time()
     cts=window_ct(ct)
-    print('time to window:',time.time()-start)
-    start=time.time()
+    #print('time to window:',time.time()-start)
+    #start=time.time()
     cts=project_cts(cts, spacing, axis=axis)
-    print('time to project:',time.time()-start)
-    start=time.time()
+    #print('time to project:',time.time()-start)
+    #start=time.time()
     cts['skeleton']=clahe_n_gamma(cts['skeleton'],clip_limit=5, tile_grid_size=(8, 8), gamma=0.6, apply_clahe=True, apply_gamma=True, threshold=0.01)
-    print('time to clahe:',time.time()-start)
-    start=time.time()
+    #print('time to clahe:',time.time()-start)
+    #start=time.time()
     if save:
         for window in cts:
             projection=cts[window] * 255.0
@@ -329,7 +329,7 @@ def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,de
             filename = f"{pid}_ct_window_{window}_axis_{axis}.png"
             filepath = os.path.join(save_path, filename) if save_path else filename
             cv2.imwrite(filepath, projection_np)
-    print('time to save:',time.time()-start)
+    #print('time to save:',time.time()-start)
 
     return cts
 
@@ -347,15 +347,15 @@ def load_mask(pid, organ, datapath, mask_path,device='cuda'):
     transform = get_orientation_transform(mask_nii, orientation=('L', 'A', 'S')) 
 
     # Apply the transformation to the CT scan data
-    start=time.time()
+    #start=time.time()
     mask = apply_transform(np.asanyarray(mask_nii.dataobj).astype(bool), transform)
-    print('time to reorient:',time.time()-start)
+    #print('time to reorient:',time.time()-start)
 
-    start=time.time()
+    #start=time.time()
     mask=torch.from_numpy(mask.copy()).float()
     if device!='cpu':
         mask=mask.to(device)
-    print('time to move to device:',time.time()-start)
+    #print('time to move to device:',time.time()-start)
 
     return mask
 
@@ -409,13 +409,13 @@ def resize_masks(masks, size):
     return masks
 
 def load_n_project_masks(pid, datapath, size=None, device='cuda',axis=1,th=0.5,save=False,save_path=None,organs=None):
-    start=time.time()
+    #start=time.time()
     masks,organs=load_all_masks(pid, datapath, device=device,organs=organs)
-    print('time to load:',time.time()-start)
-    start=time.time()
+    #print('time to load:',time.time()-start)
+    #start=time.time()
     masks=project_masks(masks, axis=axis,th=th)
-    print('time to project:',time.time()-start)
-    start=time.time()
+    #print('time to project:',time.time()-start)
+    #start=time.time()
 
     if size is not None:
         masks=F.interpolate(masks.unsqueeze(1), size=size, mode='nearest').squeeze(1)
@@ -431,7 +431,7 @@ def load_n_project_masks(pid, datapath, size=None, device='cuda',axis=1,th=0.5,s
             filename = f"{pid}_mask_axis_{axis}.png"
             filepath = os.path.join(save_path, filename) if save_path else filename
             cv2.imwrite(filepath, projection_np)
-    print('time to save:',time.time()-start)
+    #print('time to save:',time.time()-start)
 
     return masks,organs
 
@@ -483,9 +483,9 @@ def overlap_ct_and_masks(cts, masks, organs):
 
 def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,save_path=None,organs=None):
     if not os.path.exists(os.path.join(save_path, pid,f"{pid}_ct_window_bone_axis_{axis}.png")):
-        start=time.time()
+        #start=time.time()
         cts=load_n_project_ct(pid, datapath, ct_path=None,axis=axis,save=save,save_path=save_path,device=device)
-        print('time to load and project ct:',time.time()-start)
+        #print('time to load and project ct:',time.time()-start)
     else:
         cts={}
         for window in ['organs','bone','skeleton']:
@@ -496,9 +496,9 @@ def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,s
                 cts[window]=cts[window].to(device)
         print('ct projection loaded from '+f"{pid}_ct_window_{window}_axis_{axis}.png")
 
-    start=time.time()
+    #start=time.time()
     masks,organs=load_n_project_masks(pid, datapath, size=cts['organs'].shape[-2:], device=device,axis=axis,th=th,save=save,save_path=save_path,organs=organs)
-    print('time to load and project masks:',time.time()-start)
+    #print('time to load and project masks:',time.time()-start)
     overlay=overlap_ct_and_masks(cts, masks, organs)
     if save:
         for window in overlay:
@@ -517,6 +517,7 @@ def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,s
     return cts,masks,organs
 
 def project_files_standard(pth, destin, organ, file_list=None, axis=1,device='cpu',skip_existing=True):
+    #no multiprocessing
     if file_list is None:
         file_list=[f for f in file_list if f in os.listdir(pth)]
     for pid in file_list:
@@ -555,7 +556,7 @@ def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
     # Call the function to project CT and masks (assuming this function is defined elsewhere)
     project_ct_and_masks(pid, datapath=pth, device=device, axis=axis, th=0.5, save=True, save_path=os.path.join(destin, pid), organs=[organ])
     
-    print(f'Projected {pid}')
+    print(f'Projected {pid} and saved in {os.path.join(destin, pid)}')
     print('Time to project:', time.time() - start_proj)
     print('')
 
@@ -728,9 +729,9 @@ def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=1,
             divisor = 2000.0
         elif window == 'skeleton':
             upper_limit = 2000.0
-            lower_limit = 300.0
-            offset = -300.0
-            divisor = 1700.0
+            lower_limit = 400.0
+            offset = -400.0
+            divisor = 1600.0
         else:
             raise ValueError('Window should be "organs" "skeleton" or "bone"')
 
