@@ -20,6 +20,8 @@ def main():
     parser.add_argument('--output_dir2', default='compose_BetaGT_ProGT',
                         help='Output directory for the second composite dataset (ignored if bad_folder2 is "none").')
     parser.add_argument('--organ', default='none')
+    parser.add_argument('--device', default='cpu')
+    parser.add_argument('--num_processes', default='10')
 
     args = parser.parse_args()
 
@@ -123,7 +125,9 @@ def main():
             pth=src,
             destin=destination,
             file_list=file_list[organ],
-            organ=organ
+            organ=organ,
+            device=args.device,
+            num_processes=int(args.num_processes)
         )
         if organ != 'none':
             if '00' not in os.listdir(bad_folder)[0]:
@@ -138,7 +142,9 @@ def main():
             pth=src,
             destin=destination,
             file_list=file_list[organ],
-            organ=organ
+            organ=organ,
+            device=args.device,
+            num_processes=int(args.num_processes)
         )
         if bad_folder2.lower() != 'none' and organ in list(bad_old['DSC<=0.5'].keys()):
             if organ != 'none':
@@ -154,7 +160,9 @@ def main():
                 pth=src,
                 destin=destination,
                 file_list=file_list2[organ],
-                organ=organ
+                organ=organ,
+                device=args.device,
+            num_processes=int(args.num_processes)
             )
 
     # Composite datasets

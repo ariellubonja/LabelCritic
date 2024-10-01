@@ -9,6 +9,10 @@ import ast
 import torch
 from PIL import Image
 import shutil
+import torch.nn.functional as F
+import time
+import multiprocessing
+
 
 def plot_organ_projection(list_of_array, organ_name, pid, axis=2,
                            pngpath=None, th=0.5, ct=False, save=True,
@@ -69,12 +73,12 @@ def plot_organ_projection_3_axis(list_of_array, organ_name, pid,
     return projections
 
 
-def get_orientation_transform(nii):
+def get_orientation_transform(nii, orientation=('L', 'A', 'S')):
     """
     Compute the transformation needed to reorient the image to LAS standard orientation.
     """
     current_orientation = nib.orientations.io_orientation(nii.affine)
-    standard_orientation = nib.orientations.axcodes2ornt(('L', 'A', 'S'))
+    standard_orientation = nib.orientations.axcodes2ornt(orientation)
     transform = nib.orientations.ornt_transform(current_orientation, standard_orientation)
     return transform
 
@@ -108,9 +112,10 @@ def resample_image(image, original_spacing, target_spacing=(1, 1, 1),order=1):
 
 
 def load_ct_and_mask(pid, organ, datapath,
-                     ct_path=None, mask_path=None):
+                     ct_path=None, mask_path=None,
+                     resize=True):
     """
-    Load and reorient the CT scan and its corresponding mask to the standard RAS orientation.
+    Load and reorient the CT scan and its corresponding mask to the standard LAS orientation.
 
     Parameters:
         pid (str): Patient ID.
@@ -156,6 +161,421 @@ def load_ct_and_mask(pid, organ, datapath,
 
     return ct, mask
 
+
+def load_ct(pid, datapath, ct_path,device='cuda'):
+    """
+    Load and reorient the CT scan to the standard LAS orientation.
+
+    Parameters:
+        pid (str): Patient ID.
+        organ (str): Name of the organ for the mask file.
+        datapath (str): Path to the dataset.
+        ct_path (str): Path to the CT scan.
+
+    Returns:
+        ct (np.ndarray): Reoriented CT scan data.
+    """
+    # Load the CT scan
+    if ct_path is None:
+        ct_path = os.path.join(datapath, pid, 'ct.nii.gz')
+    start=time.time()
+    ct_nii = nib.load(ct_path)
+    print('time to nib.load:',time.time()-start)
+    spacing=ct_nii.header.get_zooms()
+
+    # Calculate the orientation transformation based on the CT scan
+    transform = get_orientation_transform(ct_nii, orientation=('L', 'A', 'S')) 
+
+    # Apply the transformation to the CT scan data
+    start=time.time()
+    ct = apply_transform(ct_nii.get_fdata(), transform)
+    print('time to reorient:',time.time()-start)
+
+    start=time.time()
+    ct=torch.from_numpy(ct.copy()).float()
+    if device!='cpu':
+        ct=ct.to(device)
+    print('time to move to device:',time.time()-start)
+
+    return ct, spacing
+
+def window_ct(ct):
+    """
+    ct: torch.Tensor of shape (D, H, W)
+    """
+    ct = ct.clone()
+
+    windows={'organs':(-150.0,250.0),
+             'bone':(-500.0,1500.0),
+             'skeleton':(300.0,2000.0)}
+
+    cts={}
+    for window in windows:
+        lower_limit, upper_limit = windows[window]
+        cts[window] = torch.clamp(ct, min=lower_limit, max=upper_limit)
+        cts[window] = (cts[window] - lower_limit) / (upper_limit - lower_limit)
+        
+    return cts
+
+
+def project_cts(cts, spacing, axis=1):
+    """
+    Projects CT scans along a given axis, normalizes the projection, and resamples 
+    the remaining two dimensions to have 1x1 mm spacing.
+
+    Parameters:
+    cts : dict
+        Dictionary of CT scans, where each key represents a window (or scan), 
+        and the value is a PyTorch tensor representing the CT scan.
+    spacing : tuple or list
+        A tuple containing the voxel spacing in each dimension (x, y, z).
+    axis : int
+        The axis along which to sum the image (default is 2).
+    
+    Returns:
+    resampled_cts : dict
+        The dictionary of resampled CT scans with 1x1 mm spacing in the remaining two dimensions.
+    """
+
+    # Identify the two remaining dimensions after summing
+    remaining_axis = [item for item in range(3) if item != axis]
+
+    # List to store normalized images before resampling
+    normalized_images = []
+
+    # Iterate over the CT windows and process each one
+    for window in cts:
+        # Sum along the specified axis
+        summed_image = torch.sum(cts[window], dim=axis)
+
+        # Normalize the image by dividing by the maximum value of the summed image
+        normalized_image = summed_image.unsqueeze(0).unsqueeze(0) / torch.max(summed_image)  # Normalize, and add batch and channel dimensions
+
+        normalized_images.append(normalized_image)
+
+    # Stack all normalized images for batch processing
+    stacked_images = torch.cat(normalized_images, dim=0)
+
+    # Get the shape of the remaining dimensions (same for all images)
+    remaining_dims = stacked_images.shape[-2:]  # Get height and width
+
+    # Calculate the new size (in pixels) to achieve 1x1 mm spacing in the remaining dimensions
+    remaining_spacing = [spacing[remaining_axis[i]] for i in range(2)]
+    new_size = [int(remaining_dims[i] * remaining_spacing[i]) for i in range(2)]
+
+    # Resample using bilinear interpolation to 1x1 mm spacing
+    resampled_images = F.interpolate(stacked_images, size=new_size, mode='bilinear', align_corners=False)
+
+    # Squeeze the batch dimension and store the resampled images in the result dictionary
+    resampled_cts = {window: resampled_images[i].squeeze(0).squeeze(0) for i, window in enumerate(cts)}
+
+    return resampled_cts
+
+
+def clahe_n_gamma(ct, clip_limit=2.0, tile_grid_size=(8, 8), gamma=0.3, apply_clahe=False, apply_gamma=True, threshold = 0.03):
+    """
+    Apply CLAHE and gamma correction to a CT scan normalized between 0 and 1.
+
+    Args:
+        ct (torch.Tensor): Input tensor of shape (H, W) with values between 0 and 1.
+        clip_limit (float): Threshold for contrast limiting.
+        tile_grid_size (tuple): Size of grid for histogram equalization.
+        gamma (float): Gamma correction parameter.
+
+    Returns:
+        torch.Tensor: Processed image tensor with values between 0 and 1.
+    """
+
+    if apply_clahe:
+        # Convert the PyTorch tensor to a NumPy array and scale to [0, 255]
+        ct_np = (ct.cpu().numpy() * 255).astype(np.uint8)
+        # Create a CLAHE object with the desired parameters
+        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+        # Apply CLAHE to the image
+        clahe_image_np = clahe.apply(ct_np)
+        # Convert the processed image back to a PyTorch tensor and scale to [0, 1]
+        ct = torch.from_numpy(clahe_image_np.astype(np.float32) / 255.0)
+        ct = (ct-ct.min())/(ct.max()-ct.min())
+        # Apply threshold to preserve background
+
+    ct[ct < threshold] = 0
+
+    if apply_gamma:
+        ct = torch.pow(ct, gamma)
+
+    return ct
+
+def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,device='cpu'):
+    start=time.time()
+    ct,spacing=load_ct(pid, datapath, ct_path, device=device)
+    print('time to load:',time.time()-start)
+    start=time.time()
+    cts=window_ct(ct)
+    print('time to window:',time.time()-start)
+    start=time.time()
+    cts=project_cts(cts, spacing, axis=axis)
+    print('time to project:',time.time()-start)
+    start=time.time()
+    cts['skeleton']=clahe_n_gamma(cts['skeleton'],clip_limit=5, tile_grid_size=(8, 8), gamma=0.6, apply_clahe=True, apply_gamma=True, threshold=0.01)
+    print('time to clahe:',time.time()-start)
+    start=time.time()
+    if save:
+        for window in cts:
+            projection=cts[window] * 255.0
+
+            # Rotate the projection by 90 degrees counter-clockwise
+            projection = torch.rot90(projection, k=1, dims=(0, 1))
+            projection_np = projection.detach().cpu().numpy()
+            filename = f"{pid}_ct_window_{window}_axis_{axis}.png"
+            filepath = os.path.join(save_path, filename) if save_path else filename
+            cv2.imwrite(filepath, projection_np)
+    print('time to save:',time.time()-start)
+
+    return cts
+
+def load_mask(pid, organ, datapath, mask_path,device='cuda'):
+    # Load the CT scan
+    if mask_path is None:
+        try:
+            mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
+        except:
+            mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
+    mask_nii = nib.load(mask_path)
+
+
+    # Calculate the orientation transformation based on the CT scan
+    transform = get_orientation_transform(mask_nii, orientation=('L', 'A', 'S')) 
+
+    # Apply the transformation to the CT scan data
+    start=time.time()
+    mask = apply_transform(np.asanyarray(mask_nii.dataobj).astype(bool), transform)
+    print('time to reorient:',time.time()-start)
+
+    start=time.time()
+    mask=torch.from_numpy(mask.copy()).float()
+    if device!='cpu':
+        mask=mask.to(device)
+    print('time to move to device:',time.time()-start)
+
+    return mask
+
+def load_all_masks(pid, datapath, device='cuda',organs=['spleen','stomach','gall_bladder','liver']):
+    try:
+        mask_path = os.path.join(datapath, pid, 'segmentations')
+    except:
+        mask_path = os.path.join(datapath, pid, 'predictions')
+
+    if organs is None:
+        organs=[organ[:-len('.nii.gz')] for organ in os.listdir(mask_path)]
+
+    masks=[]
+    for pth in organs:
+        mask=load_mask(pid, pth, datapath, None,device=device)
+        masks.append(mask)
+    masks=torch.stack(masks,0)
+
+    return masks,organs
+
+
+
+def project_masks(masks, axis=1,th=0.5):
+    """
+    Projects masks along a given axis and resamples the remaining two dimensions to have 1x1 mm spacing.
+
+    Parameters: 
+    masks : torch.Tensor
+        A tensor of shape (N, D, H, W) containing the masks for each organ.
+    axis : int
+        The axis along which to sum the image (default is 1).
+    """
+
+    # Sum along the specified axis
+    summed_masks = torch.sum(masks, dim=axis+1)#accounts for batching
+
+    # Normalize the masks by dividing by the maximum value of the summed masks
+    organ_projection = summed_masks / (summed_masks.amax(dim=(-1, -2), keepdim=True) + 1e-8)  # Normalize
+
+    # Apply threshold if specified
+    if th > 0:
+        organ_projection = torch.where(organ_projection > 0,
+                                 organ_projection / (1 / (1 - th)) + th,
+                                 torch.tensor(0.0).type_as(organ_projection))
+
+    return organ_projection
+
+
+def resize_masks(masks, size):
+    masks=F.interpolate(masks, size=size, mode='nearest')
+    return masks
+
+def load_n_project_masks(pid, datapath, size=None, device='cuda',axis=1,th=0.5,save=False,save_path=None,organs=None):
+    start=time.time()
+    masks,organs=load_all_masks(pid, datapath, device=device,organs=organs)
+    print('time to load:',time.time()-start)
+    start=time.time()
+    masks=project_masks(masks, axis=axis,th=th)
+    print('time to project:',time.time()-start)
+    start=time.time()
+
+    if size is not None:
+        masks=F.interpolate(masks.unsqueeze(1), size=size, mode='nearest').squeeze(1)
+
+    if save:
+        for i,organ in enumerate(organs):
+            projection=masks[i] * 255.0
+
+            # Rotate the projection by 90 degrees counter-clockwise
+            projection = torch.rot90(projection, k=1, dims=(0, 1))
+
+            projection_np = projection.detach().cpu().numpy()
+            filename = f"{pid}_mask_axis_{axis}.png"
+            filepath = os.path.join(save_path, filename) if save_path else filename
+            cv2.imwrite(filepath, projection_np)
+    print('time to save:',time.time()-start)
+
+    return masks,organs
+
+def overlap_ct_and_masks(cts, masks, organs):
+    """
+    Overlay CT scans and masks for different organs and save the resulting images.
+
+    Parameters: 
+    cts : dict
+        Dictionary of CT scans, where each key represents a window (or scan),
+        and the value is a PyTorch tensor representing the CT scan.
+    masks : torch.Tensor
+        A tensor of shape (N, D, H, W) containing the masks for each organ.
+    organs : list
+        A list of organ names corresponding to the masks.
+    device : str
+        The device to run the computations on ('cuda:0' or 'cpu').
+    """
+
+    overlays={}
+    # Iterate over the CT windows and process each one
+    for window in cts:
+        # Get the CT scan for the current window
+        ct = cts[window]
+        ov={}
+
+        # Iterate over the organs and overlay the CT scan with the masks
+        for i, organ in enumerate(organs):
+            # Get the mask for the current organ
+            mask = masks[i]
+            mask [mask > 0.5] = 1
+            mask [mask <= 0.5] = 0
+            mask = mask.bool()
+
+            # Overlay the CT scan with the mask
+            overlay=ct.clone().unsqueeze(0).repeat(3,1,1)
+            overlay[1][mask] = 0.0
+            overlay[2][mask] = 0.0
+
+            if window=='skeleton':
+                overlay[0][mask] += 0.5
+                overlay=torch.clamp(overlay,0,1)
+
+            ov[organ]=overlay
+        overlays[window]=ov
+    return overlays
+
+
+
+def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,save_path=None,organs=None):
+    if not os.path.exists(os.path.join(save_path, pid,f"{pid}_ct_window_bone_axis_{axis}.png")):
+        start=time.time()
+        cts=load_n_project_ct(pid, datapath, ct_path=None,axis=axis,save=save,save_path=save_path,device=device)
+        print('time to load and project ct:',time.time()-start)
+    else:
+        cts={}
+        for window in ['organs','bone','skeleton']:
+            filename = f"{pid}_ct_window_{window}_axis_{axis}.png"
+            filepath = os.path.join(save_path, pid, filename) if save_path else filename
+            cts[window]=torch.rot90(torch.from_numpy(cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)/255.0).float(), k=-1, dims=(0, 1))
+            if device!='cpu':
+                cts[window]=cts[window].to(device)
+        print('ct projection loaded from '+f"{pid}_ct_window_{window}_axis_{axis}.png")
+
+    start=time.time()
+    masks,organs=load_n_project_masks(pid, datapath, size=cts['organs'].shape[-2:], device=device,axis=axis,th=th,save=save,save_path=save_path,organs=organs)
+    print('time to load and project masks:',time.time()-start)
+    overlay=overlap_ct_and_masks(cts, masks, organs)
+    if save:
+        for window in overlay:
+            for organ in overlay[window]:
+                ov=overlay[window][organ]
+                ov *= 255.0
+                # Rotate the projection by 90 degrees counter-clockwise
+                ov = torch.rot90(ov, k=1, dims=(-2, -1))
+                ov = ov.permute(1, 2, 0)
+                ov=ov.detach().cpu().numpy()
+                ov = cv2.cvtColor(ov, cv2.COLOR_RGB2BGR)
+                filename = pid+'_overlay_window_'+window+'_axis_'+str(axis)+'_'+organ+'.png'
+                filepath = os.path.join(save_path, filename) if save_path else filename
+                cv2.imwrite(filepath, ov)
+
+    return cts,masks,organs
+
+def project_files_standard(pth, destin, organ, file_list=None, axis=1,device='cpu',skip_existing=True):
+    if file_list is None:
+        file_list=[f for f in file_list if f in os.listdir(pth)]
+    for pid in file_list:
+        os.makedirs(os.path.join(destin,pid), exist_ok=True)
+        if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):          
+            print(f'Skipping {pid}, already exists')
+            continue
+
+        print(f'Projecting {pid}')
+        start_proj=time.time()
+        project_ct_and_masks(pid, datapath=pth, device=device,axis=axis,th=0.5,save=True,save_path=os.path.join(destin,pid),organs=[organ])
+        print(f'Projected {pid}')
+        print('time to project:',time.time()-start_proj)
+        print('')
+
+def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
+    os.makedirs(os.path.join(destin, pid), exist_ok=True)
+    
+    # Check if the necessary files already exist
+    if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
+        print(f'Skipping {pid}, already exists')
+        return
+
+    # Process the file
+    print(f'Projecting {pid}')
+    start_proj = time.time()
+    
+    # Call the function to project CT and masks (assuming this function is defined elsewhere)
+    project_ct_and_masks(pid, datapath=pth, device=device, axis=axis, th=0.5, save=True, save_path=os.path.join(destin, pid), organs=[organ])
+    
+    print(f'Projected {pid}')
+    print('Time to project:', time.time() - start_proj)
+    print('')
+
+
+# Main function that uses multiprocessing to parallelize the task
+def project_files(pth, destin, organ, file_list=None, axis=1, device='cpu', skip_existing=True, num_processes=10):
+    if 'cuda' in device:
+        project_files_standard(pth=pth, destin=destin, organ=organ, file_list=file_list, axis=axis,device=device,skip_existing=skip_existing)
+        return
+    
+    if file_list is None:
+        file_list = [f for f in os.listdir(pth)]  # Load all files in the directory if no list is provided
+
+    # Create a pool of workers for parallel processing
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        # Prepare arguments for the helper function
+        pool.starmap(
+            process_single_file, 
+            [(pid, pth, destin, organ, axis, device, skip_existing) for pid in file_list]
+        )
 
 
 def overlay_projection(pid, organ, datapath,save_path,th=0.5,
@@ -288,7 +708,7 @@ def apply_clahe_to_tensor(image_tensor, clip_limit=2.0, tile_grid_size=(8, 8),ap
 
     return clahe_image_tensor
 
-def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=2,
+def plot_organ_projection_cuda(list_of_array, organ_name, pid, axis=1,
                                pngpath=None, th=0.5, ct=False, save=True,
                                window='organs'):
     # Stack tensors along a new dimension
@@ -637,7 +1057,7 @@ def composite_dataset_liver(output_dir='projections',path='projections_bad_liver
         create_composite_image_2figs(output_dir, organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
 
 
-def project_files(pth, destin, organ, file_list, axis=1,device='cuda:0',skip_existing=True):
+def project_files_slow(pth, destin, organ, file_list, axis=1,device='cuda:0',skip_existing=True):
     file_list=[f for f in file_list if f in os.listdir(pth)]
     for pid in file_list:
         os.makedirs(os.path.join(destin,pid), exist_ok=True)
