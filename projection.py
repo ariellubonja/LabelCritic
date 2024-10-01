@@ -541,11 +541,14 @@ def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
     os.makedirs(os.path.join(destin, pid), exist_ok=True)
     
     # Check if the necessary files already exist
+    #print(f'Checking if file exists in {os.path.join(destin,pid, pid + "_overlay_window_bone_axis_" + str(axis) + "_" + organ + ".png")}')
+
     if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
+                     and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
+                     and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
+                     and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'.png')) \
+                     and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_organs_axis_'+str(axis)+'.png')) \
+                     and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'.png')):
         print(f'Skipping {pid}, already exists')
         return
 
