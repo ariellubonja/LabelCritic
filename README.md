@@ -35,3 +35,8 @@ answer=ed.project_and_compare(ct,y1,y2)
 ```
 Example: see MyAPITest.ipynb
 
+### Project a dataset:
+
+```bash
+python3 ProjectDatasetFlex.py --good_folder /mnt/T9/AbdomenAtlasPro/ --bad_folder /mnt/sdc/pedro/JHH/nnUnetResultsBad/ --output_dir1 compose_nnUnet_JHH --num_processes 10 --file_list /mnt/sdc/pedro/ErrorDetection/ErrorLists/low_dice_benchmark_nnUnet_vs_JHH.txt
+```
