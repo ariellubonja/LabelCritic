@@ -395,6 +395,7 @@ def overlay_projection_fast(pid, organ, datapath, save_path, th=0.5,
     Returns:
     - None
     """
+    print(f'Projecting {organ} for patient {pid} from {datapath}')
     # Load CT and mask images
     ct, mask = load_ct_and_mask(pid, organ, datapath,
                                 ct_path=ct_path, mask_path=mask_path)
@@ -669,26 +670,31 @@ def project_files(pth, destin, organ, file_list, axis=1,device='cuda:0',skip_exi
                                     ct_path=None, mask_path=None, axis=1, device=device,
                                     precision=32)
         
-        #if not os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
-        overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
-                                save_path=os.path.join(destin,pid), 
-                                th=0.5,mask_only=False, ct_only=True, window='skeleton',
-                                ct_path=None, mask_path=None, axis=1, device=device,
-                                precision=32)
+        if not os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
+            overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                    save_path=os.path.join(destin,pid), 
+                                    th=0.5,mask_only=False, ct_only=True, window='skeleton',
+                                    ct_path=None, mask_path=None, axis=1, device=device,
+                                    precision=32)
         
-        #if not os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
-        overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
-                                save_path=os.path.join(destin,pid), 
-                                th=0.5,mask_only=False, ct_only=False, window='skeleton',
-                                ct_path=None, mask_path=None, axis=1, device=device,
-                                precision=32)
+        if not os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):
+            overlay_projection_fast(pid=pid, organ=organ, datapath=pth, 
+                                    save_path=os.path.join(destin,pid), 
+                                    th=0.5,mask_only=False, ct_only=False, window='skeleton',
+                                    ct_path=None, mask_path=None, axis=1, device=device,
+                                    precision=32)
         
 def composite_dataset(output_dir, good_path, bad_path, axis=1):
     path1=bad_path
     path2=good_path
     for organ in os.listdir(path1):
+        if organ=='all_classes':
+            continue
         os.makedirs(os.path.join(output_dir,organ), exist_ok=True)
         for file in os.listdir(os.path.join(path1,organ)):
+            if file not in os.listdir(os.path.join(path2,organ)):
+                print(f'File {file} does not exist in {path2},skipping')
+                continue
             
             ct=os.path.join(path1,organ,file,file+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')
             y1_bone=os.path.join(path1,organ,file,file+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')
