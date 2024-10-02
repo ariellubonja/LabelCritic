@@ -2,6 +2,7 @@ import os
 import argparse
 import ast
 import importlib
+import json
 import AnnotationVLM.projection as pj
 importlib.reload(pj)
 
@@ -22,6 +23,7 @@ def main():
     parser.add_argument('--organ', default='none')
     parser.add_argument('--device', default='cpu')
     parser.add_argument('--num_processes', default='10')
+    parser.add_argument('--file_list', default=None)
 
     args = parser.parse_args()
 
@@ -63,6 +65,14 @@ def main():
     print(organs)
     #raise ValueError
 
+    if args.file_list is not None:
+        with open(args.file_list, 'r') as file:
+            file_list_loaded = json.load(file)
+        #print(file_list)
+        #raise ValueError
+        if bad_folder2.lower() != 'none':
+            raise ValueError('File list not supported for multiple bad folders.')
+        
 
     file_list={}
     file_list2={}
@@ -77,6 +87,7 @@ def main():
             else:
                 file_list2[organ]=os.listdir(os.path.join(bad_folder2,organ))
 
+
     for organ in organs:
         if 'right' in organ:
             file_list[organ]=list(set(file_list[organ]+file_list[organ.replace('right','left')]))
@@ -87,6 +98,10 @@ def main():
             if bad_folder2.lower() != 'none':
                 file_list2[organ]=list(set(file_list2[organ]+file_list2[organ.replace('left','right')]))
     
+    #get intersection between file list and file_list_loaded
+    if args.file_list is not None:
+        for organ in organs:
+            file_list[organ]=list(set(file_list[organ])&set(file_list_loaded[organ]))
 
 
     # Define projection paths
@@ -165,20 +180,23 @@ def main():
             num_processes=int(args.num_processes)
             )
 
-    # Composite datasets
-    pj.composite_dataset(
-        output_dir=output_dir1,
-        good_path=good_projection_path,
-        bad_path=bad_projection_path
-    )
-    if bad_folder2.lower() != 'none':
-        pj.composite_dataset(
-            output_dir=output_dir2,
-            good_path=good_projection_path,
-            bad_path=bad2_projection_path
-        )
 
-    # Join left and right datasets
+        # Composite datasets
+        pj.composite_dataset(
+            output_dir=output_dir1,
+            good_path=good_projection_path,
+            bad_path=bad_projection_path,
+            organ=organ
+        )
+        if bad_folder2.lower() != 'none':
+            pj.composite_dataset(
+                output_dir=output_dir2,
+                good_path=good_projection_path,
+                bad_path=bad2_projection_path,
+            organ=organ
+            )
+
+        # Join left and right datasets
     for organ in organs:
         if 'left' in organ:
             pj.join_left_and_right_dataset(

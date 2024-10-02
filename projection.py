@@ -524,9 +524,9 @@ def project_files_standard(pth, destin, organ, file_list=None, axis=1,device='cp
         os.makedirs(os.path.join(destin,pid), exist_ok=True)
         if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
                                             and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'.png')) \
                                             and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):          
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'.png')):          
             print(f'Skipping {pid}, already exists')
             continue
 
@@ -979,7 +979,7 @@ def create_composite_image_2figs(pth, organ, axis=1, y1_bone=None, y2_bone=None,
 
     # Load the images
     image_paths = [y1_bone, y2_bone]
-    images = [Image.open(path) for path in image_paths]
+    images = [Image.open(path).convert('RGB') for path in image_paths]
 
     # Get image dimensions in pixels
     img_width, img_height = images[0].size
@@ -1067,9 +1067,9 @@ def project_files_slow(pth, destin, organ, file_list, axis=1,device='cuda:0',ski
         os.makedirs(os.path.join(destin,pid), exist_ok=True)
         if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
                                             and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_bone_axis_'+str(axis)+'.png')) \
                                             and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')) \
-                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')):          
+                                            and os.path.exists(os.path.join(destin,pid,pid+'_ct_window_skeleton_axis_'+str(axis)+'.png')):          
             print(f'Skipping {pid}, already exists')
             continue
         
@@ -1108,37 +1108,43 @@ def project_files_slow(pth, destin, organ, file_list, axis=1,device='cuda:0',ski
                                     ct_path=None, mask_path=None, axis=1, device=device,
                                     precision=32)
         
-def composite_dataset(output_dir, good_path, bad_path, axis=1):
+def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None):
     path1=bad_path
     path2=good_path
-    for organ in os.listdir(path1):
+    if organ is None:
+        organs=os.listdir(path1)
+    else:
+        organs=[organ]
+    for organ in organs:
         if organ=='all_classes':
             continue
         os.makedirs(os.path.join(output_dir,organ), exist_ok=True)
         for file in os.listdir(os.path.join(path1,organ)):
             if file not in os.listdir(os.path.join(path2,organ)):
                 print(f'File {file} does not exist in {path2},skipping')
+                #raise ValueError(f'File {file} does not exist in {path2},skipping')
                 continue
             
-            ct=os.path.join(path1,organ,file,file+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png')
+            ct=os.path.join(path1,organ,file,file+'_ct_window_bone_axis_'+str(axis)+'.png')
             y1_bone=os.path.join(path1,organ,file,file+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')
             y1_organs=os.path.join(path1,organ,file,file+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')
             y2_bone=os.path.join(path2,organ,file,file+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')
             y2_organs=os.path.join(path2,organ,file,file+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'.png')
-            skeleton=os.path.join(path1,organ,file,file+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
+            skeleton=os.path.join(path1,organ,file,file+'_ct_window_skeleton_axis_'+str(axis)+'.png')
             y1_seleton=os.path.join(path1,organ,file,file+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
             y2_seleton=os.path.join(path2,organ,file,file+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
 
             if not os.path.exists(ct):
                 print(f'File {file} does not exist in {path2}')
+                #raise ValueError(f'File {file} does not exist in {path2},skipping')
                 continue
             
-            shutil.copy(ct, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_bone_axis_'+str(axis)+'_'+organ+'.png'))
+            shutil.copy(ct, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_bone_axis_'+str(axis)+'.png'))
             shutil.copy(y1_bone, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'_y1.png'))
             shutil.copy(y1_organs, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'_y1.png'))
             shutil.copy(y2_bone, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'_y2.png'))
             shutil.copy(y2_organs, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_organs_axis_'+str(axis)+'_'+organ+'_y2.png'))
-            shutil.copy(skeleton, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_skeleton_axis_'+str(axis)+'_'+organ+'.png'))
+            shutil.copy(skeleton, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_skeleton_axis_'+str(axis)+'.png'))
             shutil.copy(y1_seleton, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y1.png'))
             shutil.copy(y2_seleton, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y2.png'))
 
@@ -1234,6 +1240,7 @@ def join_left_and_right(image_path1, image_path2):
 
     # Ensure the images have 3 channels (RGB)
     if image1_array.shape[-1] != 3 or image2_array.shape[-1] != 3:
+        print(image1_array.shape, image2_array.shape)
         raise ValueError("Both images must be RGB with 3 channels.")
 
     # Get red, green, and blue channels from image 1 and image 2
@@ -1297,7 +1304,12 @@ def highlight_skeleton(ct_path, skeleton_path, pth, name, device='cuda:0',red=Tr
         skeleton = skeleton[:, :, :3]  # Drop alpha channel if present
 
     # Ensure the images have 3 channels (RGB)
+    if len(ct.shape) == 2:
+        ct = ct.unsqueeze(-1).repeat(1, 1, 3)
+        skeleton = skeleton.unsqueeze(-1).repeat(1, 1, 3)
+
     if ct.shape[-1] != 3 or skeleton.shape[-1] != 3:
+        print(ct.shape, skeleton.shape)
         raise ValueError("Both images must be RGB with 3 channels.")
 
     if red:
