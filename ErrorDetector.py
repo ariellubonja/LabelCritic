@@ -284,13 +284,47 @@ d) The stomach is located in the upper left quadrant of the abdomen (right side 
 e) The stomach red overlay should be a single smooth shape."""
 #0.75 accuracy, erros actually make sense
 
-StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+StomachDescriptionEDV4="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
 b) Its curve does not point up.
 c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
 d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
 e) The stomach red overlay should be a single structure."""
 #0.81 accuracy, erros actually make sense
+
+StomachDescriptionEDV5="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is mainly located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs. Its bottom part extends towards the right side of the body (left side of the image), and it may cross the spine.
+e) The stomach red overlay should be a single structure."""
+#75% acc
+
+StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is mainly located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs. Its lower part can cross the midline and enter the right side of the human body.
+e) The stomach red overlay should be a single structure."""
+#75% acc
+
+StomachDescriptionEDMultiStage="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach red overlay can have the follwoing shapes, depending on digestion: 
+- Empty stomach: a small J-shaped or curved sac-like structure.
+- Early digestion: the J-shape may still be visible, but it becomes bigger, more rounded and distended. It may look rounder at the top.
+- Mid-digestion: the stomach may have an hourglass shape, with a contraction in the middle and two bulging areas—one at the top and one at the bottom. It may also look like a rounded, distended sac, with some sesemblance of its J shape.
+b) Its curve does not point up, when the curve is clearly visible it resembles a J.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is mainly located in the upper part of the abdomen, just below the diaphragm.
+e) The stomach red overlay should be a single structure."""
+#68%
+
+StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J-shaped or curved sac-like structure. The stomach red overlay should be a single structure.
+b) Wrong shapes: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+c) Location: The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+
 
 PancreasDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) The pancreas is an elongated, flat organ with a tadpole-like or elongated S-shape.
@@ -324,13 +358,42 @@ a) The pancreas head is its thickest part. This thickest part points to the left
 b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
 c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
 
-PancreasDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+PancreasDescriptionEDV5="""When evaluating and comparing the overlays, individually adress each of the following points:
 a) The pancreas is an elongated organ with a tadpole-like shape. It has a thicker head at one side and and a thinner tail at the other.
 b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
 c) The pancreas is located in the upper abdomen near the bottom of the rib cage.
 d) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges.
 e) Position: the pancreas is mainly horizontal, with a curve pointing upwards. The head can be at the tail height or lower, the tail cannot go much lower than the head."""
+#bad
 
+
+PancreasDescriptionEDv6="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. The pancreas is significantly thicker in one of its sides. 
+b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented.
+d) The head of the pancreas usually sits lower than the tail."""
+#bad
+
+
+PancreasDescriptionEDV7="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+b) The pancreas is an elongated, flat organ with a tadpole-like shape. It is mostly horizontal, with a curve pointing up. 
+c) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+d) The head of the pancreas usually sits lower than the tail.
+e) The pancreas is a single smooth shape and it does not have very sharp edges."""
+#horrible
+
+PancreasDescriptionEDV8="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. Besides its head, the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The head of the pancreas is usually lower than the tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+#good
+
+PancreasDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
 
 GallbladderDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) The gallbladder is a small, pear-shaped organ.
@@ -345,6 +408,7 @@ a) The gallbladder is a small, pear-shaped organ.
 b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
 c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in this frontal CT projection.
 d) The gallbladder should be represented as a single red object."""
+
 
 LiverDescriptionLocation=("The liver is positioned at the height of the lower ribs, spanning from about the 7th to the 11th rib on the right side. In relation to the spine, the liver typically starts around the level of the 7th or 8th thoracic vertebra (T7–T8) and extends down to around the 1st or 2nd lumbar vertebra (L1–L2). In terms of the pelvis, the liver is well above it, separated by several vertebrae and the abdominal cavity. Its lower edge does not reach as far down as the pelvis, staying contained in the upper abdomen.")
 GallbladderDescriptionLocation=("It is positioned beneath the liver, close to the lower edge of the rib cage. "
