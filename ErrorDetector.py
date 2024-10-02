@@ -24,7 +24,7 @@ ZeroShotInstructions=("The image I am sending is a frontal projection of a CT sc
                       "like a X-ray. The left side of the image represents the right side of the human body. "
                       "The %(organ)s region in the image should be marked in red, "
                       "using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
+                      "or incorrectly marks the %(organ)s. Check if the red region is coherent with "
                       "the expected shape and location of a %(organ)s.")
 
 FindErrors=("The image I am sending now, we can call it Image %(number)s, is a frontal projection of a CT scan. "
@@ -32,7 +32,7 @@ FindErrors=("The image I am sending now, we can call it Image %(number)s, is a f
                       "like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. "
                       "The %(organ)s region in the image should be marked in red, "
                       "using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
+                      "or incorrectly marks the %(organ)s. Check if the red region is coherent with "
                       "the expected shape and location of a %(organ)s, and analyze potential mistakes, if any.")
 
 
@@ -42,7 +42,7 @@ FindErrorsSkeleton=("The image I am sending now, we can call it Image %(number)s
                       "The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. "
                       "The %(organ)s region in the image should be marked in red, "
                       "using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. Check if the red region is corerent with "
+                      "or incorrectly marks the %(organ)s. Check if the red region is coherent with "
                       "the expected shape and location of a %(organ)s, and analyze potential mistakes, if any.")
 
 SummarizeInstructions=("Summarize your last answer, using only 2 words: "
@@ -57,7 +57,7 @@ OneShotFirstPart=("The images I am sending are a frontal projections of a CT sca
                       "The left side of the image represents the right side of the human body. "
                       "The %(organ)s region in the images should "
                      "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. You must if the red region is corerent with "
+                      "or incorrectly marks the %(organ)s. You must if the red region is coherent with "
                       "the expected shape and location of a %(organ)s."
                       "However, now I am sending you just an example image, which is a 'good annotation'. "
                       "I will send you the image for evaluation after you see the example. "
@@ -69,7 +69,7 @@ FewShotFirstPart=("The images I am sending are a frontal projections of a CT sca
                       "The left side of the image represents the right side of the human body. "
                       "The %(organ)s region in the images should "
                      "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. You must if the red region is corerent with "
+                      "or incorrectly marks the %(organ)s. You must if the red region is coherent with "
                       "the expected shape and location of a %(organ)s."
                       "However, now I am sending you just an example image, which is a 'good annotation'. "
                       "I will send mutiple examples in diverse prompts. "
@@ -121,6 +121,7 @@ kidneys_questions=("Consider the following anatomical information: the kidneys a
          "2. Does the shape of the red overlay resemble the typical bean shape of each kidney? \n"
          "3. Is the red overlay located in the correct anatomical region, on either side of the spine and close to the posterior wall? \n")
 
+
 liver_no_question=(" Consider the following anatomical information: the liver is a large, triangular organ located in the upper right quadrant of the abdomen, "
       "just below the diaphragm. It is a single structure. It spans across the midline, partially extending"
       " into the left upper quadrant. "
@@ -132,7 +133,7 @@ liver_describe=(" Consider the following anatomical information: the liver is a 
       "The liver position is primarily under the rib cage. \n"
       "Throuhgly describe the overlay: what is its shape? where is it? Then you say if it corresponds to the liver or not. ")
 
-KidneysDescriptionED=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects. "
+KidneysDescriptionED=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
                       "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
@@ -223,17 +224,143 @@ DescendingAortaDescriptionEDSanity = (
  "To verify if the overlay is right or not, ignore anything you already know about aorta. Do just ONE SIMPLE THING: check if the red color TOUCHES the top of the image or not. That is the only thing you should car about when analyzing or comparing images. \n"
 )
 
-DescendingAortaDescriptionED = [(""
+DescendingAortaDescriptionEDCheating = [(""
 ),
    (
     "When comparing the 2 images, do just one thing: check which red overlay gets closer to the top of the heart and the head. ")]
 
+
+LiverDescriptionED=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
+"a) The liver is a large organ, with triangular or wedge-like shape.\n"
+"b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.\n"
+"c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region. \n")
+#"d) The liver is a single structure.\n")
+
+
+SpleenDescriptionED=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
+                    "a) The spleen is an organ with an oval or bean-like shape, approximately the size of a fist.\n"
+                    "b) The spleen is located in the upper LEFT quadrant of the abdomen. I.e., in the right side of the figure, which is oriented like an AP X-ray."
+                    "c) The spleen is located beneath the diaphragm and behind the stomach. It lies at the level of the 9th to 11th ribs.\n"
+                    "d) The spleen is situated near the LEFT kidney.")
+
+StomachDescriptionEDGPT="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is a hollow organ with a J-shaped or curved sac-like structure. It is not a solid organ, but it is not an amorphous blob.
+b) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs, between the esophagus and the small intestine.
+c) The stomach is situated between the esophagus (above) and the small intestine (below), and is in close proximity to the spleen and pancreas."""
+#GPT generated - 65 ACC
+
+StomachDescriptionEDV1="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
+b) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+c) The stomach red overlay should be a single shape, with a smooth surface and no holes."""
+
+
+StomachDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
+b) The stomach is NOT an amorphous blob and it does NOT have sharp edges.
+c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+d) The stomach red overlay should be a single smooth shape."""
+#0.75 Accuracy
+
+StomachDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The shape of the stomach red overlay should resemble an inverted L or inverted J or a curved sac-like structure. Its lower end should point to the right side of the body (left side of the image, which is oriented like an AP X-ray). 
+b) The stomach is NOT an amorphous blob.
+c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+d) The stomach red overlay should be a single smooth shape."""
+#0.62 accuracy
+
+StomachDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
+b) The stomach is NOT an amorphous blob and it does NOT have sharp edges.
+c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+d) The stomach red overlay should be a single smooth shape."""
+
+
+StomachDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single smooth shape."""
+#0.75 accuracy, erros actually make sense
+
+StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single structure."""
+#0.81 accuracy, erros actually make sense
+
+PancreasDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like or elongated S-shape.
+b) The pancreas is located in the upper abdomen, behind the stomach. It extends horizontally from the right side of the abdomen (left side of the image, like an AP X-ray) to the left side (right side of the image).
+c) The head of the pancreas is situated on the right side of the abdomen (left side of the image), nestled in the curve of the duodenum, while the tail extends toward the spleen on the left side (right side of the image), near the left kidney."""
+#GPT generated
+
+PancreasDescriptionEDV1="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape, with its tail pointing to the left side of the body (right side of the image, like an AP X-ray).
+a) The pancreas head is its thickest part.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented."""
+
+PancreasDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape.
+a) The pancreas head is its thickest part. Thus, the pancreas is thicker in the left side of the image/right side of the body (the image is oriented like an AP X-ray).
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented."""
+
+
+
+PancreasDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. The pancreas is significantly thicker in one of its sides. 
+a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
+
+PancreasDescriptionEDV4="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. It has a thicker head at one side and and a thinner tail at the other. The head is notably thicker than the tail.
+a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
+
+PancreasDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated organ with a tadpole-like shape. It has a thicker head at one side and and a thinner tail at the other.
+b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+c) The pancreas is located in the upper abdomen near the bottom of the rib cage.
+d) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges.
+e) Position: the pancreas is mainly horizontal, with a curve pointing upwards. The head can be at the tail height or lower, the tail cannot go much lower than the head."""
+
+
+GallbladderDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The gallbladder is a small, pear-shaped organ.
+b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
+c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in frontal projections.
+d) The gallbladder is a single structure."""
+#GPT generated
+
+
+GallbladderDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The gallbladder is a small, pear-shaped organ.
+b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
+c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in this frontal CT projection.
+d) The gallbladder should be represented as a single red object."""
+
+LiverDescriptionLocation=("The liver is positioned at the height of the lower ribs, spanning from about the 7th to the 11th rib on the right side. In relation to the spine, the liver typically starts around the level of the 7th or 8th thoracic vertebra (T7–T8) and extends down to around the 1st or 2nd lumbar vertebra (L1–L2). In terms of the pelvis, the liver is well above it, separated by several vertebrae and the abdominal cavity. Its lower edge does not reach as far down as the pelvis, staying contained in the upper abdomen.")
+GallbladderDescriptionLocation=("It is positioned beneath the liver, close to the lower edge of the rib cage. "
+                                "It is typically found at the level of the 9th or 10th rib."
+                                "The gallbladder is usually present when the lower ribs are present.")
+
 DescriptionsED={
     "aorta":AortaDescriptionED,
     "descending aorta":DescendingAortaDescriptionED,
-    "liver":liver_no_question,
+    "liver":LiverDescriptionED,
               "kidneys":KidneysDescriptionED,
-              "adrenal_glands":AdrenalGlandDescriptionED}
+              "adrenal_glands":AdrenalGlandDescriptionED,
+              "spleen":SpleenDescriptionED,
+              "stomach":StomachDescriptionED,
+              "pancreas":PancreasDescriptionED,
+              "gall_bladder":GallbladderDescriptionED}
 
 
 organ_descriptions={'liver':liver}
@@ -1621,18 +1748,34 @@ BodyRegionTextHighlightedSkeleton=("The image I am sending is frontal projection
 "Q3- Based on your answer to Q1, is the %(organ)s usually present (even if partially) in this area and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
 "Q3 = _\n")
 
+BodyRegionTextSkeletonGoodOne=("The image I am sending is frontal projections of one CT scan, focusing on showing the skeleton. Look at it carefully, and answer the questions below:\n"
+"Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
+"Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"skull = _"
+"neck = _"
+"trachea = _"
+"upper ribs = _"
+"lower ribs = _"
+"lumbar spine = _"
+"pelvis = _"
+"femurs = _"
+"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names).\n"
+"Q4- Based on your answer to Q2 and Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"Q4 = _\n")
+
 BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT scan, focusing on showing the skeleton. Look at it carefully, and answer the questions below:\n"
 "Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
 "Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
 "skull = _"
 "neck = _"
 "trachea = _"
-"ribs = _"
+"upper ribs = _"
+"lower ribs = _"
 "lumbar spine = _"
 "pelvis = _"
 "femurs = _"
-"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names).\n"
-"Q4- Based on your answer to Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names). In your list, carefully consider if the following organs are usually contained or not: liver, gallbladder, stomach, spleen, pancreas and kidneys. \n"
+"Q4- Based on your answer to Q2 and Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
 "Q4 = _\n")
 
 BodyRegionTextSkeletonV0=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It highlights major bones, not soft tissue. Answer the questions below:\n"
@@ -1971,18 +2114,18 @@ def RedArea(image_path):
     return area
 
 TextCompare=('Based on your analyses of the two figures, which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
-             'Consider your previous analyses, but confirm these analyses by analyzing and comparing the two images again. Consider the shape, location, and completeness of the %(organ)s in each overlay. Think thorughly and justify your answer.')
+             'Consider your previous analyses, but confirm these analyses by analyzing and comparing the two images again. Consider the shape, location, and completeness of the %(organ)s in each overlay. Think thoroughly and justify your answer.')
 
 TextCompareAdd=('First, analyze possible errors in overlay 2, in doing so, directly compare it to overlay 1. In this comparison, you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
                 'After analyzing overlay 2, answer me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
-                'Think thorughly and justify your answer. If both overlays have mistakes, choose the one whith less mistakes or smaller mistakes. You must always choose one of the overlays, one is for sure better than the other, and they are different. You cannot just say they are both equally good or equally bad, they are not. ')# If you you are sure that both are equally bad or equally good, respond "none".c
+                'Think thoroughly and justify your answer. If both overlays have mistakes, choose the one whit less mistakes or smaller mistakes. You must always choose one of the overlays, one is for sure better than the other, and they are different. You cannot just say they are both equally good or equally bad, they are not. ')# If you you are sure that both are equally bad or equally good, respond "none".c
 
 TextCompareSuper=('Based on your analyses of the two figures, which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
     'Now that you know both images, you may want to revise your previous analyses, as you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
     'To help you in this comparison, carefully observe the image I am sending now. It shows the same CT scan frontal projection as Image 1 and Image 2, but it shows the 2 overlays. '
     'In this new image, overlay 1 in red and overlay 2 in yellow. The superposition is in orange. '   
     'After throughly analyzing your previous answers and the new image, tell me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
-    'Think thorughly and justify your answer. If both overlays have mistakes, choose the one whith less mistakes or smaller mistakes. If you you are sure that both are equally bad or equally good, respond "none".')
+    'Think thorughly and justify your answer. If both overlays have mistakes, choose the one with less mistakes or smaller mistakes. If you you are sure that both are equally bad or equally good, respond "none".')
 
 def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2, 
                             base_url='http://0.0.0.0:8000/v1', size=512,
@@ -1994,8 +2137,12 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
                             text_summarize=CompareSummarize, organ='liver',
                             save_memory=False, window='bone',solid_overlay=False):
     
-    organRegion=text_region % {'organ': organ.replace('_',' ')}
-    text_compare=text_compare % {'organ': organ.replace('_',' ')}
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
+    text_compare=text_compare % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
 
     if organ=='aorta':
         if window=='skeleton':
@@ -2109,11 +2256,33 @@ Compare2ImagesPostcava=(
                 'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
                 'Point 3: In which image is the red shape continuos and tubular?')
 
+Compare2ImagesKidneysOld=("Check out these 2 images, and answer the following questions. I want you to conclude which image is better. The questions represent positive qualities that the images should satisfy. "
+                   "a) Consider that a person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney. If only one images shows a single kidney, the image showing two kidneys should be better. \n"
+                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Are the shapes of the 2 kidneys in image 1 correct? Are the shapes in image 2 better, worse or similar? \n"
+                   "c) Completeness: does one image show more complete kidney overlays than the other? Is any overlay missing some part? \n"
+                   "d) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 correct? Are the kidney locations in image 2 better, worse or similar? \n")
+
+Compare2ImagesKidneys=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. "
+                       "Evaluate each image individually, carefully comapre them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
+                       "Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
+                      "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
+                      " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
+
+Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. "
+                       "Evaluate each image individually, carefully comapre them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
+                       "Consider the following anatomical information:"
+                        "a) The liver is a large organ, with triangular or wedge-like shape."
+                        "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis."
+                        "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.")
 
 Compare2Images={
     'descending aorta':Compare2Images,
     'aorta':Compare2ImagesFullAorta,
+    'liver':Compare2ImagesLiver,
     'postcava':Compare2ImagesPostcava,
+    'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
 }
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
@@ -2124,13 +2293,18 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
                             text_summarize=CompareSummarize, organ='liver',
                             save_memory=False, window='bone',solid_overlay=False):
     
-    organRegion=text_region % {'organ': organ.replace('_',' ')}
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
 
     if organ=='aorta':
         if window=='skeleton':
             organRegion+=AorticArchTextSkeleton
         else:
             organRegion+=AorticArchText
+
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
 
     conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
                                                 base_url=base_url, size=size)
@@ -2160,7 +2334,7 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
     
     if isinstance(text_compare, dict):
         text_compare=text_compare[organ]
-    text_compare=text_compare % {'organ': organ.replace('_',' ')}
+    text_compare=text_compare % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
     
     if save_memory:
         conversation=[]
@@ -2838,7 +3012,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             superpose=False,comparison_window='bone',
                             solid_overlay=False,multi_image_prompt_2=False,
                             text_multi_image_prompt_2=Compare2Images,
-                            dice_th=0.8):
+                            dice_th=0.8,file_list=None):
         
         if window=='skeleton':
             text_region=BodyRegionTextSkeleton
@@ -2849,9 +3023,22 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
         answers=[]
         labels=[]
         outputs={}
+
+        if file_list is not None:
+            with open(file_list, 'r') as file:
+                file_list = file.readlines()
+            # Removing the newline characters at the end of each line (optional)
+            file_list = [line.strip() for line in file_list]
+
+        #print('File list:',file_list)
         
 
         for target in os.listdir(pth):
+            if file_list is not None:
+                #print ('Target:',target[:14] )
+                if target[:14] not in file_list:
+                    #print('Skipping:',target)
+                    continue
             if shuffle:
                 best=random.randint(1,2)
             
@@ -2866,6 +3053,10 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             else:
                 y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
                 y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
+
+            if organ not in clean[clean.rfind('ct'):]:
+                y1=y1.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+                y2=y2.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
 
             if superpose:
                 text_compare=TextCompareSuper
