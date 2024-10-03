@@ -374,14 +374,14 @@ d) Location: The stomach is located mainly in the upper left quadrant of the abd
 
 
 StomachDescriptionEDBad="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass-like shape.
 b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random sharp edges or internal holes.
 c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
 d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
 #65% accuracy
 
 StomachDescriptionEDVXX="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of diggestion, it may be more inflated in different regions, or have a hourglass shape.
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass shape.
 b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
 c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
 d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
@@ -409,12 +409,36 @@ c) Unity: The stomach is a single connected structure. If the red overlay shows 
 d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
 #88% accuracy 6 rejections
 
-StomachDescriptionED="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+StomachDescriptionEDV17="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
 a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, but should follow these general contours. It may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
 b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
 c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
 d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#82% 2 prompts non conservative
 
+StomachDescriptionEDV18="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass shape.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper abdomen, just below the diaphragm. It lies mostly under the ribs."""
+#82% 2 prompts non conservative, 4 rejections
+#cnservative: would give 100% with 11 rejections!
+#If you force yes or no answers, you get 100% accuracy with 9 rejections
+
+
+StomachDescriptionEDV20="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature. It is not expected to be perfectly uniform but should follow these general contours. It may be more rounded in different regions, or have a hourglass shape with two bulges.
+c) Unity: The stomach red overlay should be a single connected structure. Big errors overlay are: showing multiple structures, disconnected parts, or internal voids.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Force yes or no answers: 72% accuracy, 4 rejections
+
+StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay should be a single connected structure. If it has multiple structures or small disconnected parts, the overlay has a big error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+# 83% 3 rejections (10/12)
+# Conservative: 100%, 10 rejections
 
 
 PancreasDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
@@ -2315,7 +2339,8 @@ TextCompareAdd=('First, analyze possible errors in overlay 2, in doing so, direc
 TextCompareAdd3Options=('First, analyze possible errors in overlay 2, in doing so, directly compare it to overlay 1. In this comparison, you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
                 'After analyzing overlay 2, answer me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
                 'Think thoroughly and justify your answer, and try your best to truly understand which overlay is better and why. '
-                'Say that neither overlay is better only in one on these three consitions: you are sure both overlays are equally bad / you are sure both overlays equally good / you cannot be totally sure that an overlay is better than the other.')
+                'Say that there is no better overlay only if: you are sure that both are EQUALLY bad / you are sure they are EQUALLY good / both overlays have very obvious mistakes.')
+                #'Say that neither overlay is better only in one on these three consitions: you are sure both overlays are equally bad / you are sure both overlays equally good / you cannot be totally sure that an overlay is better than the other.')
 
 TextCompareSuper=('Based on your analyses of the two figures, which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
     'Now that you know both images, you may want to revise your previous analyses, as you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
@@ -2410,6 +2435,46 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
     else:
         return 0.5
 
+def CompareAnswers(answer,conservative):
+    if 'overlay 1' in answer[0].lower() and 'overlay 2' not in answer[0].lower():
+        a1 = 1
+    elif 'overlay 2' in answer[0].lower() and 'overlay 1' not in answer[0].lower():
+        a1 = 2
+    else:
+        a1 = 0.5
+
+    if 'overlay 1' in answer[1].lower() and 'overlay 2' not in answer[1].lower():
+        a2 = 1
+    elif 'overlay 2' in answer[1].lower() and 'overlay 1' not in answer[1].lower():
+        a2 = 2
+    else:
+        a2 = 0.5
+
+    print("Dual answers are:",a1,a2)
+
+    if conservative:
+        if a1==0.5 or a2==0.5:#one of the 2 answers is uncertain: return an uncertain answer
+            return 0.5, [a1,a2]
+        elif a1==a2:#both answers are the same, but I sent images in different order, so the answers are inconsistent: return an uncertain answer
+            return 0.5, [a1,a2]
+        else:#both answers are different, which is consistent, because images were in different order: return the answer for the original image order sent as input to this function
+            return a1, [a1,a2]
+    else:
+        if a1==0.5 and a2==0.5:#one of the 2 answers is uncertain: return an uncertain answer
+            return 0.5, [a1,a2]
+        elif a2==0.5:
+            return a1, [a1,a2]
+        elif a1==0.5:
+            #invert a2
+            if a2==1:    
+                return 2, [a1,a2]
+            else:
+                return 1, [a1,a2]
+        elif a1==a2:#both answers are the same, but I sent images in different order, so the answers are inconsistent: return an uncertain answer
+            return 0.5, [a1,a2]
+        else:#both answers are different, which is consistent, because images were in different order: return the answer for the original image order sent as input to this function
+            return a1, [a1,a2]
+
 
 def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2, 
                             base_url='http://0.0.0.0:8000/v1', size=512,
@@ -2500,44 +2565,7 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
     
 
 
-    if 'overlay 1' in answer[0].lower() and 'overlay 2' not in answer[0].lower():
-        a1 = 1
-    elif 'overlay 2' in answer[0].lower() and 'overlay 1' not in answer[0].lower():
-        a1 = 2
-    else:
-        a1 = 0.5
-
-    if 'overlay 1' in answer[1].lower() and 'overlay 2' not in answer[1].lower():
-        a2 = 1
-    elif 'overlay 2' in answer[1].lower() and 'overlay 1' not in answer[1].lower():
-        a2 = 2
-    else:
-        a2 = 0.5
-
-    print("Dual answers are:",a1,a2)
-
-    if conservative:
-        if a1==0.5 or a2==0.5:#one of the 2 answers is uncertain: return an uncertain answer
-            return 0.5, [a1,a2]
-        elif a1==a2:#both answers are the same, but I sent images in different order, so the answers are inconsistent: return an uncertain answer
-            return 0.5, [a1,a2]
-        else:#both answers are different, which is consistent, because images were in different order: return the answer for the original image order sent as input to this function
-            return a1, [a1,a2]
-    else:
-        if a1==0.5 and a2==0.5:#one of the 2 answers is uncertain: return an uncertain answer
-            return 0.5, [a1,a2]
-        elif a2==0.5:
-            return a1, [a1,a2]
-        elif a1==0.5:
-            #invert a2
-            if a2==1:    
-                return 2, [a1,a2]
-            else:
-                return 1, [a1,a2]
-        elif a1==a2:#both answers are the same, but I sent images in different order, so the answers are inconsistent: return an uncertain answer
-            return 0.5, [a1,a2]
-        else:#both answers are different, which is consistent, because images were in different order: return the answer for the original image order sent as input to this function
-            return a1, [a1,a2]
+    return CompareAnswers(answer,conservative)
     
 
 
@@ -2598,12 +2626,92 @@ Compare2ImagesKidneys=("I am sending you 2 images, Image 1 and Image 2. Both ima
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
 Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. "
-                       "Evaluate each image individually, carefully comapre them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
+                       " A red shape (overlay) over the images demarks the liver, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. "
+                       "Evaluate each image individually, carefully comapre them and conclude which overlay better represents the liver, the one in Image 1 or in Image 2. "
                        "Consider the following anatomical information:"
                         "a) The liver is a large organ, with triangular or wedge-like shape."
                         "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis."
                         "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.")
+
+Compare2ImagesStomachV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay should be a single connected structure. If it has multiple structures or small disconnected parts, the overlay has a big error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#80%, 0 rejections
+#try accepting unknown
+
+
+
+Compare2ImagesStomachV2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1, the one in Image 2, or neither. 
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#85%, 1 rejection
+
+Compare2ImagesStomachV3="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass (two rounded bulbs separated by a narrow waist).
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#dual confirmation: 92%, 2 rejections, 1 mistake
+
+
+
+
+Compare2ImagesStomachV5="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
+'Say that there is no better overlay only if: you are totally sure that both are equally bad / you are totally sure they are equally good / both overlays have very big mistakes / you absolutelly cannot tell which one is better.'
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Dual confirmation: 1 error, 3 refusals
+
+
+
+Compare2ImagesStomachConservativeV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
+'Say that there is no better overlay only if: you are sure that both are equally bad / you are sure they are equally good / both overlays have very obvious mistakes / you truly cannot tell which one is better.'
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Dual confirmation: accuracy 100%, 4 rejections
+
+Compare2ImagesStomachConservative="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Dual confirmation: accuracy 100%, 4 rejections
+
+Compare2ImagesStomach="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
+Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Dual confirmation: 93%, 1 rejection, 1 mistake --------Best until now
 
 Compare2Images={
     'descending aorta':Compare2ImagesAorta,
@@ -2611,6 +2719,7 @@ Compare2Images={
     'liver':Compare2ImagesLiver,
     'postcava':Compare2ImagesPostcava,
     'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
+    'stomach':Compare2ImagesStomach,
 }
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
@@ -2684,6 +2793,78 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
         return 2
     else:
         return 0.5
+
+
+def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2, 
+                            base_url='http://0.0.0.0:8000/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=None,
+                            text_compare=Compare2Images,
+                            text_summarize=CompareSummarize, organ='liver',
+                            save_memory=False, window='bone',solid_overlay=False,
+                            conservative=False):
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+                text_compare=Compare2ImagesFullAorta
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero, choosing annotation with smallest overlay')
+        if a1<a2:
+            return 1
+        elif a2<=a1:
+            return 2
+    
+    
+    if isinstance(text_compare, dict):
+        text_compare=text_compare[organ]
+    text_compare=text_compare % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+    
+    if save_memory:
+        conversation=[[],[]]
+    else:
+        conversation=[conversation,conversation]
+    imgs=[[y1,y2],[y2,y1]]
+    text=[text_compare,text_compare]
+
+    conversation, answer = SendMessageLmdeploy(imgs,text=text, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay,
+                                                batch=2)
+    imgs=[[],[]]
+    text=[text_summarize+answer[0],text_summarize+answer[1]]
+    conver=[[],[]]
+    conversation, answer = SendMessageLmdeploy(imgs, text=text, conver=conver,
+                                               base_url=base_url, size=size,
+                                               batch=2)
+
+    return CompareAnswers(answer,conservative)
     
 
 def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
@@ -3413,22 +3594,34 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
                 print('clean:',clean)
 
-            if dual_confirmation and (superpose or multi_image_prompt_2):
+            if dual_confirmation and superpose:
                 raise ValueError('Dual confirmation is not implemented for superpose or multi_image_prompt_2.')
             
             if dual_confirmation:
-                answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
+                if multi_image_prompt_2:
+                    answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmation(
                                 clean=clean,y1=y1,y2=y2,
                                 base_url=base_url,size=size,
                                 text_region=text_region, 
                                 organ_descriptions=organ_descriptions,
-                                text_y1=text_y1, 
-                                text_y2=text_y2,
-                                text_compare=text_compare,
+                                text_compare=text_multi_image_prompt_2,
                                 text_summarize=text_summarize,
                                 organ=organ,save_memory=save_memory,
                                 window=window,solid_overlay=solid_overlay,
                                 conservative=conservative_dual)
+                else:
+                    answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
+                                    clean=clean,y1=y1,y2=y2,
+                                    base_url=base_url,size=size,
+                                    text_region=text_region, 
+                                    organ_descriptions=organ_descriptions,
+                                    text_y1=text_y1, 
+                                    text_y2=text_y2,
+                                    text_compare=text_compare,
+                                    text_summarize=text_summarize,
+                                    organ=organ,save_memory=save_memory,
+                                    window=window,solid_overlay=solid_overlay,
+                                    conservative=conservative_dual)
             elif superpose:
                 answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
                             clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
