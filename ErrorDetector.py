@@ -16,8 +16,9 @@ except:
     import projection as prj
 import tempfile
 import shutil
-
+import copy
 import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
 
 ZeroShotInstructions=("The image I am sending is a frontal projection of a CT scan. "
                       "It is not a CT slice, we have transparency and can see through the entire body, "
@@ -284,7 +285,7 @@ d) The stomach is located in the upper left quadrant of the abdomen (right side 
 e) The stomach red overlay should be a single smooth shape."""
 #0.75 accuracy, erros actually make sense
 
-StomachDescriptionEDV4="""When evaluating and comparing the overlays, consider the following anatomical information:
+StomachDescriptionEDVX="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
 b) Its curve does not point up.
 c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
@@ -300,7 +301,7 @@ d) The stomach is mainly located in the upper left quadrant of the abdomen (righ
 e) The stomach red overlay should be a single structure."""
 #75% acc
 
-StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+StomachDescriptionEDV6="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
 b) Its curve does not point up.
 c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
@@ -319,10 +320,100 @@ d) The stomach is mainly located in the upper part of the abdomen, just below th
 e) The stomach red overlay should be a single structure."""
 #68%
 
-StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
+StomachDescriptionEDV8="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) Shape: The stomach is an organ with a J-shaped or curved sac-like structure. The stomach red overlay should be a single structure.
 b) Wrong shapes: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
 c) Location: The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#68%
+
+StomachDescriptionEDV9="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single structure."""
+#68%
+
+StomachDescriptionEDV10="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is a J-shaped or curved sac-like structure. When empty, it is small and compact, and may look folded. During digestion, it becomes larger and more rounded but still maintains some of its J-shape; it may become rounded at the top, at the middle, at the bottom or it also take on an hourglass shape with a contraction in the middle and two bulging areas.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single structure."""
+#52%
+
+
+
+StomachDescriptionEDV11="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure. With a J shape, tts curve points down. During some time of diggestion, it may be more inflated in different regions, or have a hourglass shape.
+c) Defined and smooth shape: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+e) Unity: The stomach red overlay should be a single structure. Not being a single structure is an obvious overlay error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+
+
+StomachDescriptionEDV12="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+StomachDescriptionEDV12="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+StomachDescriptionEDV13="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#Above 80% accuracy
+
+
+
+StomachDescriptionEDBad="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random sharp edges or internal holes.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#65% accuracy
+
+StomachDescriptionEDVXX="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of diggestion, it may be more inflated in different regions, or have a hourglass shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#100% accuracr with 5 samples rejected as "do not know".
+
+
+StomachDescriptionEDV14="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, or a flipped letter L, or a sac with a downwards curve. During some time of diggestion, it may be more rounded in different regions, or have a hourglass shape with two bulges.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#75% accuracy
+
+StomachDescriptionEDV15="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. The stomach can resemble a J-shape, flipped L-shape, or a sac-like structure with a downward curve. It is not expected to be perfectly uniform but should follow these general contours. It may be more rounded in different regions, or have a hourglass shape with 2 round areas.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#100% acc, 4 rejections
+
+StomachDescriptionEDV16="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, it may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#88% accuracy 6 rejections
+
+StomachDescriptionED="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, but should follow these general contours. It may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
 
 
 
@@ -1688,8 +1779,9 @@ def InitializeOpenAIClient(base_url='http://0.0.0.0:8000/v1'):
 
 def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_overlay=False):
     #if no previous conversation, send conver=[]. Do not automatically define conver above.
+    cnv=copy.deepcopy(conver)
     
-    conver.append({
+    cnv.append({
             'role': 'user',
             'content': [{
                 'type': 'text',
@@ -1698,6 +1790,7 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_over
         })
     
     imgs=[]
+    print('img_file_list:',img_file_list)
     for i,img in enumerate(img_file_list,0):
         if isinstance(size, list):
             s=size[i]
@@ -1707,7 +1800,7 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_over
             img = resize_and_encode_image(img, s, solid_overlay=solid_overlay)
         else:
             img = encode_image(img, solid_overlay=solid_overlay)
-        conver[-1]['content'].append({
+        cnv[-1]['content'].append({
                                             "type": "image_url",
                                             "image_url": {
                                                 "url": f"data:image/png;base64,{img}"
@@ -1716,11 +1809,45 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_over
         if prt:
             image_size, file_size = get_image_size_from_base64(f"data:image/png;base64,{img}")
             print(f"Image Size (WxH) in prompt: {image_size}, File Size: {file_size} bytes")
-    return conver
+    return cnv
+
+def print_conv(conver):
+    # Print the conversation with truncated base64 data
+    for entry in conver:
+        print(f"Role: {entry['role']}")
+        for content in entry['content']:
+            if content['type'] == 'text':
+                print(f"Text: {content['text']}")
+            elif content['type'] == 'image_url':
+                image_url = content['image_url']['url']
+                truncated_url = truncate_base64(image_url)
+                # Extract image size from the base64 string
+    i=0
+    for entry in conver:
+        for content in entry['content']:
+            if content['type'] == 'image_url':
+                i+=1
+    print('Number of images in the conversation:',i)
+
+def request_VLM(cv,model_name,client,max_tokens):
+    if max_tokens is None:
+        return client.chat.completions.create(
+            model=model_name,
+            messages=cv,
+            temperature=0,
+            top_p=1)
+    else:
+        return client.chat.completions.create(
+            model=model_name,
+            messages=cv,
+            max_tokens=max_tokens,
+            temperature=0,
+            top_p=1)
 
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
                         size=None,prt=True,print_conversation=False,max_tokens=None,
-                        solid_overlay=False):
+                        solid_overlay=False,
+                        batch=1):
     """
     Sends a message to the LM deploy API.
 
@@ -1740,50 +1867,46 @@ def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:80
     #if no previous conversation, send conver=[]. Do not automatically define conver above.
     client,model_name=InitializeOpenAIClient(base_url)
 
-    conver=CreateConversation(img_file_list=img_file_list, text=text, conver=conver,size=size,solid_overlay=solid_overlay)
-
-    # Print the conversation with truncated base64 data
-    if print_conversation:
-        for entry in conver:
-            print(f"Role: {entry['role']}")
-            for content in entry['content']:
-                if content['type'] == 'text':
-                    print(f"Text: {content['text']}")
-                elif content['type'] == 'image_url':
-                    image_url = content['image_url']['url']
-                    truncated_url = truncate_base64(image_url)
-                    # Extract image size from the base64 string
-    i=0
-    for entry in conver:
-        for content in entry['content']:
-            if content['type'] == 'image_url':
-                i+=1
-    print('Number of images in the conversation:',i)
-    print('Length of img_file_list:',len(img_file_list))
-    # Create the request with the base64-encoded image data
-    if max_tokens is None:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=conver,
-            temperature=0,
-            top_p=1)
+    if batch>1:
+        for i in range(batch):
+            #print('Batch:',i)
+            #print('img_file_list:',img_file_list[i])
+            #print('text:',text[i])
+            #print('conver:',conver[i])
+            conver[i]=CreateConversation(img_file_list=img_file_list[i], text=text[i], conver=conver[i],size=size,solid_overlay=solid_overlay,prt=(i==0))
+            if print_conversation:
+                print_conv(conver[i])
     else:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=conver,
-            max_tokens=max_tokens,
-            temperature=0,
-            top_p=1)
+        conver=CreateConversation(img_file_list=img_file_list, text=text, conver=conver,size=size,solid_overlay=solid_overlay)
+        if print_conversation:
+            print_conv(conver)
 
+    response=[]
+    for i in range(batch):
+        if batch==1:
+            response=request_VLM(conver,model_name,client,max_tokens)
+        else:
+            # Use ThreadPoolExecutor to send both requests concurrently
+            with ThreadPoolExecutor() as executor:
+                # Map both the conversation and model name to each thread
+                response = list(executor.map(request_VLM, conver, [model_name] * len(conver),[client] * len(conver),[max_tokens] * len(conver)))
+        
 
-    # Print the response
-    answer = response.choices[0].message.content
-
-    conver.append({"role": "assistant","content": [{"type": "text", "text": answer}]})
-
-    if prt:
-        print('Text:',text)
-        print('Answer:',answer)
+    if batch==1:
+        # Print the response
+        answer = response.choices[0].message.content
+        conver.append({"role": "assistant","content": [{"type": "text", "text": response.choices[0].message.content}]})
+        if prt:
+            print('Text:',text)
+            print('Answer:',answer)
+    else:
+        answer=[]
+        for i in range(batch):
+            answer.append(response[i].choices[0].message.content)
+            conver[i].append({"role": "assistant","content": [{"type": "text", "text": response[i].choices[0].message.content}]})
+        if prt:
+            print('Text:',text[0])
+            print('Answer:',answer[0])
 
     return conver, answer
 
@@ -2066,6 +2189,12 @@ CompareSummarize2Figs=("The text below represents a comparisons of 2 overlays, '
                 "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "The text is:\n")
 
+CompareSummarize2Figs=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
+                " Image 1 showed Overlay 1, and Image 2 showed Overlay 2. "
+                "A VLM like you compared the 2 overlays by analyzing the 2 images. Its answer is the text below."
+                "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only these words: 'Overlay 1', 'Overlay 2' or 'Neither'. "
+                "The text is:\n")
+
 CompareSummarize6Figs=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 " Image 1 and 4 showed Overlay 1 in red, and Images 2 and 5 showed Overlay 2 in yellow. Images 3 and 6 showed the superposition of both overlays. "
                 "A LVLM like you compared the 2 overlays by analyzing the 6 images. Its answer is the text below."
@@ -2183,6 +2312,10 @@ TextCompare=('Based on your analyses of the two figures, which of the overlays i
 TextCompareAdd=('First, analyze possible errors in overlay 2, in doing so, directly compare it to overlay 1. In this comparison, you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
                 'After analyzing overlay 2, answer me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
                 'Think thoroughly and justify your answer. If both overlays have mistakes, choose the one whit less mistakes or smaller mistakes. You must always choose one of the overlays, one is for sure better than the other, and they are different. You cannot just say they are both equally good or equally bad, they are not. ')# If you you are sure that both are equally bad or equally good, respond "none".c
+TextCompareAdd3Options=('First, analyze possible errors in overlay 2, in doing so, directly compare it to overlay 1. In this comparison, you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
+                'After analyzing overlay 2, answer me: which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
+                'Think thoroughly and justify your answer, and try your best to truly understand which overlay is better and why. '
+                'Say that neither overlay is better only in one on these three consitions: you are sure both overlays are equally bad / you are sure both overlays equally good / you cannot be totally sure that an overlay is better than the other.')
 
 TextCompareSuper=('Based on your analyses of the two figures, which of the overlays is a better overlay for the %(organ)s, the first one (overlay 1, from Image 1) or the second one (overlay 2, from Image 2)?\n'
     'Now that you know both images, you may want to revise your previous analyses, as you may find that either aspects from overlay 2 are worse than those in overlay 1, or you may find that aspects from overlay 1, which you previously found correct, are actually worse than overlay 2. '
@@ -2278,6 +2411,137 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
         return 0.5
 
 
+def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2, 
+                            base_url='http://0.0.0.0:8000/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=DescriptionsED,
+                            text_y1=ZeroShotInstructions, 
+                            text_y2=ZeroShotInstructions,
+                            text_compare=TextCompareAdd,
+                            text_summarize=CompareSummarize, organ='liver',
+                            save_memory=False, window='bone',solid_overlay=False,
+                            conservative=True):
+    #sends 2 prompts, each one with one image order, checks if the answer is the same, if not, returns 0.5
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
+    text_compare=text_compare % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero, choosing annotation with smallest overlay')
+        if a1<a2:
+            return 1
+        elif a2<=a1:
+            return 2
+    
+    
+    text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
+    if isinstance(organ_descriptions[organ], list):
+        text_y1 += organ_descriptions[organ][0]
+    else:
+        text_y1 += organ_descriptions[organ]
+
+    text_y2 = text_y2 % {'organ': organ.replace('_',' '), 'number': 2} 
+    if isinstance(organ_descriptions[organ], list):
+        text_y2 += organ_descriptions[organ][1]
+    else:
+        text_y2 += organ_descriptions[organ]
+
+    if save_memory:
+        conversation=[]
+
+    #Analyze image 1
+    imgs=[[y1],[y2]]
+    conversation = [conversation,conversation]
+    text = [text_y1,text_y1]
+
+    conversation, answer = SendMessageLmdeploy(imgs,text=text, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay,
+                                                batch=2)
+    
+    #Analyze image 2 and compare
+    imgs=[[y2],[y1]]
+    text = [text_y2+'\n'+text_compare, text_y2+'\n'+text_compare]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay,
+                                                batch=2)
+    
+
+    text = [text_summarize+answer[0],text_summarize+answer[1]]
+    conversation, answer = SendMessageLmdeploy([[],[]], text=text, conver=[[],[]],
+                                               base_url=base_url, size=size,
+                                                batch=2)
+    
+
+
+    if 'overlay 1' in answer[0].lower() and 'overlay 2' not in answer[0].lower():
+        a1 = 1
+    elif 'overlay 2' in answer[0].lower() and 'overlay 1' not in answer[0].lower():
+        a1 = 2
+    else:
+        a1 = 0.5
+
+    if 'overlay 1' in answer[1].lower() and 'overlay 2' not in answer[1].lower():
+        a2 = 1
+    elif 'overlay 2' in answer[1].lower() and 'overlay 1' not in answer[1].lower():
+        a2 = 2
+    else:
+        a2 = 0.5
+
+    print("Dual answers are:",a1,a2)
+
+    if conservative:
+        if a1==0.5 or a2==0.5:#one of the 2 answers is uncertain: return an uncertain answer
+            return 0.5, [a1,a2]
+        elif a1==a2:#both answers are the same, but I sent images in different order, so the answers are inconsistent: return an uncertain answer
+            return 0.5, [a1,a2]
+        else:#both answers are different, which is consistent, because images were in different order: return the answer for the original image order sent as input to this function
+            return a1, [a1,a2]
+    else:
+        if a1==0.5 and a2==0.5:#one of the 2 answers is uncertain: return an uncertain answer
+            return 0.5, [a1,a2]
+        elif a2==0.5:
+            return a1, [a1,a2]
+        elif a1==0.5:
+            #invert a2
+            if a2==1:    
+                return 2, [a1,a2]
+            else:
+                return 1, [a1,a2]
+        elif a1==a2:#both answers are the same, but I sent images in different order, so the answers are inconsistent: return an uncertain answer
+            return 0.5, [a1,a2]
+        else:#both answers are different, which is consistent, because images were in different order: return the answer for the original image order sent as input to this function
+            return a1, [a1,a2]
+    
+
+
+
 Compare2ImagesGOOD='Check out these 2 images. In which one does the red shape come further up, image 1 or image 2?'
 #90% accuracy!!!!!!!!!
 Compare2ImagesBad=('Check out these 2 images. The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2, or are they equal? If they are equal, answer "equal", if not, answer "the best is image 1" or "the best is image 2".')
@@ -2294,7 +2558,7 @@ Compare2ImagesBad=('Check out these 2 images. The best image is the one where th
 
 
 
-Compare2Images=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
+Compare2ImagesAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
                 'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2?'
                 'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
                 'Point 3: In which image is the red shape continuos and tubular?')
@@ -2342,7 +2606,7 @@ Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both image
                         "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.")
 
 Compare2Images={
-    'descending aorta':Compare2Images,
+    'descending aorta':Compare2ImagesAorta,
     'aorta':Compare2ImagesFullAorta,
     'liver':Compare2ImagesLiver,
     'postcava':Compare2ImagesPostcava,
@@ -3076,7 +3340,8 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             superpose=False,comparison_window='bone',
                             solid_overlay=False,multi_image_prompt_2=False,
                             text_multi_image_prompt_2=Compare2Images,
-                            dice_th=0.8,file_list=None):
+                            dice_th=0.8,file_list=None,
+                            dual_confirmation=False,conservative_dual=False):
         
         if window=='skeleton':
             text_region=BodyRegionTextSkeleton
@@ -3147,8 +3412,24 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 #clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
                 print('clean:',clean)
+
+            if dual_confirmation and (superpose or multi_image_prompt_2):
+                raise ValueError('Dual confirmation is not implemented for superpose or multi_image_prompt_2.')
             
-            if superpose:
+            if dual_confirmation:
+                answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
+                                clean=clean,y1=y1,y2=y2,
+                                base_url=base_url,size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_y1=text_y1, 
+                                text_y2=text_y2,
+                                text_compare=text_compare,
+                                text_summarize=text_summarize,
+                                organ=organ,save_memory=save_memory,
+                                window=window,solid_overlay=solid_overlay,
+                                conservative=conservative_dual)
+            elif superpose:
                 answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
                             clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
                             base_url=base_url,size=size,
@@ -3187,7 +3468,10 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
             answers.append(answer)
             labels.append(best)
-            outputs[target]=(best==answer)
+            if dual_confirmation:
+                outputs[target]=[(best==answer),answer_dual]
+            else:
+                outputs[target]=(best==answer)
 
             if superpose:
                 fake_file.close()
@@ -3199,8 +3483,10 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
         #calculate accuracy based on answers and labels
         answers=np.array(answers)
         labels=np.array(labels)
-        acc=(answers==labels).sum()/len(answers)
+
+        acc=(answers==labels).sum()/(len(answers)-np.where(answers==0.5)[0].shape[0])
         print('Accuracy: ',acc)
+        print('Acc:',(answers==labels).sum(),'/(',len(answers),'-',np.where(answers==0.5)[0].shape[0],')')
         print('answers:',answers)
         print('labels:',labels)
         print()
