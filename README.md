@@ -41,7 +41,7 @@ python3 ProjectDatasetFlex.py --good_folder /mnt/T9/AbdomenAtlasPro/ --bad_folde
 ```
 
 # Run label comparison over projected dataset 
-###(faster than using high level API)
+### (faster than using high level API)
 
 ```bash
 python3 RunAPI.py --path projections/directory/organ/ > organ.log 2>&1
