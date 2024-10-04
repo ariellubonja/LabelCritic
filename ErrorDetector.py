@@ -2685,7 +2685,7 @@ d) Location: The stomach red overlay should be located mainly in the upper abdom
 Compare2ImagesStomachConservativeV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
 Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
-'Say that there is no better overlay only if: you are sure that both are equally bad / you are sure they are equally good / both overlays have very obvious mistakes / you truly cannot tell which one is better.'
+Say that there is no better overlay only if: you are sure that both are equally bad / you are sure they are equally good / both overlays have very obvious mistakes / you truly cannot tell which one is better.'
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
@@ -2796,7 +2796,7 @@ d) Location: The spleen red overlay should be located in the upper left quadrant
 #2 rejections, 0 errors
 
 
-Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+Compare2ImagesGallbladderV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
 Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
 Consider the following anatomical information:
@@ -2804,17 +2804,51 @@ a) Shape: The gallbladder red overlay should resemble a small pear-shaped sac or
 b) Size: The gallbladder red overlay should be relatively small, not extending beyond the expected size of a few centimeters in length.
 c) Unity: The gallbladder red overlay must be a single connected structure. Multiple disconnected structures are a significant error.
 d) Location: The gallbladder red overlay should be located in the upper right quadrant of the abdomen (left side of the image, which is oriented like an AP X-ray), beneath the liver, near the right edge of the ribcage. It should not extend too far towards the midline or too low towards the pelvis."""
-#error: one gallbladder was too large, it chose the smaller overlay, which was wrong-BDMAP_V0002017; BDMAP_A0001406- model chose the very elongated shape, which was wrong; BDMAP_A0001777 - chose a fragmented one
+#Errors:
+# 2017- one gallbladder was too large, it chose the smaller overlay, which was wrong-BDMAP_V0002017; 
+# 1406- model chose the very elongated shape, which was wrong and had a s curve;
+# 1777 - chose a fragmented one
+# 1889 - chose a small fragmented instead of a larger one
+# 1645 - super difficult
+# 2196 - super difficult, chose by size
+
 #rejections: BDMAP_A0001660
 
-Compare2ImagesGallbladder2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
-A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
-Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Compare2ImagesGallbladderV1="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2.
 Consider the following anatomical information:
-a) The gallbladder is a small, pear-shaped organ.
-b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
-c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in this frontal CT projection.
-d) The gallbladder should be represented as a single red object."""
+a) Shape: The gallbladder red overlay should resemble a pear or oval, and have a smooth shape.
+b) Location: The gallbladder red overlay should be located in the upper right quadrant of the abdomen (left side of the figure, which is oriented like an AP X-ray). It should be near the bottom of the ribcage.
+c) Unity: The gallbladder should be represented as a single red object. Multiple objects or disconnected parts are a big error."""
+
+
+
+Compare2ImagesGallbladderV2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2.
+Say that there is no better overlay only if: you are sure that both are equally bad / you are sure they are equally good / both overlays have very obvious mistakes / you truly cannot tell which one is better.
+Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+
+
+Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+#Accuracy:  0.8433734939759037
+#Acc: 70 /( 110 - 27 )
+#Out of 13 mistakes, 2 are probable annotation errors: V0001777 and A0000686
+#5 are certain label errors: A0001441, A0001802, A0001880, A0002308, V0000548
+#This makes our acc at least: 75/(110-27)=75/83=0.9036144578313253
+
 
 Compare2Images={
     'descending aorta':Compare2ImagesAorta,
@@ -2828,18 +2862,6 @@ Compare2Images={
     'gall_bladder':Compare2ImagesGallbladder
 }
 
-
-Compare2Images2={
-    'descending aorta':Compare2ImagesAorta,
-    'aorta':Compare2ImagesFullAorta,
-    'liver':Compare2ImagesLiver,
-    'postcava':Compare2ImagesPostcava,
-    'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
-    'stomach':Compare2ImagesStomach,#much better than putting one image per prompt and sending more prompts
-    'pancreas':Compare2ImagesPancreas,
-    'spleen':Compare2ImagesSpleen,
-    'gall_bladder':Compare2ImagesGallbladder2
-}
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
                             base_url='http://0.0.0.0:8000/v1', size=512,
