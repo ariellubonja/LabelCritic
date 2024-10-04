@@ -52,6 +52,12 @@ SummarizeInstructionsFewShot=("Summarize your last answer, using only 2 words: "
                             "'good annotation' or 'bad annotation'. "
                             "Is the annotation for the last image I sent a 'good annotation' or a 'bad annotation'?")
 
+CompareSummarizeED=("The text below represents an evaluation of an overlay. The overlay was a red shape over a CT scan projection, which was an image similar to an X-ray. "
+                "The overlay was supposed to mark the %(organ)s region, being an annotation for the organ. "
+                "A VLM like you analyzed the overlay and evaluated if it was a 'good annotation' or a 'bad annotation'. Its answer is the text below."
+                "I want you ro read the VLM's answer and tell me if the VLM considered the annotation good or bad. Answer me with only these words: 'good annotation' or 'bad annotation'. "
+                "The text is:\n")
+
 OneShotFirstPart=("The images I am sending are a frontal projections of a CT scans. "
                      "They are not CT slices, instead, they have transparency and let you see throgh "
                      "the entire human body, like an X-ray does. "
@@ -534,12 +540,12 @@ DescriptionsED={
     "aorta":AortaDescriptionED,
     "descending aorta":DescendingAortaDescriptionED,
     "liver":LiverDescriptionED,
-              "kidneys":KidneysDescriptionED,
-              "adrenal_glands":AdrenalGlandDescriptionED,
-              "spleen":SpleenDescriptionED,
-              "stomach":StomachDescriptionED,
-              "pancreas":PancreasDescriptionED,
-              "gall_bladder":GallbladderDescriptionED}
+    "kidneys":KidneysDescriptionED,
+    "adrenal_glands":AdrenalGlandDescriptionED,
+    "spleen":SpleenDescriptionED,
+    "stomach":StomachDescriptionED,
+    "pancreas":PancreasDescriptionED,
+    "gall_bladder":GallbladderDescriptionED}
 
 
 organ_descriptions={'liver':liver}
@@ -980,8 +986,7 @@ def FewShot2Steps(img,good_examples,bad_examples,processor,model,
                             ],
                         })
     
-    conversation.append({
-                            "role": "user",
+    conversation.append({   "role": "user",
                             "content": [
                                 {"type": "text", "text": summarize_instructions}
                             ],
@@ -1157,6 +1162,9 @@ def FewShotSystematicEval(good_annos,bad_annos,model,processor,
 
     print('Accuracy: ',calculate_accuracy(answers_good,answers_bad))
 
+
+
+
 def LoadLLaVAOneVision7B(bits=4):
     import torch
     from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
@@ -1216,8 +1224,267 @@ def LoadLLaVAOneVision72B(bits=8):
 
 
 
+def ErrorDetectionLMDeployZeroShot(clean, y, 
+                           base_url='http://0.0.0.0:8000/v1', size=512,
+                           text_region=BodyRegionText, 
+                           organ_descriptions=DescriptionsED,
+                           instructions=ZeroShotInstructions,
+                           text_summarize=CompareSummarizeED, organ='liver',
+                           save_memory=True, window='bone',solid_overlay=False):
+    """
+    clean: X-ray withouth annotation
+    y: X-ray with annotation
+    """
+    
+
+    #check if organ should be in image
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+             organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+                text_compare=Compare2ImagesFullAorta
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a=RedArea(y)
+        print('Annotation should be zero')
+        if a==0:
+            return 1.0
+        else:
+            return 0.0
+        
+
+    #organ should be present in image. Let's evaluate the label y
+    if isinstance(organ_descriptions, dict):
+        organ_description=organ_descriptions[organ]
+
+    instructions=instructions % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_description
+    
+    if save_memory:
+        conversation=[]
+
+    #Analyze image 1
+    imgs=[y]
+    conversation, answer = SendMessageLmdeploy(imgs,text=instructions, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay)
+    
+    #summarize answer
+    text=text_summarize % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+answer
+    conversation, answer = SendMessageLmdeploy([], text=text, conver=[], base_url=base_url, size=size)
+
+    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
+        return 1
+    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
+        return 2
+    else:
+        return 0.5
+
+def ZeroShotSystematicEvalLMDeploy(good_annos,bad_annos,
+                                   base_url='http://0.0.0.0:8000/v1', size=512,
+                                    text_region=BodyRegionText, 
+                                    organ_descriptions=DescriptionsED,
+                                    instructions=ZeroShotInstructions,
+                                    text_summarize=CompareSummarizeED, organ='liver',
+                                    save_memory=True, window='bone',solid_overlay=False):
+        
+        if multi_image_prompt_2=='auto':
+            if organ in ['kidneys','liver','pancreas']:
+                multi_image_prompt_2=False
+            elif organ in ['aorta','postcava','spleen','stomach','gall_bladder']:
+                multi_image_prompt_2=True
+            else:
+                raise ValueError('Organ not recognized for multi_image_prompt_2=auto')
+            
+        if window=='skeleton':
+            text_region=BodyRegionTextSkeleton
+        if comparison_window=='skeleton':
+            text_y1=FindErrorsSkeleton
+            text_y2=FindErrorsSkeleton
+
+        answers=[]
+        labels=[]
+        outputs={}
+
+        if file_list is not None:
+            with open(file_list, 'r') as file:
+                file_list = file.readlines()
+            # Removing the newline characters at the end of each line (optional)
+            file_list = [line.strip() for line in file_list]
+
+        #print('File list:',file_list)
+        
+
+        for target in os.listdir(pth):
+            if file_list is not None:
+                #print ('Target:',target[:14] )
+                if target[:14] not in file_list:
+                    #print('Skipping:',target)
+                    continue
+            if shuffle:
+                best=random.randint(1,2)
+            
+            if 'ct_window_bone_axis_1' not in target:
+                continue
+            clean=os.path.join(pth,target)
 
 
+            if best==2:
+                y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
+                y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
+            else:
+                y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
+                y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
+
+            if organ not in clean[clean.rfind('ct'):]:
+                y1=y1.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+                y2=y2.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+
+            if superpose:
+                text_compare=TextCompareSuper
+                y_super=superpose_images(y1,y2)
+                from io import BytesIO
+                fake_file = BytesIO()
+                y_super.save(fake_file, format='PNG')
+                fake_file.seek(0)
+
+
+            print(target)
+            print('Best is:',best)
+
+            if dice_check:
+                dice=check_dice(y1,y2)
+                print('2D dice coefficient between 2 projections on axis 1:',dice)
+                if dice>dice_th:
+                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
+                    continue
+            
+            if window=='skeleton':
+                #clean=clean[:clean.rfind('ct_window_bone')]+'composite_ct_2_figs_axis_1_skeleton.png'
+                #clean=clean.replace('ct_window_bone','composite')
+                #clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
+                clean=clean.replace('ct_window_bone','ct_window_skeleton')
+                print('clean:',clean)
+
+            if dual_confirmation and superpose:
+                raise ValueError('Dual confirmation is not implemented for superpose or multi_image_prompt_2.')
+            
+
+            print('dual_confirmation:',dual_confirmation)
+            print('multi_image_prompt_2:',multi_image_prompt_2)
+
+            if dual_confirmation:
+                if multi_image_prompt_2:
+                    print('Using dual confirmation and sending images together.')
+                    answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmation(
+                                clean=clean,y1=y1,y2=y2,
+                                base_url=base_url,size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_compare=text_multi_image_prompt_2,
+                                text_summarize=text_summarize,
+                                organ=organ,save_memory=save_memory,
+                                window=window,solid_overlay=solid_overlay,
+                                conservative=conservative_dual)
+                else:
+                    print('Using dual confirmation and sending images separately.')
+                    answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
+                                    clean=clean,y1=y1,y2=y2,
+                                    base_url=base_url,size=size,
+                                    text_region=text_region, 
+                                    organ_descriptions=organ_descriptions,
+                                    text_y1=text_y1, 
+                                    text_y2=text_y2,
+                                    text_compare=text_compare,
+                                    text_summarize=text_summarize,
+                                    organ=organ,save_memory=save_memory,
+                                    window=window,solid_overlay=solid_overlay,
+                                    conservative=conservative_dual)
+            elif superpose:
+                answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
+                            clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
+                            base_url=base_url,size=size,
+                            text_region=text_region, 
+                            organ_descriptions=organ_descriptions,
+                            text_y1=text_y1, 
+                            text_y2=text_y2,
+                            text_compare=text_compare,
+                            text_summarize=text_summarize,
+                            organ=organ,save_memory=save_memory,
+                            window=window,solid_overlay=solid_overlay)
+            elif multi_image_prompt_2:
+                answer=Prompt2MessagesSepFiguresLMDeploy(
+                                clean=clean,y1=y1,y2=y2,
+                                base_url=base_url,size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_compare=text_multi_image_prompt_2,
+                                text_summarize=text_summarize,
+                                organ=organ,save_memory=save_memory,
+                                window=window,solid_overlay=solid_overlay)
+
+            else:
+                answer=Prompt3MessagesSepFiguresLMDeploy(
+                                clean=clean,y1=y1,y2=y2,
+                                base_url=base_url,size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_y1=text_y1, 
+                                text_y2=text_y2,
+                                text_compare=text_compare,
+                                text_summarize=text_summarize,
+                                organ=organ,save_memory=save_memory,
+                                window=window,solid_overlay=solid_overlay)
+            
+            print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
+            answers.append(answer)
+            labels.append(best)
+            if dual_confirmation:
+                outputs[target]=[(best==answer),answer_dual]
+            else:
+                outputs[target]=(best==answer)
+
+            if superpose:
+                fake_file.close()
+        
+            # Clean up
+            del answer
+            torch.cuda.empty_cache()
+            gc.collect()
+        #calculate accuracy based on answers and labels
+        answers=np.array(answers)
+        labels=np.array(labels)
+
+        acc=(answers==labels).sum()/(len(answers)-np.where(answers==0.5)[0].shape[0])
+        print('Accuracy: ',acc)
+        print('Acc:',(answers==labels).sum(),'/(',len(answers),'-',np.where(answers==0.5)[0].shape[0],')')
+        print('answers:',answers)
+        print('labels:',labels)
+        print()
+
+        for k,v in outputs.items():
+            print(k,v)
 
 
 
@@ -2845,6 +3112,17 @@ d) Location: The gallbladder is located in the upper right quadrant of the abdom
 #Accuracy:  0.8068181818181818
 #Acc: 71 /( 110 - 22 )
 
+
+Compare2ImagesGallbladderV4="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
+Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+#77%
+
 Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
 Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2.
@@ -2860,22 +3138,13 @@ d) Location: The gallbladder is located in the upper right quadrant of the abdom
 #This makes our acc at least: 75/(110-27)=75/83=0.9036144578313253
 
 
-Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
-A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
-Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
-Consider the following anatomical information:
-a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
-b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
-c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
-
 
 
 Compare2Images={
-    'descending aorta':Compare2ImagesAorta,
-    'aorta':Compare2ImagesFullAorta,
+    'descending aorta':Compare2ImagesAorta,#better here
+    'aorta':Compare2ImagesFullAorta,#better here
     'liver':Compare2ImagesLiver,
-    'postcava':Compare2ImagesPostcava,
+    'postcava':Compare2ImagesPostcava,#better here
     'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
     'stomach':Compare2ImagesStomach,#much better than putting one image per prompt and sending more prompts
     'pancreas':Compare2ImagesPancreas,
@@ -3687,9 +3956,9 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             dual_confirmation=False,conservative_dual=False):
         
         if multi_image_prompt_2=='auto':
-            if organ in ['kidneys','liver','pancreas','gall_bladder']:
+            if organ in ['kidneys','liver','pancreas']:
                 multi_image_prompt_2=False
-            elif organ in ['aorta','postcava','spleen','stomach']:
+            elif organ in ['aorta','postcava','spleen','stomach','gall_bladder']:
                 multi_image_prompt_2=True
             else:
                 raise ValueError('Organ not recognized for multi_image_prompt_2=auto')
