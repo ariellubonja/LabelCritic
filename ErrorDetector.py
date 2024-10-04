@@ -2521,9 +2521,9 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         a2=RedArea(y2)
         print('Annotation should be zero, choosing annotation with smallest overlay')
         if a1<a2:
-            return 1
+            return 1, [a1,a2]
         elif a2<=a1:
-            return 2
+            return 2, [a1,a2]
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -2807,6 +2807,15 @@ d) Location: The gallbladder red overlay should be located in the upper right qu
 #error: one gallbladder was too large, it chose the smaller overlay, which was wrong-BDMAP_V0002017; BDMAP_A0001406- model chose the very elongated shape, which was wrong; BDMAP_A0001777 - chose a fragmented one
 #rejections: BDMAP_A0001660
 
+Compare2ImagesGallbladder2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) The gallbladder is a small, pear-shaped organ.
+b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
+c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in this frontal CT projection.
+d) The gallbladder should be represented as a single red object."""
+
 Compare2Images={
     'descending aorta':Compare2ImagesAorta,
     'aorta':Compare2ImagesFullAorta,
@@ -2817,6 +2826,19 @@ Compare2Images={
     'pancreas':Compare2ImagesPancreas,
     'spleen':Compare2ImagesSpleen,
     'gall_bladder':Compare2ImagesGallbladder
+}
+
+
+Compare2Images2={
+    'descending aorta':Compare2ImagesAorta,
+    'aorta':Compare2ImagesFullAorta,
+    'liver':Compare2ImagesLiver,
+    'postcava':Compare2ImagesPostcava,
+    'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
+    'stomach':Compare2ImagesStomach,#much better than putting one image per prompt and sending more prompts
+    'pancreas':Compare2ImagesPancreas,
+    'spleen':Compare2ImagesSpleen,
+    'gall_bladder':Compare2ImagesGallbladder2
 }
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
@@ -2935,9 +2957,9 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         a2=RedArea(y2)
         print('Annotation should be zero, choosing annotation with smallest overlay')
         if a1<a2:
-            return 1
+            return 1, [a1,a2]
         elif a2<=a1:
-            return 2
+            return 2, [a1,a2]
     
     
     if isinstance(text_compare, dict):
