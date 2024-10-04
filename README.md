@@ -23,7 +23,7 @@ export HF_HOME=./HFCache
 CUDA_VISIBLE_DEVICES=1,2,3,4 vllm serve "Qwen/Qwen2-VL-72B-Instruct-AWQ" --dtype=half --tensor-parallel-size 4 --limit-mm-per-prompt image=3 --gpu_memory_utilization 0.9
 ```
 
-Call API (Python)
+# High level API 
 ```python
 import ErrorDetector as ed
 
@@ -35,8 +35,14 @@ answer=ed.project_and_compare(ct,y1,y2)
 ```
 Example: see MyAPITest.ipynb
 
-### Project a dataset:
+# Project a dataset:
+```bash
+python3 ProjectDatasetFlex.py --good_folder /mnt/T9/AbdomenAtlasPro/ --bad_folder /mnt/sdc/pedro/JHH/nnUnetResultsBad/ --output_dir1 /projections/directory/ --num_processes 10 --file_list /mnt/sdc/pedro/ErrorDetection/ErrorLists/low_dice_benchmark_nnUnet_vs_JHH.txt
+```
+
+# Run label comparison over projected dataset 
+###(faster than using high level API)
 
 ```bash
-python3 ProjectDatasetFlex.py --good_folder /mnt/T9/AbdomenAtlasPro/ --bad_folder /mnt/sdc/pedro/JHH/nnUnetResultsBad/ --output_dir1 compose_nnUnet_JHH --num_processes 10 --file_list /mnt/sdc/pedro/ErrorDetection/ErrorLists/low_dice_benchmark_nnUnet_vs_JHH.txt
+python3 RunAPI.py --path projections/directory/organ/ > organ.log 2>&1
 ```
