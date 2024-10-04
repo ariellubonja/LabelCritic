@@ -468,13 +468,13 @@ b) The pancreas is located in the upper abdomen, behind the stomach and near the
 c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
 
 PancreasDescriptionEDV4="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. It has a thicker head at one side and and a thinner tail at the other. The head is notably thicker than the tail.
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. It has a thicker head at one side and a thinner tail at the other. The head is notably thicker than the tail.
 a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
 b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
 c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
 
 PancreasDescriptionEDV5="""When evaluating and comparing the overlays, individually adress each of the following points:
-a) The pancreas is an elongated organ with a tadpole-like shape. It has a thicker head at one side and and a thinner tail at the other.
+a) The pancreas is an elongated organ with a tadpole-like shape. It has a thicker head at one side and a thinner tail at the other.
 b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
 c) The pancreas is located in the upper abdomen near the bottom of the rib cage.
 d) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges.
@@ -2618,24 +2618,24 @@ Compare2ImagesKidneysOld=("Check out these 2 images, and answer the following qu
                    "c) Completeness: does one image show more complete kidney overlays than the other? Is any overlay missing some part? \n"
                    "d) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 correct? Are the kidney locations in image 2 better, worse or similar? \n")
 
-Compare2ImagesKidneys=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. "
-                       "Evaluate each image individually, carefully comapre them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
+Compare2ImagesKidneys=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and Image 2 are different. "
+                       "Evaluate each image individually, carefully compare them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
                        "Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
                       "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
-Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-                       " A red shape (overlay) over the images demarks the liver, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. "
-                       "Evaluate each image individually, carefully comapre them and conclude which overlay better represents the liver, the one in Image 1 or in Image 2. "
+Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+                       " A red shape (overlay) over the images demarks the liver, but they may not be accurate. The overlays in Image 1 and Image 2 are different. "
+                       "Evaluate each image individually, carefully compare them and conclude which overlay better represents the liver, the one in Image 1 or in Image 2. "
                        "Consider the following anatomical information:"
                         "a) The liver is a large organ, with triangular or wedge-like shape."
                         "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis."
                         "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.")
 
-Compare2ImagesStomachV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Compare2ImagesStomachV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature.
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
@@ -2646,19 +2646,19 @@ d) Location: The stomach red overlay should be located mainly in the upper abdom
 
 
 
-Compare2ImagesStomachV2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1, the one in Image 2, or neither. 
+Compare2ImagesStomachV2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1, the one in Image 2, or neither. 
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
-c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple structures is a major error.
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 #85%, 1 rejection
 
-Compare2ImagesStomachV3="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Compare2ImagesStomachV3="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass (two rounded bulbs separated by a narrow waist).
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
@@ -2669,9 +2669,9 @@ d) Location: The stomach red overlay should be located mainly in the upper abdom
 
 
 
-Compare2ImagesStomachV5="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
+Compare2ImagesStomachV5="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
 'Say that there is no better overlay only if: you are totally sure that both are equally bad / you are totally sure they are equally good / both overlays have very big mistakes / you absolutelly cannot tell which one is better.'
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
@@ -2682,9 +2682,9 @@ d) Location: The stomach red overlay should be located mainly in the upper abdom
 
 
 
-Compare2ImagesStomachConservativeV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
+Compare2ImagesStomachConservativeV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2.
 'Say that there is no better overlay only if: you are sure that both are equally bad / you are sure they are equally good / both overlays have very obvious mistakes / you truly cannot tell which one is better.'
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
@@ -2693,9 +2693,9 @@ c) Unity: The stomach red overlay must be a single connected structure. Showing 
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 #Dual confirmation: accuracy 100%, 4 rejections
 
-Compare2ImagesStomachConservative="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
+Compare2ImagesStomachConservative="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
@@ -2703,9 +2703,9 @@ c) Unity: The stomach red overlay must be a single connected structure. Showing 
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 #Dual confirmation: accuracy 100%, 4 rejections
 
-Compare2ImagesStomach="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparencey, showing through the entire body. They look like AP X-rays."
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and and Image 2 are different. 
-Evaluate each image individually, carefully comapre them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Compare2ImagesStomach="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
 Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
@@ -2713,13 +2713,110 @@ c) Unity: The stomach red overlay must be a single connected structure. Showing 
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 #Dual confirmation: 93%, 1 rejection, 1 mistake --------Best until now
 
+
+Compare2ImagesPancreas="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the pancreas, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the pancreas, the one in Image 1 or in Image 2. 
+Consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+
+Compare2ImagesSpleenV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen.
+b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+# 0 errors, 2 rejections, th 0.7 dice-GPT round 0
+
+Compare2ImagesSpleenV1="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The spleen red overlay should resemble an oval or crescent, with smooth and continuous curves. An irregular or jagged outline is likely incorrect, even if the overlay appears smaller.
+b) Completeness: The spleen red overlay must cover the entire spleen. Any missing portions, especially in the upper or lateral aspects, indicate an incomplete and thus incorrect overlay.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures or disconnected sections are major errors.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and adjacent to the stomach and left kidney, just below the diaphragm. 
+e) Size: The spleen red overlay may vary in size, depending on anatomical factors such as splenic enlargement. A larger spleen that still maintains the correct shape and location should not be considered incorrect solely due to size. Small overlays with irregular or jagged shapes are more likely to be incorrect.
+f) Alignment: The overlay should follow the curvature of the ribs without extending too far toward the midline (spine) or downwards into the pelvic area.
+g) Disease-related changes: If the spleen appears enlarged in one of the images, consider that this could be a result of an underlying medical condition. Enlarged spleens that maintain correct shape, smoothness, and continuity are still considered correct."""
+#gpt round 1 - 1 mistake, 4 rejections th 8
+
+
+Compare2ImagesSpleenV2="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It has only smooth and continuous curves, without recesses, sharp points or holes.
+b) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+c) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh."""
+# my turn: 1 mistake and one rejection on th 0.7
+
+Compare2ImagesSpleenV3="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen.
+b) Shape 2: The spleen red overlay should have smooth curves only. It should not have irregular or random shapes, gaps, recesses or sharp points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+# more focus on smoothness- 5 rejections,
+
+Compare2ImagesSpleenV4="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen.
+b) Smoothness: The spleen red overlay should have smooth curves only. It must NOT have gaps, holes or recesses.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+#Acc: 4 /( 12 - 6 )
+
+Compare2ImagesSpleenV5="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural and SMOOTH curve of the spleen.
+b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+#2 rejections, 2 errors
+
+Compare2ImagesSpleen="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen, with no small recesses.
+b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+#2 rejections, 0 errors
+
+
+Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should resemble a small pear-shaped sac or oval, with a slight taper towards one end.
+b) Size: The gallbladder red overlay should be relatively small, not extending beyond the expected size of a few centimeters in length.
+c) Unity: The gallbladder red overlay must be a single connected structure. Multiple disconnected structures are a significant error.
+d) Location: The gallbladder red overlay should be located in the upper right quadrant of the abdomen (left side of the image, which is oriented like an AP X-ray), beneath the liver, near the right edge of the ribcage. It should not extend too far towards the midline or too low towards the pelvis."""
+#error: one gallbladder was too large, it chose the smaller overlay, which was wrong-BDMAP_V0002017; BDMAP_A0001406- model chose the very elongated shape, which was wrong; BDMAP_A0001777 - chose a fragmented one
+#rejections: BDMAP_A0001660
+
 Compare2Images={
     'descending aorta':Compare2ImagesAorta,
     'aorta':Compare2ImagesFullAorta,
     'liver':Compare2ImagesLiver,
     'postcava':Compare2ImagesPostcava,
     'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
-    'stomach':Compare2ImagesStomach,
+    'stomach':Compare2ImagesStomach,#much better than putting one image per prompt and sending more prompts
+    'pancreas':Compare2ImagesPancreas,
+    'spleen':Compare2ImagesSpleen,
+    'gall_bladder':Compare2ImagesGallbladder
 }
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
@@ -2929,7 +3026,7 @@ def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
     conversation, answer = SendMessageLmdeploy(imgs,text=text_y2, conver=conversation,
                                                 base_url=base_url, size=size)
 
-    #comapre
+    #compare
     imgs=[y_super]
     conversation, answer = SendMessageLmdeploy(imgs,text=text_compare, conver=conversation,
                                                 base_url=base_url, size=size)
@@ -3009,7 +3106,7 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
     conversation, answer = SendMessageLmdeploy(imgs,text=text_y2, conver=conversation,
                                                 base_url=base_url, size=size)
 
-    #comapre
+    #compare
     imgs=[]
     conversation, answer = SendMessageLmdeploy(imgs,text=text_compare, conver=conversation,
                                                 base_url=base_url, size=size)
