@@ -20,6 +20,104 @@ import copy
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 
+
+
+
+
+
+
+
+
+
+
+DescendingAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
+    'Point 1: The red shape should should come as far up as possible in the image. Does the red shape reach the top of the image? '
+    'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
+    'Point 3: Is the red shape continuos and tubular? ')
+
+FullAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
+                'Point 1: Does the red shape reach the thoracic region (high ribs), showing a curve in this area?'
+                'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
+                'Point 3: Is the red shape continuos and tubular? ')
+
+PostcavaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
+            'Point 1: Does the red shape reach the thoracic region (high ribs)?'
+            'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
+            'Point 3: Is the red shape continuos and tubular? ')
+
+KidneysErrorDetect=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
+                      "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
+                      " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
+
+LiverErrorDetect=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
+"a) The liver is a large organ, with triangular or wedge-like shape.\n"
+"b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.\n"
+"c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region. \n")
+
+
+StomachErrorDetect="""Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+
+PancreasErrorDetect="""Consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+
+SpleenErrorDetect="""Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen, with no small recesses.
+b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+
+GallbladderErrorDetect="""Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+
+PancreasErrorDetect="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+
+DescriptionsErrorDetect={
+    "aorta":FullAortaErrorDetect,
+    "descending aorta":DescendingAortaErrorDetect,
+    "liver":LiverErrorDetect,
+    "kidneys":KidneysErrorDetect,
+    "spleen":SpleenErrorDetect,
+    "stomach":StomachErrorDetect,
+    "pancreas":PancreasErrorDetect,
+    "gall_bladder":GallbladderErrorDetect}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ZeroShotInstructions=("The image I am sending is a frontal projection of a CT scan. "
                       "It is not a CT slice, we have transparency and can see through the entire body, "
                       "like a X-ray. The left side of the image represents the right side of the human body. "
@@ -1301,28 +1399,21 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
     else:
         return 0.5
 
-def ZeroShotSystematicEvalLMDeploy(good_annos,bad_annos,
+
+
+
+
+
+def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                    base_url='http://0.0.0.0:8000/v1', size=512,
-                                    text_region=BodyRegionText, 
-                                    organ_descriptions=DescriptionsED,
+                                    text_region=BodyRegionTextSkeleton, 
+                                    organ_descriptions=DescriptionsErrorDetect,
                                     instructions=ZeroShotInstructions,
                                     text_summarize=CompareSummarizeED, organ='liver',
-                                    save_memory=True, window='bone',solid_overlay=False):
+                                    save_memory=True, window='skeleton',solid_overlay=False,
+                                    file_structure='new',anno_window='bone',best=2):
         
-        if multi_image_prompt_2=='auto':
-            if organ in ['kidneys','liver','pancreas']:
-                multi_image_prompt_2=False
-            elif organ in ['aorta','postcava','spleen','stomach','gall_bladder']:
-                multi_image_prompt_2=True
-            else:
-                raise ValueError('Organ not recognized for multi_image_prompt_2=auto')
-            
-        if window=='skeleton':
-            text_region=BodyRegionTextSkeleton
-        if comparison_window=='skeleton':
-            text_y1=FindErrorsSkeleton
-            text_y2=FindErrorsSkeleton
-
+        
         answers=[]
         labels=[]
         outputs={}
@@ -1334,7 +1425,6 @@ def ZeroShotSystematicEvalLMDeploy(good_annos,bad_annos,
             file_list = [line.strip() for line in file_list]
 
         #print('File list:',file_list)
-        
 
         for target in os.listdir(pth):
             if file_list is not None:
@@ -1342,136 +1432,54 @@ def ZeroShotSystematicEvalLMDeploy(good_annos,bad_annos,
                 if target[:14] not in file_list:
                     #print('Skipping:',target)
                     continue
-            if shuffle:
-                best=random.randint(1,2)
             
             if 'ct_window_bone_axis_1' not in target:
                 continue
             clean=os.path.join(pth,target)
 
-
-            if best==2:
-                y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
-                y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
-            else:
-                y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
-                y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
+            y1=clean.replace('ct_window_bone','overlay_window_'+anno_window).replace('.png','_y1.png')
+            y2=clean.replace('ct_window_bone','overlay_window_'+anno_window).replace('.png','_y2.png')
 
             if organ not in clean[clean.rfind('ct'):]:
                 y1=y1.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
                 y2=y2.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
 
-            if superpose:
-                text_compare=TextCompareSuper
-                y_super=superpose_images(y1,y2)
-                from io import BytesIO
-                fake_file = BytesIO()
-                y_super.save(fake_file, format='PNG')
-                fake_file.seek(0)
-
-
-            print(target)
-            print('Best is:',best)
-
-            if dice_check:
-                dice=check_dice(y1,y2)
-                print('2D dice coefficient between 2 projections on axis 1:',dice)
-                if dice>dice_th:
-                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
-                    continue
-            
             if window=='skeleton':
-                #clean=clean[:clean.rfind('ct_window_bone')]+'composite_ct_2_figs_axis_1_skeleton.png'
-                #clean=clean.replace('ct_window_bone','composite')
-                #clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
                 print('clean:',clean)
 
-            if dual_confirmation and superpose:
-                raise ValueError('Dual confirmation is not implemented for superpose or multi_image_prompt_2.')
-            
-
-            print('dual_confirmation:',dual_confirmation)
-            print('multi_image_prompt_2:',multi_image_prompt_2)
-
-            if dual_confirmation:
-                if multi_image_prompt_2:
-                    print('Using dual confirmation and sending images together.')
-                    answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmation(
-                                clean=clean,y1=y1,y2=y2,
-                                base_url=base_url,size=size,
-                                text_region=text_region, 
-                                organ_descriptions=organ_descriptions,
-                                text_compare=text_multi_image_prompt_2,
-                                text_summarize=text_summarize,
-                                organ=organ,save_memory=save_memory,
-                                window=window,solid_overlay=solid_overlay,
-                                conservative=conservative_dual)
-                else:
-                    print('Using dual confirmation and sending images separately.')
-                    answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
-                                    clean=clean,y1=y1,y2=y2,
-                                    base_url=base_url,size=size,
-                                    text_region=text_region, 
-                                    organ_descriptions=organ_descriptions,
-                                    text_y1=text_y1, 
-                                    text_y2=text_y2,
-                                    text_compare=text_compare,
-                                    text_summarize=text_summarize,
-                                    organ=organ,save_memory=save_memory,
-                                    window=window,solid_overlay=solid_overlay,
-                                    conservative=conservative_dual)
-            elif superpose:
-                answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
-                            clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
-                            base_url=base_url,size=size,
-                            text_region=text_region, 
-                            organ_descriptions=organ_descriptions,
-                            text_y1=text_y1, 
-                            text_y2=text_y2,
-                            text_compare=text_compare,
-                            text_summarize=text_summarize,
-                            organ=organ,save_memory=save_memory,
-                            window=window,solid_overlay=solid_overlay)
-            elif multi_image_prompt_2:
-                answer=Prompt2MessagesSepFiguresLMDeploy(
-                                clean=clean,y1=y1,y2=y2,
-                                base_url=base_url,size=size,
-                                text_region=text_region, 
-                                organ_descriptions=organ_descriptions,
-                                text_compare=text_multi_image_prompt_2,
-                                text_summarize=text_summarize,
-                                organ=organ,save_memory=save_memory,
-                                window=window,solid_overlay=solid_overlay)
-
+            if best==2:
+                good_file=y2
+                bad_file=y1
             else:
-                answer=Prompt3MessagesSepFiguresLMDeploy(
-                                clean=clean,y1=y1,y2=y2,
-                                base_url=base_url,size=size,
-                                text_region=text_region, 
-                                organ_descriptions=organ_descriptions,
-                                text_y1=text_y1, 
-                                text_y2=text_y2,
-                                text_compare=text_compare,
-                                text_summarize=text_summarize,
-                                organ=organ,save_memory=save_memory,
-                                window=window,solid_overlay=solid_overlay)
-            
-            print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
-            answers.append(answer)
-            labels.append(best)
-            if dual_confirmation:
-                outputs[target]=[(best==answer),answer_dual]
-            else:
-                outputs[target]=(best==answer)
+                good_file=y1
+                bad_file=y2
 
-            if superpose:
-                fake_file.close()
+            answer_good=ErrorDetectionLMDeployZeroShot(clean=clean, y=good_file, 
+                           base_url=base_url, size=size,
+                           text_region=text_region, 
+                           organ_descriptions=organ_descriptions,
+                           instructions=instructions,
+                           text_summarize=text_summarize, organ=organ,
+                           save_memory=save_memory, window=anno_window,
+                           solid_overlay=solid_overlay)
+
         
-            # Clean up
-            del answer
-            torch.cuda.empty_cache()
-            gc.collect()
+
+            
+        
+
+
+                
+                # Clean up
+                #del answer
+                #torch.cuda.empty_cache()
+                #gc.collect()
+
+
+
+
+
         #calculate accuracy based on answers and labels
         answers=np.array(answers)
         labels=np.array(labels)
@@ -2853,53 +2861,6 @@ Compare2ImagesBad=('Check out these 2 images. The best image is the one where th
 
 
 
-Compare2ImagesAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
-                'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2? '
-                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height? '
-                'Point 3: In which image is the red shape continuos and tubular? ')
-#100% accuracy, halleluia!!!!!!!!!!!
-
-
-Compare2ImagesFullAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. I want you to conclude which image is better based on the answers to these points. '
-                'Point 1: In which one does the red shape reach the thoracic region (high ribs), shown a curve in this area, image 1 or image 2?'
-                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
-                'Point 3: In which image is the red shape continuos and tubular?')
-
-                #'If one of the images has a red shape that comes further up, you must say that it is better and stop here. If both images have the red shape touching the image top, move to the next step.\n'
-                #'Step 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red overlay reach the lumbar spine region? \n'
-                #'If the red overlay reaches the lumbar spine region in just one of the images, you must say that it is better and stop here. If both images reach the lumbar spine region, move to the next step.\n'
-                #'Step 3: In which image is the red overlay continuos and tubular?\n'
-                #'If just one of the images has a continuos and tubular red overlay, you must say that it is better. If both images have a continuos and tubular red overlay, move to the next step.\n'
-                #'Step 4: In which image is the red overlay more centered and parallel to the spine?\n'
-                #'If just one of the images has a more centered and parallel red overlay, you must say that it is better.')
-
-Compare2ImagesPostcava=(
-                'Check out these 2 images, and answer the following questions. I want you to conclude which image is better. The points represent positive qualities that the images should satisfy. '
-                'Point 1: In which one does the red shape reach the thoracic region (high ribs), image 1 or image 2?'
-                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
-                'Point 3: In which image is the red shape continuos and tubular?')
-
-Compare2ImagesKidneysOld=("Check out these 2 images, and answer the following questions. I want you to conclude which image is better. The questions represent positive qualities that the images should satisfy. "
-                   "a) Consider that a person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney. If only one images shows a single kidney, the image showing two kidneys should be better. \n"
-                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Are the shapes of the 2 kidneys in image 1 correct? Are the shapes in image 2 better, worse or similar? \n"
-                   "c) Completeness: does one image show more complete kidney overlays than the other? Is any overlay missing some part? \n"
-                   "d) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 correct? Are the kidney locations in image 2 better, worse or similar? \n")
-
-Compare2ImagesKidneys=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
-                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and Image 2 are different. "
-                       "Evaluate each image individually, carefully compare them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
-                       "Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
-                      "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
-                      " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
-
-Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
-                       " A red shape (overlay) over the images demarks the liver, but they may not be accurate. The overlays in Image 1 and Image 2 are different. "
-                       "Evaluate each image individually, carefully compare them and conclude which overlay better represents the liver, the one in Image 1 or in Image 2. "
-                       "Consider the following anatomical information:"
-                        "a) The liver is a large organ, with triangular or wedge-like shape."
-                        "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis."
-                        "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.")
-
 Compare2ImagesStomachV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
 A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
 Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
@@ -2960,34 +2921,6 @@ c) Unity: The stomach red overlay must be a single connected structure. Showing 
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 #Dual confirmation: accuracy 100%, 4 rejections
 
-Compare2ImagesStomachConservative="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
-Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
-Consider the following anatomical information:
-a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
-b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
-c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
-#Dual confirmation: accuracy 100%, 4 rejections
-
-Compare2ImagesStomach="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
-A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
-Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
-Consider the following anatomical information:
-a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
-b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
-c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
-#Dual confirmation: 93%, 1 rejection, 1 mistake --------Best until now
-
-
-Compare2ImagesPancreas="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
-A red shape (overlay) over the images demarks the pancreas, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
-Evaluate each image individually, carefully compare them and conclude which overlay better represents the pancreas, the one in Image 1 or in Image 2. 
-Consider the following anatomical information:
-a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
-b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
-C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
 
 Compare2ImagesSpleenV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
@@ -3052,15 +2985,6 @@ c) Unity: The spleen red overlay must be a single, continuous structure. Multipl
 d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
 #2 rejections, 2 errors
 
-Compare2ImagesSpleen="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
-A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
-Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
-Consider the following anatomical information:
-a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen, with no small recesses.
-b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
-c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
-d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
-#2 rejections, 0 errors
 
 
 Compare2ImagesGallbladderV0="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
@@ -3122,6 +3046,104 @@ b) Shape 2: The gallbladder red overlay should be smooth. It should not have man
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 #77%
+Compare2ImagesKidneysOld=("Check out these 2 images, and answer the following questions. I want you to conclude which image is better. The questions represent positive qualities that the images should satisfy. "
+                   "a) Consider that a person usually has two kidneys. Does Image 1 show two distinct kidney overlays? Does Image 2 show two distinct kidney overlays? If both show a single kidney, the patient may truly have only one kidney. If only one images shows a single kidney, the image showing two kidneys should be better. \n"
+                   "b) Shape: each kidney has a bean-shaped structure, with a convex lateral surface and a concave medial surface. Are the shapes of the 2 kidneys in image 1 correct? Are the shapes in image 2 better, worse or similar? \n"
+                   "c) Completeness: does one image show more complete kidney overlays than the other? Is any overlay missing some part? \n"
+                   "d) Location: the kidneys are located in the retroperitoneal space, on either side of the spine, at the level of the lower ribs. Are the locations of the 2 kidneys in image 1 correct? Are the kidney locations in image 2 better, worse or similar? \n")
+
+                #'If one of the images has a red shape that comes further up, you must say that it is better and stop here. If both images have the red shape touching the image top, move to the next step.\n'
+                #'Step 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red overlay reach the lumbar spine region? \n'
+                #'If the red overlay reaches the lumbar spine region in just one of the images, you must say that it is better and stop here. If both images reach the lumbar spine region, move to the next step.\n'
+                #'Step 3: In which image is the red overlay continuos and tubular?\n'
+                #'If just one of the images has a continuos and tubular red overlay, you must say that it is better. If both images have a continuos and tubular red overlay, move to the next step.\n'
+                #'Step 4: In which image is the red overlay more centered and parallel to the spine?\n'
+                #'If just one of the images has a more centered and parallel red overlay, you must say that it is better.')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Compare2ImagesAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
+                'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2? '
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height? '
+                'Point 3: In which image is the red shape continuos and tubular? ')
+#100% accuracy, halleluia!!!!!!!!!!!
+
+Compare2ImagesFullAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. I want you to conclude which image is better based on the answers to these points. '
+                'Point 1: In which one does the red shape reach the thoracic region (high ribs), showing a curve in this area, image 1 or image 2?'
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
+                'Point 3: In which image is the red shape continuos and tubular?')
+
+Compare2ImagesPostcava=(
+                'Check out these 2 images, and answer the following questions. I want you to conclude which image is better. The points represent positive qualities that the images should satisfy. '
+                'Point 1: In which one does the red shape reach the thoracic region (high ribs), image 1 or image 2?'
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
+                'Point 3: In which image is the red shape continuos and tubular?')
+
+Compare2ImagesKidneys=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+                       " A red shape (overlay) over the images demarks the kidneys, but they may not be accurate. The overlays in Image 1 and Image 2 are different. "
+                       "Evaluate each image individually, carefully compare them and conclude which overlay better represents the kidneys, the one in Image 1 or in Image 2. "
+                       "Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
+                      "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
+                      " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
+
+Compare2ImagesLiver=("I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays."
+                       " A red shape (overlay) over the images demarks the liver, but they may not be accurate. The overlays in Image 1 and Image 2 are different. "
+                       "Evaluate each image individually, carefully compare them and conclude which overlay better represents the liver, the one in Image 1 or in Image 2. "
+                       "Consider the following anatomical information:"
+                        "a) The liver is a large organ, with triangular or wedge-like shape."
+                        "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis."
+                        "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.")
+
+Compare2ImagesStomachConservative="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Dual confirmation: accuracy 100%, 4 rejections
+
+Compare2ImagesStomach="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Dual confirmation: 93%, 1 rejection, 1 mistake --------Best until now
+
+Compare2ImagesPancreas="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the pancreas, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the pancreas, the one in Image 1 or in Image 2. 
+Consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+
+Compare2ImagesSpleen="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the spleen, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen, with no small recesses.
+b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
+#2 rejections, 0 errors
 
 Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
@@ -3137,9 +3159,6 @@ d) Location: The gallbladder is located in the upper right quadrant of the abdom
 #5 are certain label errors: A0001441, A0001802, A0001880, A0002308, V0000548
 #This makes our acc at least: 75/(110-27)=75/83=0.9036144578313253
 
-
-
-
 Compare2Images={
     'descending aorta':Compare2ImagesAorta,#better here
     'aorta':Compare2ImagesFullAorta,#better here
@@ -3151,6 +3170,8 @@ Compare2Images={
     'spleen':Compare2ImagesSpleen,
     'gall_bladder':Compare2ImagesGallbladder
 }
+
+
 
 
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
@@ -3950,7 +3971,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             dice_check=False,pth1=None,pth2=None,save_memory=False,
                             window='skeleton',shuffle=True,best=None,
                             superpose=False,comparison_window='bone',
-                            solid_overlay=False,multi_image_prompt_2='auto',
+                            solid_overlay='auto',multi_image_prompt_2='auto',
                             text_multi_image_prompt_2=Compare2Images,
                             dice_th=0.75,file_list=None,
                             dual_confirmation=False,conservative_dual=False):
@@ -3962,6 +3983,12 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 multi_image_prompt_2=True
             else:
                 raise ValueError('Organ not recognized for multi_image_prompt_2=auto')
+            
+        if solid_overlay=='auto':
+            if organ in ['aorta','postcava']:
+                solid_overlay=True
+            else:
+                solid_overlay=False
             
         if window=='skeleton':
             text_region=BodyRegionTextSkeleton

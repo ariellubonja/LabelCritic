@@ -1,38 +1,16 @@
-import argparse
 import os
-import ErrorDetector as ed
-import importlib
+os.environ['TRANSFORMERS_CACHE'] = './HFCache'
+os.environ['HF_HOME'] = './HFCache'
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
-# Reload the module in case it has been updated
+import ErrorDetector as ed
+import importlib 
+import os
 importlib.reload(ed)
 
-# Set up argument parsing
-parser = argparse.ArgumentParser(description='Run SystematicComparisonLMDeploySepFigures with the specified path.')
-parser.add_argument('--path', help='Path to the annotations')
-parser.add_argument('--port', help='VLLM port to use', default='8000')
+annos='../compose_nnUnet_JHH/gall_bladder/'
 
-# Parse the arguments
-args = parser.parse_args()
 
-# Extract the organ from the path
-path = args.path
-if path[-1] != '/':
-    path += '/'
-organ = os.path.basename(os.path.normpath(path))
-
-base_url = 'http://0.0.0.0:8000/v1'.replace('8000', args.port)
-
-# Call the function with the extracted organ and provided path
-ed.SystematicComparisonLMDeploySepFigures(
-    pth=path,
-    size=512,
-    organ=organ,
-    dice_check=True,
-    save_memory=True,
-    solid_overlay=False,
-    multi_image_prompt_2='auto',
-    dual_confirmation=True,
-    conservative_dual=False,
-    dice_th=0.75,
-    base_url=base_url
-)
+ed.SystematicComparisonLMDeploySepFigures(pth=annos,size=512,organ='gall_bladder', dice_check=True,save_memory=True,solid_overlay='auto',
+                                          multi_image_prompt_2=True,dual_confirmation=True,conservative_dual=False,dice_th=0.7,
+                                          base_url='http://0.0.0.0:9001/v1')
