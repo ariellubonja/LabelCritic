@@ -2834,6 +2834,16 @@ b) Shape 2: The gallbladder red overlay should be smooth. It should not have man
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 
+Compare2ImagesGallbladderV3="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2.
+Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The surface of the gallbladder red overlay should be smooth. It should not have many sharp, angular points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+#Accuracy:  0.8068181818181818
+#Acc: 71 /( 110 - 22 )
 
 Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
@@ -2848,6 +2858,7 @@ b) Location: The gallbladder is located in the upper right quadrant of the abdom
 #Out of 13 mistakes, 2 are probable annotation errors: V0001777 and A0000686
 #5 are certain label errors: A0001441, A0001802, A0001880, A0002308, V0000548
 #This makes our acc at least: 75/(110-27)=75/83=0.9036144578313253
+
 
 
 Compare2Images={
