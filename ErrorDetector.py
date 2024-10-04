@@ -2587,9 +2587,9 @@ Compare2ImagesBad=('Check out these 2 images. The best image is the one where th
 
 
 Compare2ImagesAorta=('Check out these 2 images, and answer the following questions. I want you to conclude which image is better. Point 1 is the most important for determining this, then point 2, then point 3, and so on. '
-                'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2?'
-                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?'
-                'Point 3: In which image is the red shape continuos and tubular?')
+                'Point 1: The best image is the one where the red shape comes further up. In which one does the red shape come further up, image 1 or image 2? '
+                'Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height? '
+                'Point 3: In which image is the red shape continuos and tubular? ')
 #100% accuracy, halleluia!!!!!!!!!!!
 
 
@@ -2832,7 +2832,7 @@ Consider the following anatomical information:
 a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
 b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 
 Compare2ImagesGallbladderV3="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
@@ -2841,7 +2841,7 @@ Consider the following anatomical information:
 a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
 b) Shape 2: The surface of the gallbladder red overlay should be smooth. It should not have many sharp, angular points.
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 #Accuracy:  0.8068181818181818
 #Acc: 71 /( 110 - 22 )
 
@@ -2852,12 +2852,22 @@ Consider the following anatomical information:
 a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
 b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 #Accuracy:  0.8433734939759037
 #Acc: 70 /( 110 - 27 )
 #Out of 13 mistakes, 2 are probable annotation errors: V0001777 and A0000686
 #5 are certain label errors: A0001441, A0001802, A0001880, A0002308, V0000548
 #This makes our acc at least: 75/(110-27)=75/83=0.9036144578313253
+
+
+Compare2ImagesGallbladder="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2. You may say neither only if you are sure that both are equally bad, equally good, or you are very unsure about which one is better.
+Consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 
 
 
@@ -3671,11 +3681,19 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             dice_check=False,pth1=None,pth2=None,save_memory=False,
                             window='skeleton',shuffle=True,best=None,
                             superpose=False,comparison_window='bone',
-                            solid_overlay=False,multi_image_prompt_2=False,
+                            solid_overlay=False,multi_image_prompt_2='auto',
                             text_multi_image_prompt_2=Compare2Images,
-                            dice_th=0.8,file_list=None,
+                            dice_th=0.75,file_list=None,
                             dual_confirmation=False,conservative_dual=False):
         
+        if multi_image_prompt_2=='auto':
+            if organ in ['kidneys','liver','pancreas','gall_bladder']:
+                multi_image_prompt_2=False
+            elif organ in ['aorta','postcava','spleen','stomach']:
+                multi_image_prompt_2=True
+            else:
+                raise ValueError('Organ not recognized for multi_image_prompt_2=auto')
+            
         if window=='skeleton':
             text_region=BodyRegionTextSkeleton
         if comparison_window=='skeleton':
@@ -3749,8 +3767,13 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             if dual_confirmation and superpose:
                 raise ValueError('Dual confirmation is not implemented for superpose or multi_image_prompt_2.')
             
+
+            print('dual_confirmation:',dual_confirmation)
+            print('multi_image_prompt_2:',multi_image_prompt_2)
+
             if dual_confirmation:
                 if multi_image_prompt_2:
+                    print('Using dual confirmation and sending images together.')
                     answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmation(
                                 clean=clean,y1=y1,y2=y2,
                                 base_url=base_url,size=size,
@@ -3762,6 +3785,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                                 window=window,solid_overlay=solid_overlay,
                                 conservative=conservative_dual)
                 else:
+                    print('Using dual confirmation and sending images separately.')
                     answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
                                     clean=clean,y1=y1,y2=y2,
                                     base_url=base_url,size=size,
