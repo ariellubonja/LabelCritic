@@ -1,35 +1,38 @@
+import argparse
 import os
-os.environ['TRANSFORMERS_CACHE'] = './HFCache'
-os.environ['HF_HOME'] = './HFCache'
-os.environ['CUDA_VISIBLE_DEVICES'] = '7'
-
 import ErrorDetector as ed
 import importlib
-import os
+
+# Reload the module in case it has been updated
 importlib.reload(ed)
 
-#annos='CompositeComparison4Images/'
-annos='/mnt/sdc/pedro/ErrorDetection/projections_good_n_bad_liver_best_is_2'
+# Set up argument parsing
+parser = argparse.ArgumentParser(description='Run SystematicComparisonLMDeploySepFigures with the specified path.')
+parser.add_argument('--path', help='Path to the annotations')
+parser.add_argument('--port', help='VLLM port to use', default='8000')
 
+# Parse the arguments
+args = parser.parse_args()
 
-#ed.SystematicComparison3MessagesLMDeploy2Figs(pth=annos,size=512)
-#512 p; 10/12, 2 out-of-tokens. 83.33% accuracy.
-#224p: 8/12, still out of token.
-ed.SystematicComparison3MessagesLMDeploy(pth=annos,size=512,file_structure='new')
-#40B model: 91.7% (11/12)
-#26B model: 66.7%
-#ed.SystematicComparison3MessagesLMDeploy(pth=annos,size=224)
-#ed.SystematicComparison2MessagesLMDeploy(pth=annos,size=512) # This function will be called to run the error detection
-#bad-50%
-#76B: can follow the prompt very well, but Accuracy:  66.7 ( 8 / 12 ), 512p
+# Extract the organ from the path
+path = args.path
+if path[-1] != '/':
+    path += '/'
+organ = os.path.basename(os.path.normpath(path))
 
-#ed.SystematicComparison3MessagesLMDeploy1Fig(pth=annos,size=224,mode='tissue')
-#72.7%, 224p, bone
-#Accuracy:  88.9 ( 8 / 9 ), 224p, tissue
-#Accuracy:  81.8 ( 9 / 11 ), 224p, bone
-#Accuracy:  45, 512p, tissue
-#ed.SystematicComparison3MessagesLMDeploy6Figs(pth=annos,size=512)
-#80% 512p, 2 out-of-tokens
+base_url = 'http://0.0.0.0:8000/v1'.replace('8000', args.port)
 
-#ed.SystematicComparison2MessagesLMDeployMultiImage(pth='good_and_bad_liver_RL')
-#Accuracy:  42.9 ( 3 / 7 )
+# Call the function with the extracted organ and provided path
+ed.SystematicComparisonLMDeploySepFigures(
+    pth=path,
+    size=512,
+    organ=organ,
+    dice_check=True,
+    save_memory=True,
+    solid_overlay=False,
+    multi_image_prompt_2='auto',
+    dual_confirmation=True,
+    conservative_dual=False,
+    dice_th=0.75,
+    base_url=base_url
+)
