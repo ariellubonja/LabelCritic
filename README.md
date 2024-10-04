@@ -20,7 +20,7 @@ Deploy API locally (tp should be the number of GPUs, and it accepts only powers 
 mkdir HFCache
 export TRANSFORMERS_CACHE=./HFCache
 export HF_HOME=./HFCache
-CUDA_VISIBLE_DEVICES=1,2,3,4 vllm serve "Qwen/Qwen2-VL-72B-Instruct-AWQ" --dtype=half --tensor-parallel-size 4 --limit-mm-per-prompt image=3 --gpu_memory_utilization 0.9
+CUDA_VISIBLE_DEVICES=1,2,3,4 vllm serve "Qwen/Qwen2-VL-72B-Instruct-AWQ" --dtype=half --tensor-parallel-size 4 --limit-mm-per-prompt image=3 --gpu_memory_utilization 0.9 --port 8000
 ```
 
 # High level API 
