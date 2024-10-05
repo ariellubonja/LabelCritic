@@ -29,7 +29,7 @@ ed.SystematicComparisonLMDeploySepFigures(
     organ=organ,
     dice_check=True,
     save_memory=True,
-    solid_overlay=False,
+    solid_overlay='auto',
     multi_image_prompt_2='auto',
     dual_confirmation=True,
     conservative_dual=False,
