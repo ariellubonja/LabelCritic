@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--device', default='cpu')
     parser.add_argument('--num_processes', default='10')
     parser.add_argument('--file_list', default=None)
+    parser.add_argument('--restart', action='store_true',default=False)
 
     args = parser.parse_args()
 
@@ -35,7 +36,9 @@ def main():
 
     print(os.listdir(bad_folder))
     
-    if '00' in os.listdir(bad_folder)[0]:
+    if args.organ=='kidneys':
+        organs=['kidney_left','kidney_right']
+    elif '00' in os.listdir(bad_folder)[0]:
         if args.organ=='none':
             organs=[item[:item.rfind('.nii.gz')] for item in os.listdir(bad_folder+'/'+os.listdir(bad_folder)[0]+'/segmentations')]
         else:
@@ -142,7 +145,8 @@ def main():
             file_list=file_list[organ],
             organ=organ,
             device=args.device,
-            num_processes=int(args.num_processes)
+            num_processes=int(args.num_processes),
+            skip_existing=(not args.restart)
         )
         if organ != 'none':
             if '00' not in os.listdir(bad_folder)[0]:
@@ -159,7 +163,8 @@ def main():
             file_list=file_list[organ],
             organ=organ,
             device=args.device,
-            num_processes=int(args.num_processes)
+            num_processes=int(args.num_processes),
+            skip_existing=(not args.restart)
         )
         if bad_folder2.lower() != 'none' and organ in list(bad_old['DSC<=0.5'].keys()):
             if organ != 'none':
@@ -177,10 +182,11 @@ def main():
                 file_list=file_list2[organ],
                 organ=organ,
                 device=args.device,
-            num_processes=int(args.num_processes)
+            num_processes=int(args.num_processes),
+            skip_existing=(not args.restart)
             )
 
-
+        
         # Composite datasets
         pj.composite_dataset(
             output_dir=output_dir1,

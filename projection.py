@@ -321,8 +321,7 @@ def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,de
     #start=time.time()
     if save:
         for window in cts:
-            projection=cts[window] * 255.0
-
+            projection=cts[window].unsqueeze(-1).repeat(1,1,3) * 255.0
             # Rotate the projection by 90 degrees counter-clockwise
             projection = torch.rot90(projection, k=1, dims=(0, 1))
             projection_np = projection.detach().cpu().numpy()
@@ -552,6 +551,14 @@ def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
         print(f'Skipping {pid}, already exists')
         return
 
+    if not os.path.isdir(os.path.join(pth, pid)):
+        print(f'Patient {pid} not found')
+        return
+    
+    if 'ct.nii.gz' not in os.listdir(os.path.join(pth, pid)):
+        print(f'CT not found for {pid}')
+        return
+
     # Process the file
     print(f'Projecting {pid}')
     start_proj = time.time()
@@ -571,7 +578,8 @@ def project_files(pth, destin, organ, file_list=None, axis=1, device='cpu', skip
         return
     
     if file_list is None:
-        file_list = [f for f in os.listdir(pth)]  # Load all files in the directory if no list is provided
+        file_list = [f for f in os.listdir(pth) if os.path.isdir(os.path.join(pth, f))]  # Load all files in the directory if no list is provided
+        file_list = [f for f in file_list if 'ct.nii.gz' in os.listdir(os.path.join(pth, f))]  # Filter out files without a CT scan
 
     # Create a pool of workers for parallel processing
     with multiprocessing.Pool(processes=num_processes) as pool:

@@ -22,7 +22,20 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 
-
+BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT scan, focusing on showing the skeleton. Look at it carefully, and answer the questions below:\n"
+"Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
+"Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"skull = _"
+"neck = _"
+"trachea = _"
+"upper ribs = _"
+"lower ribs = _"
+"lumbar spine = _"
+"pelvis = _"
+"femurs = _"
+"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names). In your list, carefully consider if the following organs are usually contained or not: liver, gallbladder, stomach, spleen, pancreas and kidneys. \n"
+"Q4- Based on your answer to Q2 and Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+"Q4 = _\n")
 
 
 
@@ -33,23 +46,23 @@ from concurrent.futures import ThreadPoolExecutor
 DescendingAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
     'Point 1: The red shape should should come as far up as possible in the image. Does the red shape reach the top of the image? '
     'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
-    'Point 3: Is the red shape continuos and tubular? ')
+    'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
 
 FullAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
                 'Point 1: Does the red shape reach the thoracic region (high ribs), showing a curve in this area?'
                 'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
-                'Point 3: Is the red shape continuos and tubular? ')
+                'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong. ')
 
 PostcavaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
             'Point 1: Does the red shape reach the thoracic region (high ribs)?'
             'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
-            'Point 3: Is the red shape continuos and tubular? ')
+            'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong. ')
 
 KidneysErrorDetect=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
                       "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
-LiverErrorDetect=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
+LiverErrorDetect=("When evaluating the overlays, consider the following anatomical information:\n"
 "a) The liver is a large organ, with triangular or wedge-like shape.\n"
 "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.\n"
 "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region. \n")
@@ -78,7 +91,7 @@ b) Shape 2: The gallbladder red overlay should be smooth. It should not have man
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 
-PancreasErrorDetect="""When evaluating and comparing the overlays, consider the following anatomical information:
+PancreasErrorDetect="""When evaluating the overlays, consider the following anatomical information:
 a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
 C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
@@ -86,6 +99,7 @@ C) Smoothness: The pancreas is a single smooth shape and it does not have very s
 DescriptionsErrorDetect={
     "aorta":FullAortaErrorDetect,
     "descending aorta":DescendingAortaErrorDetect,
+    "postcava":PostcavaErrorDetect,
     "liver":LiverErrorDetect,
     "kidneys":KidneysErrorDetect,
     "spleen":SpleenErrorDetect,
@@ -156,25 +170,25 @@ CompareSummarizeED=("The text below represents an evaluation of an overlay. The 
                 "I want you ro read the VLM's answer and tell me if the VLM considered the annotation good or bad. Answer me with only these words: 'good annotation' or 'bad annotation'. "
                 "The text is:\n")
 
-OneShotFirstPart=("The images I am sending are a frontal projections of a CT scans. "
+OneShotFirstPart=("The images I am sending are a frontal projections of CT scans. "
                      "They are not CT slices, instead, they have transparency and let you see throgh "
-                     "the entire human body, like an X-ray does. "
-                      "The left side of the image represents the right side of the human body. "
+                     "the entire human body, like an X-ray does. They are oriented like AP X-rays, "
+                      "i.e., the left side of the image represents the right side of the human body. "
                       "The %(organ)s region in the images should "
                      "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. You must if the red region is coherent with "
+                      "or incorrectly marks the %(organ)s. You must analyze if the red region is coherent with "
                       "the expected shape and location of a %(organ)s."
                       "However, now I am sending you just an example image, which is a 'good annotation'. "
                       "I will send you the image for evaluation after you see the example. "
                       "Take a good look and learn with it.")
 
-FewShotFirstPart=("The images I am sending are a frontal projections of a CT scans. "
+FewShotFirstPart=("The images I am sending are a frontal projections of CT scans. "
                      "They are not CT slices, instead, they have transparency and let you see throgh "
-                     "the entire human body, like an X-ray does. "
-                      "The left side of the image represents the right side of the human body. "
+                     "the entire human body, like an X-ray does. They are oriented like AP X-rays, "
+                      "i.e., the left side of the image represents the right side of the human body. "
                       "The %(organ)s region in the images should "
                      "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
-                      "or incorrectly marks the %(organ)s. You must if the red region is coherent with "
+                      "or incorrectly marks the %(organ)s. You must analyze if the red region is coherent with "
                       "the expected shape and location of a %(organ)s."
                       "However, now I am sending you just an example image, which is a 'good annotation'. "
                       "I will send mutiple examples in diverse prompts. "
@@ -1109,13 +1123,17 @@ def get_random_file_paths(folder_path, n, exclude_path,contains='overlay_axis_1'
     # Get all file paths in the specified folder
     if isinstance(folder_path, list):
         all_files = [file for file in folder_path 
-                    if (os.path.isfile(file) and (contains in file) \
-                    and (exclude_path not in file))]
+                    if (os.path.isfile(file) and (exclude_path not in file))]
     else:
         all_files = [os.path.join(folder_path, file) for file in os.listdir(folder_path) 
-                    if (os.path.isfile(os.path.join(folder_path, file)) and (contains in file) \
+                    if (os.path.isfile(os.path.join(folder_path, file)) \
                     and (exclude_path not in file))]
 
+    if isinstance(contains, str):
+        all_files = [file for file in all_files if contains in file]
+    elif isinstance(contains, list):
+        for contain in contains:
+            all_files = [file for file in all_files if contain in file]
 
     # Get n random file paths from the list
     random_files = random.sample(all_files, min(n, len(all_files)))
@@ -1324,22 +1342,21 @@ def LoadLLaVAOneVision72B(bits=8):
 
 def ErrorDetectionLMDeployZeroShot(clean, y, 
                            base_url='http://0.0.0.0:8000/v1', size=512,
-                           text_region=BodyRegionText, 
+                           text_region=BodyRegionTextSkeleton, 
                            organ_descriptions=DescriptionsED,
                            instructions=ZeroShotInstructions,
                            text_summarize=CompareSummarizeED, organ='liver',
-                           save_memory=True, window='bone',solid_overlay=False):
+                           save_memory=True, location_window='skeleton',solid_overlay=False):
     """
     clean: X-ray withouth annotation
     y: X-ray with annotation
     """
     
-
     #check if organ should be in image
     organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
 
     if organ=='aorta':
-        if window=='skeleton':
+        if location_window=='skeleton':
             organRegion+=AorticArchTextSkeleton
         else:
             organRegion+=AorticArchText
@@ -1352,12 +1369,92 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
     conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
                                                 base_url=base_url, size=size)
     q='q2'
-    if 'skeleton' in window:
+    if 'skeleton' in location_window:
+        q='q4'
+
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+
+    if organ=='aorta':
+        if 'skeleton' not in location_window:
+            if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+                organ='descending aorta'
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+                text_compare=Compare2ImagesFullAorta
+            else:
+                organ='descending aorta'
+    
+    if AnswerNo:
+        a=RedArea(y)
+        print('Annotation should be zero')
+        if a==0:
+            return 1.0
+        else:
+            return 0.0
+        
+    if save_memory:
+        conversation=[]
+
+    #organ should be present in image. Let's evaluate the label y
+    #Analyze image
+    text=instructions % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_descriptions[organ]
+    imgs=[y]
+    conversation, answer = SendMessageLmdeploy(imgs,text=text, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay)
+    
+    #summarize answer
+    text=text_summarize % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+answer
+    conversation, answer = SendMessageLmdeploy([], text=text, conver=[], base_url=base_url, size=size)
+
+    if 'good annotation' in answer.lower() and ' not ' not in answer.lower():
+        return 1.0
+    elif 'bad annotation' in answer.lower() and ' not ' not in answer.lower():
+        return 0.0
+    else:
+        return 0.5
+        
+    
+        
+def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
+                           base_url='http://0.0.0.0:8000/v1', size=512,
+                           text_region=BodyRegionTextSkeleton, 
+                           organ_descriptions=DescriptionsED,
+                           text_summarize=CompareSummarizeED, organ='liver',
+                           save_memory=True, location_window='skeleton',solid_overlay=False,
+                           print_examples=True):
+    """
+    clean: X-ray withouth annotation
+    y: X-ray with annotation
+    """
+
+    print('Good examples recevied:',good_examples)
+    print('Bad examples recevied:',bad_examples)
+    
+    #check if organ should be in image
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+
+    if organ=='aorta':
+        if location_window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in location_window:
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' not in location_window:
+            if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -1374,58 +1471,111 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
             return 0.0
         
 
-    #organ should be present in image. Let's evaluate the label y
-    if isinstance(organ_descriptions, dict):
-        organ_description=organ_descriptions[organ]
-
-    instructions=instructions % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_description
     
     if save_memory:
         conversation=[]
 
-    #Analyze image 1
+    #organ should be present in image. Let's evaluate the label y
+    #create few shot prompt
+    if isinstance(organ_descriptions, dict):
+        organ_description=organ_descriptions[organ]
+    
+
+    if len(good_examples)==1 and len(bad_examples)==0:
+        final_instructions=OneShotSecondPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_description
+        text=OneShotFirstPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        text=text+organ_description
+        conversation=CreateConversation(img_file_list=good_examples, text=text, conver=conversation,size=size,prt=True,solid_overlay=solid_overlay,
+                                  role='user')
+        model_answer='Indeed, the red overlay in this example shows a good annotation for the '+organ+'.'
+        conversation=CreateConversation(img_file_list=[], text=model_answer, conver=conversation,size=size,prt=True,solid_overlay=solid_overlay,
+                                  role='assistant')
+    else:
+        final_instructions=FewShotSecondPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_description
+        text=FewShotFirstPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        text=text+organ_description
+        for i in range(len(good_examples)):
+            if i>0:
+                text='This image is another good annotation for the '+organ+'.'+organ_description
+            conversation=CreateConversation(img_file_list=[good_examples[i]], text=text, conver=conversation,size=size,prt=print_examples,
+                                            solid_overlay=solid_overlay,
+                                            role='user')
+            model_answer='Indeed, the red overlay in this example shows a good annotation for the '+organ+'.'
+            conversation=CreateConversation(img_file_list=[], text=model_answer, conver=conversation,size=size,prt=print_examples,
+                                            solid_overlay=solid_overlay,
+                                            role='assistant')
+            if i==0:
+                text='This image exmlifies a bad annotation for the '+organ+'.'+organ_description
+            if i>0:
+                text='This image is another bad annotation for the '+organ+'.'+organ_description
+            conversation=CreateConversation(img_file_list=[bad_examples[i]], text=text, conver=conversation,size=size,prt=print_examples,
+                                            solid_overlay=solid_overlay,
+                                            role='user')
+            model_answer='Indeed, the red overlay in this example shows a bad annotation for the '+organ+'.'
+            conversation=CreateConversation(img_file_list=[], text=model_answer, conver=conversation,size=size,prt=print_examples,
+                                            solid_overlay=solid_overlay,
+                                            role='assistant')
+
+    #Analyze image
     imgs=[y]
-    conversation, answer = SendMessageLmdeploy(imgs,text=instructions, conver=conversation,
+    conversation, answer = SendMessageLmdeploy(imgs,text=final_instructions, conver=conversation,
                                                 base_url=base_url, size=size, solid_overlay=solid_overlay)
     
     #summarize answer
     text=text_summarize % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+answer
     conversation, answer = SendMessageLmdeploy([], text=text, conver=[], base_url=base_url, size=size)
 
-    if 'overlay 1' in answer.lower() and 'overlay 2' not in answer.lower():
-        return 1
-    elif 'overlay 2' in answer.lower() and 'overlay 1' not in answer.lower():
-        return 2
+    if 'good annotation' in answer.lower() and ' not ' not in answer.lower():
+        return 1.0
+    elif 'bad annotation' in answer.lower() and ' not ' not in answer.lower():
+        return 0.0
     else:
         return 0.5
 
 
 
+def get_files(pth,file_list,anno_window,organ,window,best,file_structure='dual'):
+    """
+    pth: path to images
+    file_structure: dual (good and bad annotations in one folder, y2 assumed to be the good one) or all_good (only takes y2 samples) or dual_bad (assumes y1 and y2 to be bad)
+    """
+
+    if file_list is not None:
+        with open(file_list, 'r') as file:
+            file_list = file.readlines()
+        # Removing the newline characters at the end of each line (optional)
+        file_list = [line.strip() for line in file_list]
 
 
+    if os.path.isdir(os.path.join(pth,os.listdir(pth)[0])):
+        #not composite folder
+        files=[]
+        for pid in os.listdir(pth):
+            if not os.path.isdir(os.path.join(pth,pid)):
+                continue
+            clean=os.path.join(pth,pid,pid+'_ct_window_'+window+'_axis_1.png')
+            overlay_base='overlay_window_'+anno_window+'_axis_1'
+            overlay=[x for x in os.listdir(os.path.join(pth,pid)) if overlay_base in x]
+            if len(overlay)>1:
+                raise ValueError('Multiple overlays found:',overlay)
+            if len(overlay)==0:
+                continue
+            #print('overlay base:',overlay_base)
+            #print('overlay:',overlay)
+            #print('pid:',pid)
+            overlay=overlay[0]
+            files.append([clean,os.path.join(pth,pid,overlay)])
 
-def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
-                                   base_url='http://0.0.0.0:8000/v1', size=512,
-                                    text_region=BodyRegionTextSkeleton, 
-                                    organ_descriptions=DescriptionsErrorDetect,
-                                    instructions=ZeroShotInstructions,
-                                    text_summarize=CompareSummarizeED, organ='liver',
-                                    save_memory=True, window='skeleton',solid_overlay=False,
-                                    file_structure='new',anno_window='bone',best=2):
-        
-        
-        answers=[]
-        labels=[]
-        outputs={}
+        if file_structure=='all_good' or 'pick_good_only':
+            return files,[]
+        elif file_structure=='all_bad' or 'pick_bad_only':
+            return [],files
+        else:
+            raise ValueError('Invalid file structure for non composite folders.')
 
-        if file_list is not None:
-            with open(file_list, 'r') as file:
-                file_list = file.readlines()
-            # Removing the newline characters at the end of each line (optional)
-            file_list = [line.strip() for line in file_list]
-
-        #print('File list:',file_list)
-
+    files_bad=[]
+    files_good=[]
+    if file_structure=='dual' or file_structure=='pick_bad_only' or file_structure=='pick_good_only':
         for target in os.listdir(pth):
             if file_list is not None:
                 #print ('Target:',target[:14] )
@@ -1446,7 +1596,7 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
 
             if window=='skeleton':
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
-                print('clean:',clean)
+                #print('clean:',clean)
 
             if best==2:
                 good_file=y2
@@ -1455,30 +1605,157 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                 good_file=y1
                 bad_file=y2
 
-            answer_good=ErrorDetectionLMDeployZeroShot(clean=clean, y=good_file, 
-                           base_url=base_url, size=size,
-                           text_region=text_region, 
-                           organ_descriptions=organ_descriptions,
-                           instructions=instructions,
-                           text_summarize=text_summarize, organ=organ,
-                           save_memory=save_memory, window=anno_window,
-                           solid_overlay=solid_overlay)
-
-        
-
+            if file_structure=='dual':
+                files_bad.append([clean,bad_file])
+                files_good.append([clean,good_file])
+            elif file_structure=='pick_bad_only':
+                files_bad.append([clean,bad_file])
+            elif file_structure=='pick_good_only':
+                files_good.append([clean,good_file])
+    elif file_structure=='dual_bad':
+        for target in os.listdir(pth):
+            if file_list is not None:
+                #print ('Target:',target[:14] )
+                if target[:14] not in file_list:
+                    #print('Skipping:',target)
+                    continue
             
+            if 'ct_window_bone_axis_1' not in target:
+                continue
+            clean=os.path.join(pth,target)
+
+            y1=clean.replace('ct_window_bone','overlay_window_'+anno_window).replace('.png','_y1.png')
+            y2=clean.replace('ct_window_bone','overlay_window_'+anno_window).replace('.png','_y2.png')
+
+            if organ not in clean[clean.rfind('ct'):]:
+                y1=y1.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+                y2=y2.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+
+            if window=='skeleton':
+                clean=clean.replace('ct_window_bone','ct_window_skeleton')
+                #print('clean:',clean)
+
+            files_bad.append([clean,y1])
+            files_bad.append([clean,y2])
+    elif file_structure=='all_good':
+        for target in os.listdir(pth):
+            if file_list is not None:
+                #print ('Target:',target[:14] )
+                if target[:14] not in file_list:
+                    #print('Skipping:',target)
+                    continue
+            
+            if 'ct_window_bone_axis_1' not in target:
+                continue
+            clean=os.path.join(pth,target)
+
+            y1=clean.replace('ct_window_bone','overlay_window_'+anno_window).replace('.png','_y1.png')
+            y2=clean.replace('ct_window_bone','overlay_window_'+anno_window).replace('.png','_y2.png')
+
+            if organ not in clean[clean.rfind('ct'):]:
+                y1=y1.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+                y2=y2.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+
+            if window=='skeleton':
+                clean=clean.replace('ct_window_bone','ct_window_skeleton')
+                #print('clean:',clean)
+
+            files_bad.append([clean,bad_file])
+    
+    else:
+        raise ValueError('Invalid file_structure value. Use dual or all_good or dual_bad or pick_good_only or pick_bad_only.')
+
+    #print('Files good:',files_good)
+    #print('Files bad:',files_bad)
+
+    return files_good,files_bad
+
+
+def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
+                                   base_url='http://0.0.0.0:8000/v1', size=512,
+                                    text_region=BodyRegionTextSkeleton, 
+                                    organ_descriptions=DescriptionsErrorDetect,
+                                    instructions=ZeroShotInstructions,
+                                    text_summarize=CompareSummarizeED, organ='liver',
+                                    save_memory=True, location_window='skeleton',solid_overlay=False,
+                                    anno_window='bone',best=2,
+                                    file_list=None,
+                                    file_structure='dual',
+                                    dice_threshold=0.75,dice_check=False,
+                                    limit=None,skip_good=False,skip_bad=False):
         
+        if solid_overlay=='auto':
+            if organ in ['aorta','postcava']:
+                solid_overlay=True
+            else:
+                solid_overlay=False
 
+        answers=[]
+        labels=[]
+        outputs={}
 
+        
+        files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
+        #print('Files:',files_good+files_bad)
+        #print('path:',pth)
+        #print('files in path:',os.listdir(pth))
+
+        for i in list(range(max(len(files_good),len(files_bad)))):
+            if dice_check:
+                good_file=files_good[i][1]
+                bad_file=files_bad[i][1]
+                dice=check_dice(good_file,bad_file)
+                print('Dice:',dice)
+                if dice>dice_threshold:
+                    print('Dice below th, skipping:',dice)
+                    continue
+            if i<len(files_good) and not skip_good:
+                clean,good_file=files_good[i]
+                print('Case below:',good_file)
+                answer_good=ErrorDetectionLMDeployZeroShot(clean=clean, y=good_file, 
+                            base_url=base_url, size=size,
+                            text_region=text_region, 
+                            organ_descriptions=organ_descriptions,
+                            instructions=instructions,
+                            text_summarize=text_summarize, organ=organ,
+                            save_memory=save_memory, location_window=location_window,
+                            solid_overlay=solid_overlay)
                 
+                answers.append(answer_good)
+                labels.append(1.0)
+                outputs[good_file]=answer_good
+
+                print('Answer:',answer_good,'Label:',1.0,'Correct:',answer_good==1.0)
+
+                del answer_good
+            
+            if i<len(files_bad) and not skip_bad:
+                clean,bad_file=files_bad[i]
+                print('Case below:',bad_file)
+                answer_bad=ErrorDetectionLMDeployZeroShot(clean=clean, y=bad_file, 
+                            base_url=base_url, size=size,
+                            text_region=text_region, 
+                            organ_descriptions=organ_descriptions,
+                            instructions=instructions,
+                            text_summarize=text_summarize, organ=organ,
+                            save_memory=save_memory, location_window=location_window,
+                            solid_overlay=solid_overlay)
+                
+                answers.append(answer_bad)
+                labels.append(0.0)
+                outputs[bad_file]=answer_bad
+
+                print('Answer:',answer_bad,'Label:',0.0,'Correct:',answer_bad==0.0)
+
                 # Clean up
-                #del answer
-                #torch.cuda.empty_cache()
-                #gc.collect()
+                del answer_bad
+            torch.cuda.empty_cache()
+            gc.collect()
 
-
-
-
+            if limit is not None:
+                print('Number of cases:',len(answers))
+                if len(answers)>=limit:
+                    break
 
         #calculate accuracy based on answers and labels
         answers=np.array(answers)
@@ -1496,6 +1773,133 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
 
 
 
+def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
+                                   base_url='http://0.0.0.0:8000/v1', size=512,
+                                    text_region=BodyRegionTextSkeleton, 
+                                    organ_descriptions=DescriptionsErrorDetect,
+                                    instructions=ZeroShotInstructions,
+                                    text_summarize=CompareSummarizeED, organ='liver',
+                                    save_memory=True, location_window='skeleton',solid_overlay=False,
+                                    anno_window='bone',best=2,
+                                    file_list=None,
+                                    file_structure='dual',
+                                    dice_threshold=0.75,dice_check=False,
+                                    good_examples_path=None,bad_examples_path=None,
+                                    limit=None,skip_good=False,skip_bad=False):
+        
+        if solid_overlay=='auto':
+            if organ in ['aorta','postcava']:
+                solid_overlay=True
+            else:
+                solid_overlay=False
+
+        answers=[]
+        labels=[]
+        outputs={}
+
+        
+        files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
+        #print('File list:',file_list)
+
+        if good_examples_path is None:
+            files_good_ex=files_good
+            files_bad_ex=files_bad
+        else:
+            files_good_ex,_=get_files(good_examples_path,file_list,anno_window,organ,location_window,best,file_structure='pick_good_only')
+            _,files_bad_ex=get_files(bad_examples_path,file_list,anno_window,organ,location_window,best,file_structure='pick_bad_only')
+        
+        if dice_check:
+            tmp_good=[]
+            tmp_bad=[]
+            for i in range(len(files_good)):
+                good_file=files_good[i][1]
+                bad_file=files_bad[i][1]
+                dice=check_dice(good_file,bad_file)
+                if dice<=dice_threshold:
+                    tmp_good.append(files_good[i])
+                    tmp_bad.append(files_bad[i])
+            print('Dice check completed. Number of original files:',len(files_good)+len(files_bad))
+            print('Number of files after dice check:',len(tmp_good)+len(tmp_bad))
+            files_good=tmp_good
+            files_bad=tmp_bad
+
+        for i in list(range(max(len(files_good),len(files_bad)))):
+            if dice_check:
+                good_file=files_good[i][1]
+                bad_file=files_bad[i][1]
+                dice=check_dice(good_file,bad_file)
+                print('Dice:',dice)
+                if dice>dice_threshold:
+                    print('Dice below th, skipping:',dice)
+                    continue
+            good_examples = files_good_ex[:i] + files_good_ex[i+1:]
+            good_examples = random.sample(good_examples, max(1,min(n//2, len(good_examples))))
+            good_examples = [x[1] for x in good_examples]
+            bad_examples= files_bad_ex[:i] + files_bad_ex[i+1:]
+            bad_examples = random.sample(bad_examples, min(n//2, len(bad_examples)))
+            bad_examples = [x[1] for x in bad_examples]
+
+            #print('Good examples:',good_examples)
+            #print('Bad examples:',bad_examples)
+
+            if i<len(files_good) and not skip_good:
+                clean,good_file=files_good[i]
+
+                print('Case below:',good_file)
+
+                answer_good=ErrorDetectionLMDeployFewShot(clean=clean, y=good_file,
+                            good_examples=good_examples, bad_examples=bad_examples,
+                            base_url=base_url, size=size,
+                            text_region=text_region, 
+                            organ_descriptions=organ_descriptions,
+                            text_summarize=text_summarize, organ=organ,
+                            save_memory=save_memory, location_window=location_window,
+                            solid_overlay=solid_overlay)
+                
+                answers.append(answer_good)
+                labels.append(1.0)
+                outputs[good_file]=answer_good
+
+                print('Answer:',answer_good,'Label:',1.0,'Correct:',answer_good==1.0)
+
+                del answer_good
+            
+            if i<len(files_bad) and not skip_bad:
+                clean,bad_file=files_bad[i]
+                print('Case below:',bad_file)
+                answer_bad=ErrorDetectionLMDeployFewShot(clean=clean, y=bad_file, 
+                            good_examples=good_examples, bad_examples=bad_examples,
+                            base_url=base_url, size=size,
+                            text_region=text_region, 
+                            organ_descriptions=organ_descriptions,
+                            text_summarize=text_summarize, organ=organ,
+                            save_memory=save_memory, location_window=location_window,
+                            solid_overlay=solid_overlay)
+                
+                answers.append(answer_bad)
+                labels.append(0.0)
+                outputs[bad_file]=answer_bad
+
+                print('Answer:',answer_bad,'Label:',0.0,'Correct:',answer_bad==0.0)
+
+                # Clean up
+                del answer_bad
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        #calculate accuracy based on answers and labels
+        answers=np.array(answers)
+        labels=np.array(labels)
+
+        acc=(answers==labels).sum()/(len(answers)-np.where(answers==0.5)[0].shape[0])
+        print('Accuracy: ',acc)
+        print('Acc:',(answers==labels).sum(),'/(',len(answers),'-',np.where(answers==0.5)[0].shape[0],')')
+        print('answers:',answers)
+        print('labels:',labels)
+        print()
+
+        for k,v in outputs.items():
+            print(k,v)
 
 
 CompareInstructionsZeroShotFirst=("The images I am sending are a frontal projections of a CT scans. "
@@ -1982,6 +2386,7 @@ def SendMessageQwen(img_file_list, model, processor,  process_vision_info,text, 
 
 def resize_and_encode_image(image_path, size=512, solid_overlay=False):
     # Open the image using PIL
+    print(image_path)
     with Image.open(image_path) as img:
         # Get the original width and height of the image
         original_width, original_height = img.size
@@ -2076,12 +2481,12 @@ def InitializeOpenAIClient(base_url='http://0.0.0.0:8000/v1'):
         print('Initialized model and client.')
         return clt,mdl
 
-def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_overlay=False):
+def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_overlay=False,role='user'):
     #if no previous conversation, send conver=[]. Do not automatically define conver above.
     cnv=copy.deepcopy(conver)
     
     cnv.append({
-            'role': 'user',
+            'role': role,
             'content': [{
                 'type': 'text',
                 'text': text,
@@ -2108,6 +2513,7 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_over
         if prt:
             image_size, file_size = get_image_size_from_base64(f"data:image/png;base64,{img}")
             print(f"Image Size (WxH) in prompt: {image_size}, File Size: {file_size} bytes")
+            print(text)
     return cnv
 
 def print_conv(conver):
@@ -2144,7 +2550,7 @@ def request_VLM(cv,model_name,client,max_tokens):
             top_p=1)
 
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
-                        size=None,prt=True,print_conversation=False,max_tokens=None,
+                        size=None,prt=True,print_conversation=True,max_tokens=None,
                         solid_overlay=False,
                         batch=1):
     """
@@ -2249,20 +2655,6 @@ BodyRegionTextSkeletonGoodOne=("The image I am sending is frontal projections of
 "Q4- Based on your answer to Q2 and Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
 "Q4 = _\n")
 
-BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT scan, focusing on showing the skeleton. Look at it carefully, and answer the questions below:\n"
-"Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
-"Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
-"skull = _"
-"neck = _"
-"trachea = _"
-"upper ribs = _"
-"lower ribs = _"
-"lumbar spine = _"
-"pelvis = _"
-"femurs = _"
-"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names). In your list, carefully consider if the following organs are usually contained or not: liver, gallbladder, stomach, spleen, pancreas and kidneys. \n"
-"Q4- Based on your answer to Q2 and Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
-"Q4 = _\n")
 
 BodyRegionTextSkeletonV0=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It highlights major bones, not soft tissue. Answer the questions below:\n"
 "Q1- Look at the image carefully, tell me which body region it represents and where the image limits are. Present a complete list of all organs usually present in this body region (just list their names).\n"
