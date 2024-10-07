@@ -1420,10 +1420,14 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
     
     if AnswerNo:
         a=RedArea(y)
-        print('Annotation should be zero')
+        print('Annotation should be zero, but it is not')
         if a==0:
             return 1.0
         else:
+            return 0.0
+    else:
+        if RedArea(y)==0:
+            print('Annotation is empty, but it should not be.')
             return 0.0
         
     if save_memory:
@@ -1508,6 +1512,10 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
         if a==0:
             return 1.0
         else:
+            return 0.0
+    else:
+        if RedArea(y)==0:
+            print('Annotation is empty, but it should not be.')
             return 0.0
         
 
@@ -3117,6 +3125,20 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
         else:
             return -1
+    else:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        if a1==0 and a2==0:
+            print('Both annotations are empty, but they should not be')
+            return 0.5
+        elif a1==0:
+            print('y1 is empty, but it should not be')
+            return 2.0
+        elif a2==0:
+            print('y2 is empty, but it should not be')
+            return 1.0
+        
+        
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3250,6 +3272,18 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
             return 2, [2,1]
         else:
             return -1, [-1,-1]
+    else:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        if a1==0 and a2==0:
+            print('Both annotations are empty, but they should not be')
+            return 0.5, [1,1]
+        elif a1==0:
+            print('y1 is empty, but it should not be')
+            return 2.0, [2,1]
+        elif a2==0:
+            print('y2 is empty, but it should not be')
+            return 1.0, [1,2]
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3674,6 +3708,18 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
         else:
             return -1
+    else:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        if a1==0 and a2==0:
+            print('Both annotations are empty, but they should not be')
+            return 0.5
+        elif a1==0:
+            print('y1 is empty, but it should not be')
+            return 2.0
+        elif a2==0:
+            print('y2 is empty, but it should not be')
+            return 1.0
     
     
     if isinstance(text_compare, dict):
@@ -3752,6 +3798,18 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
             return 2, [2,1]
         else:
             return -1, [-1,-1]
+    else:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        if a1==0 and a2==0:
+            print('Both annotations are empty, but they should not be')
+            return 0.5, [1,1]
+        elif a1==0:
+            print('y1 is empty, but it should not be')
+            return 2.0, [2,1]
+        elif a2==0:
+            print('y2 is empty, but it should not be')
+            return 1.0, [1,2]
     
     
     if isinstance(text_compare, dict):
@@ -3823,6 +3881,18 @@ def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
             return 2
         else:
             return -1
+    else:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        if a1==0 and a2==0:
+            print('Both annotations are empty, but they should not be')
+            return 0.5
+        elif a1==0:
+            print('y1 is empty, but it should not be')
+            return 2.0
+        elif a2==0:
+            print('y2 is empty, but it should not be')
+            return 1.0
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3907,6 +3977,18 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
         else:
             return -1
+    else:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        if a1==0 and a2==0:
+            print('Both annotations are empty, but they should not be')
+            return 0.5
+        elif a1==0:
+            print('y1 is empty, but it should not be')
+            return 2.0
+        elif a2==0:
+            print('y2 is empty, but it should not be')
+            return 1.0
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
