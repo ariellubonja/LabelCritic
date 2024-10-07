@@ -1,5 +1,9 @@
 # Use VLM to compare the per-voxel organ annotations of 2 semantic segmenters
 
+<p align="center">
+  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/Cerberus.png" alt="Project Logo" width="250"/>
+</p>
+
 ### Installation and running
 
 Install
