@@ -1,5 +1,9 @@
 # Use VLM to compare the per-voxel organ annotations of 2 semantic segmenters
 
+<p align="center">
+  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/Cerberus.png" alt="Project Logo" width="250"/>
+</p>
+
 ### Installation and running
 
 Install
@@ -13,14 +17,12 @@ conda install pip
 pip install vllm==0.6.1.post2
 pip install git+https://github.com/huggingface/transformers@21fac7abba2a37fae86106f87fcf9974fd1e3830
 pip install -r requirements.txt
+mkdir HFCache
 ```
 
 Deploy API locally (tp should be the number of GPUs, and it accepts only powers of 2)
 ```bash
-mkdir HFCache
-export TRANSFORMERS_CACHE=./HFCache
-export HF_HOME=./HFCache
-CUDA_VISIBLE_DEVICES=1,2,3,4 vllm serve "Qwen/Qwen2-VL-72B-Instruct-AWQ" --dtype=half --tensor-parallel-size 4 --limit-mm-per-prompt image=3 --gpu_memory_utilization 0.9 --port 8000
+TRANSFORMERS_CACHE=./HFCache HF_HOME=./HFCache CUDA_VISIBLE_DEVICES=1,2,3,4 vllm serve "Qwen/Qwen2-VL-72B-Instruct-AWQ" --dtype=half --tensor-parallel-size 4 --limit-mm-per-prompt image=3 --gpu_memory_utilization 0.9 --port 8000
 ```
 
 # High level API 
