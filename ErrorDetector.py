@@ -44,9 +44,10 @@ BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT
 
 
 DescendingAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
-    'Point 1: The red shape should should come as far up as possible in the image. Does the red shape reach the top of the image? '
-    'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
-    'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
+    'Point 1: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
+    'Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
+
+
 
 FullAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
                 'Point 1: Does the red shape reach the thoracic region (high ribs), showing a curve in this area?'
@@ -92,8 +93,9 @@ c) Unity: The gallbladder red overlay must be a single connected structure. Show
 d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
 
 PancreasErrorDetect="""When evaluating the overlays, consider the following anatomical information:
-a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
-b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+a) Shape: Check if the red overlay resembles the overall shape of a pancreas.
+a) Head: The pancreas is the thickest on its head, which points to the right side of the human body or the left side of the image, which is oriented like an AP X-ray.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
 C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
 
 DescriptionsErrorDetect={
@@ -1336,8 +1338,32 @@ def LoadLLaVAOneVision72B(bits=8):
 
 
 
+def red_on_top(image_path, percentage=0.05):
+    import numpy as np
+    from PIL import Image
 
+    # 1- Load the image
+    pil_img=Image.open(image_path).convert('RGB')
+    img = np.array(pil_img)
+    
+    # Create a red mask where red channel is greater than both green and blue
+    red_mask = (img[:, :, 0] > img[:, :, 1]) & (img[:, :, 0] > img[:, :, 2])
 
+    # Determine the number of rows corresponding to the top percentage of the image height
+    top_rows = int(percentage * img.shape[0])
+
+    # Get the red mask for the top portion of the image
+    red_mask_top = red_mask[:top_rows, :]
+    
+    # Count the number of red pixels in the top portion
+    red_top = np.sum(red_mask_top)
+    
+    if red_top > 10:
+        return True
+    else:
+        plt.imshow(img)
+        plt.show()
+        return False
 
 
 def ErrorDetectionLMDeployZeroShot(clean, y, 
@@ -1374,16 +1400,23 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
 
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
 
-    if organ=='aorta':
-        if 'skeleton' not in location_window:
-            if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-                organ='descending aorta'
-        else:
-            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
-                organ='aorta'
-                text_compare=Compare2ImagesFullAorta
+    if not AnswerNo:
+        if organ=='aorta':
+            if 'skeleton' not in location_window:
+                if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+                    organ='descending aorta'
+                    if not red_on_top(y):
+                        print('Aorta does not have red on top')
+                        return 0.0
             else:
-                organ='descending aorta'
+                print('Answer before q5:',answer.lower()[answer.lower().rfind('q5'):])
+                if ('yes' in answer.lower()[answer.lower().rfind('q5'):]):#aortic arch present
+                    organ='aorta'
+                else:
+                    organ='descending aorta'
+                    if not red_on_top(y):
+                        print('Aorta does not have red on top')
+                        return 0.0
     
     if AnswerNo:
         a=RedArea(y)
@@ -1455,12 +1488,19 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
         if 'skeleton' not in location_window:
             if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
                 organ='descending aorta'
+                if not red_on_top(y):
+                    print('Aorta does not have red on top')
+                    return 0.0
         else:
-            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):]):#aortic arch present
                 organ='aorta'
                 text_compare=Compare2ImagesFullAorta
+                print('Full aorta')
             else:
                 organ='descending aorta'
+                if not red_on_top(y):
+                    print('Aorta does not have red on top')
+                    return 0.0
     
     if AnswerNo:
         a=RedArea(y)
@@ -1596,7 +1636,6 @@ def get_files(pth,file_list,anno_window,organ,window,best,file_structure='dual')
 
             if window=='skeleton':
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
-                #print('clean:',clean)
 
             if best==2:
                 good_file=y2
@@ -1803,10 +1842,16 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
 
         if good_examples_path is None:
             files_good_ex=files_good
+        else:
+            files_good_ex,_=get_files(good_examples_path,file_list,anno_window,organ,location_window,best,file_structure='dual')
+
+        if bad_examples_path is None:
             files_bad_ex=files_bad
         else:
-            files_good_ex,_=get_files(good_examples_path,file_list,anno_window,organ,location_window,best,file_structure='pick_good_only')
-            _,files_bad_ex=get_files(bad_examples_path,file_list,anno_window,organ,location_window,best,file_structure='pick_bad_only')
+            _,files_bad_ex=get_files(bad_examples_path,file_list,anno_window,organ,location_window,best,file_structure='dual')
+
+        print('Good examples:',files_good_ex)
+        print('Bad examples:',files_bad_ex)
         
         if dice_check:
             tmp_good=[]
@@ -1833,10 +1878,11 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                     print('Dice below th, skipping:',dice)
                     continue
             good_examples = files_good_ex[:i] + files_good_ex[i+1:]
-            good_examples = random.sample(good_examples, max(1,min(n//2, len(good_examples))))
+            print(len(good_examples))
+            good_examples = random.sample(good_examples, max(1,n//2))
             good_examples = [x[1] for x in good_examples]
             bad_examples= files_bad_ex[:i] + files_bad_ex[i+1:]
-            bad_examples = random.sample(bad_examples, min(n//2, len(bad_examples)))
+            bad_examples = random.sample(bad_examples, n//2)
             bad_examples = [x[1] for x in bad_examples]
 
             #print('Good examples:',good_examples)
@@ -1886,6 +1932,11 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                 del answer_bad
             torch.cuda.empty_cache()
             gc.collect()
+
+            if limit is not None:
+                print('Number of cases:',len(answers))
+                if len(answers)>=limit:
+                    break
 
         #calculate accuracy based on answers and labels
         answers=np.array(answers)
@@ -3057,11 +3108,15 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
     if AnswerNo:
         a1=RedArea(y1)
         a2=RedArea(y2)
-        print('Annotation should be zero, choosing annotation with smallest overlay')
-        if a1<a2:
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5
+        elif a1==0:
             return 1
-        elif a2<=a1:
+        elif a2==0:
             return 2
+        else:
+            return -1
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3186,11 +3241,15 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
     if AnswerNo:
         a1=RedArea(y1)
         a2=RedArea(y2)
-        print('Annotation should be zero, choosing annotation with smallest overlay')
-        if a1<a2:
-            return 1, [a1,a2]
-        elif a2<=a1:
-            return 2, [a1,a2]
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5, [1,1]
+        elif a1==0:
+            return 1, [1,2]
+        elif a2==0:
+            return 2, [2,1]
+        else:
+            return -1, [-1,-1]
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3606,11 +3665,15 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
     if AnswerNo:
         a1=RedArea(y1)
         a2=RedArea(y2)
-        print('Annotation should be zero, choosing annotation with smallest overlay')
-        if a1<a2:
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5
+        elif a1==0:
             return 1
-        elif a2<=a1:
+        elif a2==0:
             return 2
+        else:
+            return -1
     
     
     if isinstance(text_compare, dict):
@@ -3680,11 +3743,15 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
     if AnswerNo:
         a1=RedArea(y1)
         a2=RedArea(y2)
-        print('Annotation should be zero, choosing annotation with smallest overlay')
-        if a1<a2:
-            return 1, [a1,a2]
-        elif a2<=a1:
-            return 2, [a1,a2]
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5, [1,1]
+        elif a1==0:
+            return 1, [1,2]
+        elif a2==0:
+            return 2, [2,1]
+        else:
+            return -1, [-1,-1]
     
     
     if isinstance(text_compare, dict):
@@ -3747,11 +3814,15 @@ def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
     if AnswerNo:
         a1=RedArea(y1)
         a2=RedArea(y2)
-        print('Annotation should be zero, choosing annotation with smallest overlay')
-        if a1<a2:
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5
+        elif a1==0:
             return 1
-        elif a2<=a1:
+        elif a2==0:
             return 2
+        else:
+            return -1
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3827,11 +3898,15 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
     if AnswerNo:
         a1=RedArea(y1)
         a2=RedArea(y2)
-        print('Annotation should be zero, choosing annotation with smallest overlay')
-        if a1<a2:
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5
+        elif a1==0:
             return 1
-        elif a2<=a1:
+        elif a2==0:
             return 2
+        else:
+            return -1
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
