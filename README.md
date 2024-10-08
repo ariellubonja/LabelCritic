@@ -51,8 +51,6 @@ python3 RunAPI.py --path projections/directory/organ/ > organ.log 2>&1
 
 # Run Error Detection
 
-Change --file_structure to all_good
-
 ```bash
 python3 RunErrorDetection.py --path /mnt/sdc/pedro/ErrorDetection/good_labels_beta_full/ --port 8000 --organ [kidneys] --file_structure auto --examples 0 --good_examples_pth /mnt/sdc/pedro/ErrorDetection/good_labels_beta_full/kidneys/ --bad_examples_pth /mnt/sdc/pedro/ErrorDetection/errors_nnUnet_full/kidneys/ > organ.log 2>&1
 ```
