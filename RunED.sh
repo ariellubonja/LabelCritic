@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Define input variables
 organ=""
 annotation_vlm_root=""
@@ -56,6 +55,9 @@ python3 RunErrorDetection.py --path "$error_detection_root/errors_nnUnet_full/" 
 --examples 2 --good_examples_pth "$error_detection_root/good_labels_beta_full/$organ/" \
 --bad_examples_pth "$error_detection_root/errors_nnUnet_full/$organ/" \
 --file_structure auto > ED_"$organ"_BadnnUnet2Shot.log 2>&1
+
+# Reset log and run the sixth command
+> ED_"$organ"_GoodBeta2Shot.log
 
 # Check if the errors_nnUnet_full directory for the organ is empty
 if [ -z "$(ls -A "$error_detection_root/errors_nnUnet_full/$organ/")" ]; then
