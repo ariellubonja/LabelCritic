@@ -38,96 +38,98 @@ BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT
 "Q4 = _\n")
 
 
+AorticArchTextSkeleton=("If you answered no to Q4, skip Q5 and Q6. If you answered yes, continue:\n"
+                "Q5- What parts of the respiratory system are contained in the image region?\n"
+                "Q6- Based on your answer to Q3, is the trachea usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+                "Q6 = _\n")
 
-DescendingAortaErrorDetectV0=('Consider the following questions, where positive answers indicate a correct annotation: '
+
+BodyRegionText=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It looks like an AP (anterior-to-posterior) X-ray. Answer the questions below:\n"
+"Q1- Look at the image carefully, tell me which body region it represents and which organs and bones inside this region are crossing the image's upper boundary and its lower boundary. Present a complete list of all organs usually present in the body region contained in the image (just list their names).\n"
+"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
+"Q2 = _\n")
+
+AorticArchText=(
+    "If you answered 'no' to Q2, skip Q3, Q4 and Q5. If you answered 'yes', continue.\n"
+    "Q3: Based on your answer to Q1, are the lungs present in the image? \n"
+    "Answer 'yes' or 'no' using the template below, substituting _ with Yes or No.\n"
+    "Q3 = _\n"
+    "If you answered 'no' to Q3, skip Q4 and Q5. If you answered 'yes', continue.\n"
+    "Q4: Repeat from you answer to Q1, which organs and bones are crossing the image upper boundary (none, brain, neck, lungs, heart or others)? \n"
+    "Q5: Considering your answer to Q3 and Q4, does the image include the aortic arch? The aortic arch is placed just above the heart. It is not present if you listed the heart, lower ribs, or lower lungs in Q4. It is present if you listed none, brain or neck. \n"#It is probably not present if you listed the lungs. \n"
+    "Answer 'yes' or 'no' using the template below, substituting _ with Yes or No.\n"
+    "Q5 = _\n"
+)
+#90% localization accuracy
+
+
+
+
+DescendingAortaErrorDetectV0=('Consider the following questions, were positive answers indicate a correct annotation: '
     'Point 1: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
     'Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
 
-DescendingAortaErrorDetectV1="""Consider the following questions, where positive answers indicate a correct annotation: 
+DescendingAortaErrorDetectV1="""Consider the following questions, were positive answers indicate a correct annotation: 
     Point 1: Does the red shape resemble a line? It does not matter if the line is curved or straight. Also, the line can have a round structure in the upper chest.
     Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong."""
 #70% acc in 2 shot correct annos
 
-DescendingAortaErrorDetect=('Consider the following questions, where positive answers indicate a correct annotation: '
+DescendingAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
     'Point 1: Does the red shape resemble a line? It does not matter if the line is curved or straight. Also, the line may have a round bulge at the top, representing the aortic arch (upper chest).'
     'Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
 FullAortaErrorDetect=DescendingAortaErrorDetect
-#0.66, 8/12	0.5, 31/62	1, 31/31; 0.8333, 10/12	0.8065, 50/62	0.839, 26/31
 
-FullAortaErrorDetectV0=('Consider the following questions, where positive answers indicate a correct annotation: '
+
+FullAortaErrorDetectV0=('Consider the following questions, were positive answers indicate a correct annotation: '
                 'Point 1: Does the red shape reach the thoracic region (high ribs), showing a curve in this area?'
                 'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
                 'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong. ')
 
-PostcavaErrorDetectV0=('Consider the following questions, where positive answers indicate a correct annotation: '
+PostcavaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
             'Point 1: Does the red shape reach the thoracic region (high ribs)?'
             'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
             'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong. ')
-#0.5, 3/6	0.505, 50/99; 1, 6/6	0.8787, 87 /( 99 - 0 )	0.24, 12 /( 50 - 0 )
-
-PostcavaErrorDetect=('Consider the following questions, where positive answers indicate a correct annotation: '
-    'Point 1: Does the red shape resemble a line? It does not matter if the line is curved or straight.'
-    'Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
-#0.333, 2/6	0.404, 40/99	0.96, 48/50; 
 
 KidneysErrorDetectOld=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
                       "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
-#1, 14/14	0.8125, 13/16	0.8333, 55/66
 
 LiverErrorDetect=("When evaluating the overlays, consider the following anatomical information:\n"
 "a) The liver is a large organ, with triangular or wedge-like shape.\n"
 "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.\n"
 "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region. \n")
-#0.9091, 10/11	1, 4/4	0.96875, 62 /( 64 - 0 ); 1, 11/11	1, 4/4	0.7656, 49 /( 64 - 0 )
+
 
 KidneysErrorDetect=("When evaluating the overlays, consider the following anatomical information:\n"
 "a) A person usually has two kidneys, check if the image display one, two or more red objects.\n"
 "b) Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape.\n"
 "c) The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects are on either side of the spine and at the level of the lower ribs. \n")
-#0.9285, 13/14	0.4375, 7 /( 16 - 0 )	1, 66/66; 1, 14/14	0.8125, 13/16	0.8333, 55/66
 
-StomachErrorDetectV0="""Consider the following anatomical information:
+
+StomachErrorDetect="""Consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
 c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
-#too many FP:, 1, 2/2	0.6774, 21/31	0.6153, 32 /( 52 - 0 ); 1, 2/2	0.9354, 0.9354	0.5192, 27 /( 52 - 0 )
-
-StomachErrorDetect="""Evaluate only the location and unity of the stomach, NOT its shape, nor its size:
-a) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-b) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
-#1, 2/2	0.6774, 21 /( 31 - 0 )	0.8846,  46 /( 52 - 0 ); 1, 2/2	0.8064,  25 /( 31 - 0 )	0.673, 35 /( 52 - 0 )
-
 
 PancreasErrorDetect="""Consider the following anatomical information:
 a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
 C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
 
-
 SpleenErrorDetect="""Consider the following anatomical information:
 a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen, with no small recesses.
 b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
 c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
 d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney."""
-#1, 3/3	1, 10/10	0.6901,  49 /( 71 - 0 ); 1, 3/3	1, 10/10	0.7746, 55 /( 71 - 0 )
 
-
-GallbladderErrorDetectV0="""Consider the following anatomical information:
+GallbladderErrorDetect="""Consider the following anatomical information:
 a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
 b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
-#horrible number of false positives: 1, 2/2	0.9782, 45/46	0.1355, 8 /( 59 - 0 ); 1, 2/2	1, 46/46	0.0508, 3/59
 
-GallbladderErrorDetect="""Evaluate only the location and unity of the gallbladder, NOT its shape, nor its size:
-a) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
-b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, which is oriented like an AP X-ray). It is near the lower edge of the liver, and around the level of the lower ribs."""
-#0.5, 1/2	0.8696, 40/46	0.8305, 49/59; 1, 2/2	0.9782, 45 /( 46 - 0 )	0.11, 7/59
-
-
-PancreasErrorDetectV0="""When evaluating the overlays, consider the following anatomical information:
+PancreasErrorDetect="""When evaluating the overlays, consider the following anatomical information:
 a) Shape: Check if the red overlay resembles the overall shape of a pancreas.
 a) Head: The pancreas is the thickest on its head, which points to the right side of the human body or the left side of the image, which is oriented like an AP X-ray.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
@@ -1438,13 +1440,12 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
     if not AnswerNo:
         if organ=='aorta':
             if 'skeleton' not in location_window:
-                if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
+                if ('no' in answer.lower()[answer.lower().rfind('q6'):]):#no lungs
                     organ='descending aorta'
                     if not red_on_top(y):
                         print('Aorta does not have red on top')
                         return 0.0
             else:
-                print('Answer before q5:',answer.lower()[answer.lower().rfind('q5'):])
                 if ('yes' in answer.lower()[answer.lower().rfind('q5'):]):#aortic arch present
                     organ='aorta'
                 else:
@@ -1531,7 +1532,7 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
                     print('Aorta does not have red on top')
                     return 0.0
         else:
-            if ('yes' in answer.lower()[answer.lower().rfind('q5'):]):#aortic arch present
+            if ('yes' in answer.lower()[answer.lower().rfind('q6'):]):#aortic arch present
                 organ='aorta'
                 text_compare=Compare2ImagesFullAorta
                 print('Full aorta')
@@ -2758,10 +2759,7 @@ BodyRegionTextV1=("The image I am sending is frontal projections of one CT scan.
 "Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
 "Q2 = _\n")
 #seem to give maybe more accurate answers
-BodyRegionText=("The image I am sending is frontal projections of one CT scan. It is not a CT slice, instead, they have transparency and let you see through the entire human body, like an X-ray does. It looks like an AP (anterior-to-posterior) X-ray. Answer the questions below:\n"
-"Q1- Look at the image carefully, tell me which body region it represents and which organs and bones inside this region are crossing the image's upper boundary and its lower boundary. Present a complete list of all organs usually present in the body region contained in the image (just list their names).\n"
-"Q2- Based on your answer to Q1, is the %(organ)s usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No.:\n"
-"Q2 = _\n")
+
 
 #touching became crossing
 
@@ -2816,10 +2814,6 @@ AorticArchTextSkeletonV0=("If you answered no to Step 3, skip Step 4. If you ans
                 "Step 4: Are heart and aoric arch fully contained within image bondaries? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by 'yes' or 'no':\n"
                 "Step 4 = _\n")
 
-AorticArchTextSkeleton=("If you answered no to Q3, skip Q4 and Q5. If you answered yes, continue:\n"
-                "Q4- What parts of the respiratory system are contained in the image region?\n"
-                "Q5- Based on your answer to Q3, is the trachea usually present in this region and in your list? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
-                "Q5 = _\n")
 
 AorticArchTextV5=("If you answered no to Q2, skip Q3 and Q4. If you answered yes, continue:\n"
                 "Q3- What parts of the respiratory system are usually presentusually present in this region and in your list?\n"
@@ -2867,18 +2861,7 @@ AorticArchTextV7=("Q3- If you answered no to Q2, ignore this question (Q3). If y
                 "Based on your answer to Q3, fill the template below substituting  _ by Yes or No.:\n"
                 "Q3 = _\n")
 
-AorticArchText=(
-    "If you answered 'no' to Q2, skip Q3, Q4 and Q5. If you answered 'yes', continue.\n"
-    "Q3: Based on your answer to Q1, are the lungs present in the image? \n"
-    "Answer 'yes' or 'no' using the template below, substituting _ with Yes or No.\n"
-    "Q3 = _\n"
-    "If you answered 'no' to Q3, skip Q4 and Q5. If you answered 'yes', continue.\n"
-    "Q4: Repeat from you answer to Q1, which organs and bones are crossing the image upper boundary (none, brain, neck, lungs, heart or others)? \n"
-    "Q5: Considering your answer to Q3 and Q4, does the image include the aortic arch? The aortic arch is placed just above the heart. It is not present if you listed the heart, lower ribs, or lower lungs in Q4. It is present if you listed none, brain or neck. \n"#It is probably not present if you listed the lungs. \n"
-    "Answer 'yes' or 'no' using the template below, substituting _ with Yes or No.\n"
-    "Q5 = _\n"
-)
-#90% localization accuracy
+
 
 ComparisonText=("I am now sending you a figure with 4 images inside of it. They are all frontal projections of the same CT scan I sent before. "
                 "The %(organ)s region in the images should be marked in red, using a red overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. "
@@ -3179,8 +3162,9 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -3326,8 +3310,9 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -3761,8 +3746,9 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -3851,8 +3837,9 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -3935,8 +3922,9 @@ def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -4031,8 +4019,9 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
         q='q4'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
@@ -4127,8 +4116,9 @@ def Prompt3MessagesLMDeploy(img1, img2, img3,
     q='q2'
     AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
     if organ=='aorta':
-        if ('no' in answer.lower()[answer.lower().rfind('q3'):answer.lower().rfind('q3')+7]):#no lungs
-             organ='descending aorta'
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
