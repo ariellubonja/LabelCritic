@@ -23,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT scan, focusing on showing the skeleton. Look at it carefully, and answer the questions below:\n"
-"Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
+"Q1- Which bones are on the top of the image? Which bones are on its bottom?\n"
 "Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
 "skull = _"
 "neck = _"
@@ -131,9 +131,9 @@ d) Location: The gallbladder is located in the upper right quadrant of the abdom
 
 PancreasErrorDetect="""When evaluating the overlays, consider the following anatomical information:
 a) Shape: Check if the red overlay resembles the overall shape of a pancreas.
-a) Head: The pancreas is the thickest on its head, which points to the right side of the human body or the left side of the image, which is oriented like an AP X-ray.
-b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+b) Head: The pancreas is the thickest on its head, which points to the right side of the human body or the left side of the image, which is oriented like an AP X-ray.
+c) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+d) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
 
 DescriptionsErrorDetect={
     "aorta":FullAortaErrorDetect,
@@ -4846,7 +4846,7 @@ def check_dice_on_composite_2_figs(image_path):
 
     # Calculate Dice coefficient
     intersection = np.sum(mask1 * mask2)
-    dice = (2. * intersection) / (np.sum(mask1) + np.sum(mask2))
+    dice = (2. * intersection) / (np.sum(mask1) + np.sum(mask2) + 1e-6)
     
     return dice
 
