@@ -13,7 +13,7 @@ importlib.reload(ed)
 parser = argparse.ArgumentParser(description='Run SystematicComparisonLMDeploySepFigures with the specified path.')
 parser.add_argument('--path', help='Path to the annotations')
 parser.add_argument('--port', help='VLLM port to use', default='8000')
-parser.add_argument('--file_structure', help='file_structure: dual (good and bad annotations in one folder, y2 assumed to be the good one) or all_good (only takes y2 samples) or dual_bad (assumes y1 and y2 to be bad) or pick_bad_only (picks only y1) or pick_good_only (picks only y2)', default='auto')
+parser.add_argument('--file_structure', help='file_structure: dual (good and bad annotations in one folder, y2 assumed to be the good one) or all_good (only takes y2 samples) or dual_bad (assumes y1 and y2 to be bad) or pick_bad_only (picks only y1) or pick_good_only (picks only y2)', default='dual')
 parser.add_argument('--organ_list', help='List of organs to process', default='auto')
 parser.add_argument('--size', help='Size of the images', default=512)
 parser.add_argument('--dice_check', action='store_true',
@@ -53,7 +53,6 @@ if args.file_structure == 'auto':
         args.file_structure = 'all_good'
     elif 'bad' in path.lower() or 'error' in path.lower():
         args.file_structure = 'all_bad'
-
 
 base_url = 'http://0.0.0.0:8000/v1'.replace('8000', args.port)
 
