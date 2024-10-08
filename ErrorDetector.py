@@ -39,17 +39,22 @@ BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT
 
 
 
-
-
-
-
-DescendingAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
+DescendingAortaErrorDetectV0=('Consider the following questions, were positive answers indicate a correct annotation: '
     'Point 1: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
     'Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
 
+DescendingAortaErrorDetectV1="""Consider the following questions, were positive answers indicate a correct annotation: 
+    Point 1: Does the red shape resemble a line? It does not matter if the line is curved or straight. Also, the line can have a round structure in the upper chest.
+    Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong."""
+#70% acc in 2 shot correct annos
 
+DescendingAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
+    'Point 1: Does the red shape resemble a line? It does not matter if the line is curved or straight. Also, the line may have a round bulge at the top, representing the aortic arch (upper chest).'
+    'Point 2: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong.')
+FullAortaErrorDetect=DescendingAortaErrorDetect
+#80+ acc
 
-FullAortaErrorDetect=('Consider the following questions, were positive answers indicate a correct annotation: '
+FullAortaErrorDetectV0=('Consider the following questions, were positive answers indicate a correct annotation: '
                 'Point 1: Does the red shape reach the thoracic region (high ribs), showing a curve in this area?'
                 'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
                 'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong. ')
@@ -59,7 +64,7 @@ PostcavaErrorDetect=('Consider the following questions, were positive answers in
             'Point 2: Consider the bones in the image. Is the lumbar spine visible? If it is, does the red shape come down to the lumbar spine height? '
             'Point 3: Is the red shape a single connected part? If you see two or more red shapes in the image, it is wrong. ')
 
-KidneysErrorDetect=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
+KidneysErrorDetectOld=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
                       "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
 
@@ -67,6 +72,12 @@ LiverErrorDetect=("When evaluating the overlays, consider the following anatomic
 "a) The liver is a large organ, with triangular or wedge-like shape.\n"
 "b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.\n"
 "c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region. \n")
+
+
+KidneysErrorDetect=("When evaluating the overlays, consider the following anatomical information:\n"
+"a) A person usually has two kidneys, check if the image display one, two or more red objects.\n"
+"b) Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape.\n"
+"c) The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects are on either side of the spine and at the level of the lower ribs. \n")
 
 
 StomachErrorDetect="""Consider the following anatomical information:
@@ -1594,7 +1605,6 @@ def get_files(pth,file_list,anno_window,organ,window,best,file_structure='dual')
         # Removing the newline characters at the end of each line (optional)
         file_list = [line.strip() for line in file_list]
 
-
     if os.path.isdir(os.path.join(pth,os.listdir(pth)[0])):
         #not composite folder
         files=[]
@@ -1620,6 +1630,44 @@ def get_files(pth,file_list,anno_window,organ,window,best,file_structure='dual')
             return [],files
         else:
             raise ValueError('Invalid file structure for non composite folders.')
+
+    if not any('y1.png' in f and 'y2.png' in f for f in os.listdir(pth)):
+        if file_structure not in ['all_good','all_bad','pick_good_only','pick_bad_only']:
+            raise ValueError('No y1 or y2 files found in folder. Use all_good, all_bad, pick_good_only or pick_bad_only file_structure.')
+        files=[]
+        for target in os.listdir(pth):
+            if file_list is not None:
+                if target[:14] not in file_list:
+                    continue
+            
+            if 'ct_window_bone_axis_1' not in target:
+                continue
+            clean=os.path.join(pth,target)
+            bdmap=clean[clean.rfind('/')+1:clean.rfind('_ct_window_bone')]
+
+            flag=False
+            for file in os.listdir(pth):
+                if bdmap in file and ('overlay_window_'+anno_window) in file:
+                    y1=file
+                    flag=True
+                    y1=os.path.join(pth,y1)
+                    break
+            if not flag:
+                print('bdmap:',bdmap)
+                raise ValueError('No y1 file found for:',clean)
+
+            if window=='skeleton':
+                clean=clean.replace('ct_window_bone','ct_window_skeleton')
+
+            files.append([clean,y1])
+        print(file_structure)
+        if file_structure=='all_good' or file_structure=='pick_good_only':
+            return files,[]
+        elif file_structure=='all_bad' or file_structure=='pick_bad_only':
+            return [],files
+        
+    
+
 
     files_bad=[]
     files_good=[]
@@ -1741,8 +1789,10 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
         labels=[]
         outputs={}
 
-        
+        print('Getting files')
         files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
+        print('Good files:',files_good)
+        print('Bad files:',files_bad)
         #print('Files:',files_good+files_bad)
         #print('path:',pth)
         #print('files in path:',os.listdir(pth))
@@ -1851,12 +1901,12 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
         if good_examples_path is None:
             files_good_ex=files_good
         else:
-            files_good_ex,_=get_files(good_examples_path,file_list,anno_window,organ,location_window,best,file_structure='dual')
+            files_good_ex,_=get_files(good_examples_path,file_list,anno_window,organ,location_window,best,file_structure='pick_good_only')
 
         if bad_examples_path is None:
             files_bad_ex=files_bad
         else:
-            _,files_bad_ex=get_files(bad_examples_path,file_list,anno_window,organ,location_window,best,file_structure='dual')
+            _,files_bad_ex=get_files(bad_examples_path,file_list,anno_window,organ,location_window,best,file_structure='pick_bad_only')
 
         print('Good examples:',files_good_ex)
         print('Bad examples:',files_bad_ex)
