@@ -1,5 +1,22 @@
 {
-    "kidneys": [],
+    "kidneys": [
+        "BDMAP_V0000226",
+        "BDMAP_A0000316",
+        "BDMAP_V0000104",
+        "BDMAP_A0000392",
+        "BDMAP_V0000035",
+        "BDMAP_V0000230",
+        "BDMAP_A0002373",
+        "BDMAP_V0000392",
+        "BDMAP_A0000226",
+        "BDMAP_A0001962",
+        "BDMAP_V0001962",
+        "BDMAP_A0000230",
+        "BDMAP_A0000035",
+        "BDMAP_A0002125",
+        "BDMAP_A0000057",
+        "BDMAP_V0000316"
+    ],
     "pancreas": [],
     "gall_bladder": [
         "BDMAP_A0002538",
