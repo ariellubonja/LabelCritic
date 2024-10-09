@@ -11,9 +11,9 @@ import io
 import base64
 import gc
 try:
-    from . import projection as prj
+    from . import Projection as prj
 except:
-    import projection as prj
+    import Projection as prj
 import tempfile
 import shutil
 import copy
@@ -4871,7 +4871,7 @@ def check_dice(image_path1, image_path2):
     intersection = torch.sum(mask1 & mask2)
     total = torch.sum(mask1) + torch.sum(mask2)
 
-    dice = (2.0 * intersection) / total
+    dice = (2.0 * intersection) / (total + np.finfo(float).eps)
 
     return dice.item()
 
