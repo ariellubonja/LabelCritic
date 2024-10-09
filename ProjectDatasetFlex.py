@@ -6,6 +6,18 @@ import json
 import AnnotationVLM.projection as pj
 importlib.reload(pj)
 
+def parse_organs_arg(organs_str):
+    # Check if the string starts with '[' and ends with ']'
+    if organs_str.startswith('[') and organs_str.endswith(']'):
+        # Remove the square brackets and split the string by commas
+        organs_list = organs_str[1:-1].split(',')
+        # Strip any extra spaces from the organ names
+        organs_list = [organ.strip() for organ in organs_list]
+        return organs_list
+    # Return as a single element list if it's not a list format
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description='Process paths for data projection and composition.')
 
@@ -34,17 +46,23 @@ def main():
     output_dir1 = args.output_dir1
     output_dir2 = args.output_dir2
 
-    print(os.listdir(bad_folder))
     
-    if args.organ=='kidneys':
-        organs=['kidney_left','kidney_right']
-    elif '00' in os.listdir(bad_folder)[0]:
-        if args.organ=='none':
-            organs=[item[:item.rfind('.nii.gz')] for item in os.listdir(bad_folder+'/'+os.listdir(bad_folder)[0]+'/segmentations')]
+
+    #print(os.listdir(bad_folder))
+    
+    organs=parse_organs_arg(args.organ)
+    if organs is None:
+        if args.organ=='kidneys':
+            organs=['kidney_left','kidney_right']
+        elif '00' in os.listdir(bad_folder)[0]:
+            if args.organ=='none':
+                organs=[item[:item.rfind('.nii.gz')] for item in os.listdir(bad_folder+'/'+os.listdir(bad_folder)[0]+'/segmentations')]
+            else:
+                organs=[args.organ]
         else:
-            organs=[args.organ]
-    else:
-        organs=os.listdir(bad_folder)
+            organs=os.listdir(bad_folder)
+
+    print('Organs:',organs)
 
     if bad_folder2.lower() != 'none':
         if '00' not in os.listdir(bad_folder2)[0]:
@@ -91,6 +109,11 @@ def main():
                 file_list2[organ]=os.listdir(os.path.join(bad_folder2,organ))
 
 
+    #get intersection between file list and file_list_loaded
+    if args.file_list is not None:
+        for organ in organs:
+            file_list[organ]=list(set(file_list[organ])&set(file_list_loaded[organ]))
+            
     for organ in organs:
         if 'right' in organ:
             file_list[organ]=list(set(file_list[organ]+file_list[organ.replace('right','left')]))
@@ -101,10 +124,6 @@ def main():
             if bad_folder2.lower() != 'none':
                 file_list2[organ]=list(set(file_list2[organ]+file_list2[organ.replace('left','right')]))
     
-    #get intersection between file list and file_list_loaded
-    if args.file_list is not None:
-        for organ in organs:
-            file_list[organ]=list(set(file_list[organ])&set(file_list_loaded[organ]))
 
 
     # Define projection paths
