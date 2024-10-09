@@ -32,8 +32,8 @@ BodyRegionTextSkeleton=("The image I am sending is frontal projections of one CT
 "lower ribs = _"
 "lumbar spine = _"
 "pelvis = _"
-"femurs = _"
-"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names). In your list, carefully consider if the following organs are usually contained or not: liver, gallbladder, stomach, spleen, pancreas and kidneys. \n"
+"femurs = _\n"
+"Q3- Considering these landmarks and the bones on the image top and bottom, give me a complete list of all organs (not bones) usually contained within this image limits (just list their names).\n"# In your list, carefully consider if the following organs are usually contained or not: liver, gallbladder, stomach, spleen, pancreas and kidneys. \n"
 "Q4- Based on your answer to Q2 and Q3, is the %(organ)s usually present within this image limits? Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
 "Q4 = _\n")
 
@@ -1461,10 +1461,10 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
             return 1.0
         else:
             return 0.0
-    else:
-        if RedArea(y)==0:
-            print('Annotation is empty, but it should not be.')
-            return 0.0
+    #else:
+    #    if RedArea(y)==0:
+    #        print('Annotation is empty, but it should not be.')
+    #        return 0.0
         
     if save_memory:
         conversation=[]
@@ -1549,10 +1549,10 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
             return 1.0
         else:
             return 0.0
-    else:
-        if RedArea(y)==0:
-            print('Annotation is empty, but it should not be.')
-            return 0.0
+    #else:
+    #    if RedArea(y)==0:
+    #        print('Annotation is empty, but it should not be.')
+    #        return 0.0
         
 
     
@@ -3183,18 +3183,18 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
         else:
             return -1
-    else:
-        a1=RedArea(y1)
-        a2=RedArea(y2)
-        if a1==0 and a2==0:
-            print('Both annotations are empty, but they should not be')
-            return 0.5
-        elif a1==0:
-            print('y1 is empty, but it should not be')
-            return 2.0
-        elif a2==0:
-            print('y2 is empty, but it should not be')
-            return 1.0
+    #else:
+    #    a1=RedArea(y1)
+    #    a2=RedArea(y2)
+    #    if a1==0 and a2==0:
+    #        print('Both annotations are empty, but they should not be')
+    #        return 0.5
+    #    elif a1==0:
+    #        print('y1 is empty, but it should not be')
+    #        return 2.0
+    #    elif a2==0:
+    #        print('y2 is empty, but it should not be')
+    #        return 1.0
         
         
     
@@ -3330,19 +3330,19 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         elif a2==0:
             return 2, [2,1]
         else:
-            return -1, [-1,-1]
-    else:
-        a1=RedArea(y1)
-        a2=RedArea(y2)
-        if a1==0 and a2==0:
-            print('Both annotations are empty, but they should not be')
-            return 0.5, [1,1]
-        elif a1==0:
-            print('y1 is empty, but it should not be')
-            return 2.0, [2,1]
-        elif a2==0:
-            print('y2 is empty, but it should not be')
-            return 1.0, [1,2]
+            return 0.5, [-1,-1]
+    #else:
+    #    a1=RedArea(y1)
+    #    a2=RedArea(y2)
+    #    if a1==0 and a2==0:
+    #        print('Both annotations are empty, but they should not be')
+    #        return 0.5, [1,1]
+    #    elif a1==0:
+    #        print('y1 is empty, but it should not be')
+    #        return 2.0, [2,1]
+    #    elif a2==0:
+    #        print('y2 is empty, but it should not be')
+    #        return 1.0, [1,2]
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -3768,18 +3768,18 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
         else:
             return -1
-    else:
-        a1=RedArea(y1)
-        a2=RedArea(y2)
-        if a1==0 and a2==0:
-            print('Both annotations are empty, but they should not be')
-            return 0.5
-        elif a1==0:
-            print('y1 is empty, but it should not be')
-            return 2.0
-        elif a2==0:
-            print('y2 is empty, but it should not be')
-            return 1.0
+    #else:
+    #    a1=RedArea(y1)
+    #    a2=RedArea(y2)
+    #    if a1==0 and a2==0:
+    #        print('Both annotations are empty, but they should not be')
+    #        return 0.5
+    #    elif a1==0:
+    #        print('y1 is empty, but it should not be')
+    #        return 2.0
+    #    elif a2==0:
+    #        print('y2 is empty, but it should not be')
+    #        return 1.0
     
     
     if isinstance(text_compare, dict):
@@ -3858,19 +3858,19 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         elif a2==0:
             return 2, [2,1]
         else:
-            return -1, [-1,-1]
-    else:
-        a1=RedArea(y1)
-        a2=RedArea(y2)
-        if a1==0 and a2==0:
-            print('Both annotations are empty, but they should not be')
-            return 0.5, [1,1]
-        elif a1==0:
-            print('y1 is empty, but it should not be')
-            return 2.0, [2,1]
-        elif a2==0:
-            print('y2 is empty, but it should not be')
-            return 1.0, [1,2]
+            return 0.5, [-1,-1]
+    #else:
+    #    a1=RedArea(y1)
+    #    a2=RedArea(y2)
+    #    if a1==0 and a2==0:
+    #        print('Both annotations are empty, but they should not be')
+    #        return 0.5, [1,1]
+    #    elif a1==0:
+    #        print('y1 is empty, but it should not be')
+    #        return 2.0, [2,1]
+    #    elif a2==0:
+    #        print('y2 is empty, but it should not be')
+    #        return 1.0, [1,2]
     
     
     if isinstance(text_compare, dict):
@@ -3943,18 +3943,18 @@ def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
             return 2
         else:
             return -1
-    else:
-        a1=RedArea(y1)
-        a2=RedArea(y2)
-        if a1==0 and a2==0:
-            print('Both annotations are empty, but they should not be')
-            return 0.5
-        elif a1==0:
-            print('y1 is empty, but it should not be')
-            return 2.0
-        elif a2==0:
-            print('y2 is empty, but it should not be')
-            return 1.0
+    #else:
+    #    a1=RedArea(y1)
+    #    a2=RedArea(y2)
+    #    if a1==0 and a2==0:
+    #        print('Both annotations are empty, but they should not be')
+    #        return 0.5
+    #    elif a1==0:
+    #        print('y1 is empty, but it should not be')
+    #        return 2.0
+    #    elif a2==0:
+    #        print('y2 is empty, but it should not be')
+    #        return 1.0
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
@@ -4040,18 +4040,18 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
             return 2
         else:
             return -1
-    else:
-        a1=RedArea(y1)
-        a2=RedArea(y2)
-        if a1==0 and a2==0:
-            print('Both annotations are empty, but they should not be')
-            return 0.5
-        elif a1==0:
-            print('y1 is empty, but it should not be')
-            return 2.0
-        elif a2==0:
-            print('y2 is empty, but it should not be')
-            return 1.0
+    #else:
+    #    a1=RedArea(y1)
+    #    a2=RedArea(y2)
+    #    if a1==0 and a2==0:
+    #        print('Both annotations are empty, but they should not be')
+    #        return 0.5
+    #    elif a1==0:
+    #        print('y1 is empty, but it should not be')
+    #        return 2.0
+    #    elif a2==0:
+    #        print('y2 is empty, but it should not be')
+    #        return 1.0
     
     
     text_y1 = text_y1 % {'organ': organ.replace('_',' '), 'number': 1} 
