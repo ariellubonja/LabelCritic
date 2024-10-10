@@ -500,10 +500,10 @@ def overlap_ct_and_masks(cts, masks, organs,device='cpu'):
 
 
 
-def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,save_path=None,organs=None):
+def project_ct_and_masks(pid, ct_pth, mask_pth, device='cuda',axis=1,th=0.5,save=False,save_path=None,organs=None):
     if not os.path.exists(os.path.join(save_path, pid,f"{pid}_ct_window_bone_axis_{axis}.png")):
         #start=time.time()
-        cts=load_n_project_ct(pid, datapath, ct_path=None,axis=axis,save=save,save_path=save_path,device=device)
+        cts=load_n_project_ct(pid, ct_pth, ct_path=None,axis=axis,save=save,save_path=save_path,device=device)
         #print('time to load and project ct:',time.time()-start)
     else:
         cts={}
@@ -516,7 +516,7 @@ def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,s
         print('ct projection loaded from '+f"{pid}_ct_window_{window}_axis_{axis}.png")
 
     #start=time.time()
-    masks,organs=load_n_project_masks(pid, datapath, size=cts['organs'].shape[-2:], device=device,axis=axis,th=th,save=save,save_path=save_path,organs=organs)
+    masks,organs=load_n_project_masks(pid, mask_pth, size=cts['organs'].shape[-2:], device=device,axis=axis,th=th,save=save,save_path=save_path,organs=organs)
     #print('time to load and project masks:',time.time()-start)
     if 'cuda' in device:
         masks=masks.to(device)
@@ -537,10 +537,10 @@ def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,s
 
     return cts,masks,organs
 
-def project_files_standard(pth, destin, organ, file_list=None, axis=1,device='cpu',skip_existing=True):
+def project_files_standard(ct_pth, mask_pth, destin, organ, file_list=None, axis=1,device='cpu',skip_existing=True):
     #no multiprocessing
     if file_list is None:
-        file_list=[f for f in file_list if f in os.listdir(pth)]
+        file_list=[f for f in file_list if f in os.listdir(mask_pth)]
     for pid in file_list:
         os.makedirs(os.path.join(destin,pid), exist_ok=True)
         if skip_existing and os.path.exists(os.path.join(destin,pid,pid+'_overlay_window_bone_axis_'+str(axis)+'_'+organ+'.png')) \
@@ -553,12 +553,12 @@ def project_files_standard(pth, destin, organ, file_list=None, axis=1,device='cp
 
         print(f'Projecting {pid}')
         start_proj=time.time()
-        project_ct_and_masks(pid, datapath=pth, device=device,axis=axis,th=0.5,save=True,save_path=os.path.join(destin,pid),organs=[organ])
+        project_ct_and_masks(pid, ct_pth=ct_pth, mask_pth=mask_pth, device=device,axis=axis,th=0.5,save=True,save_path=os.path.join(destin,pid),organs=[organ])
         print(f'Projected {pid}')
         print('time to project:',time.time()-start_proj)
         print('')
 
-def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
+def process_single_file(pid, ct_pth, mask_pth, destin, organ, axis, device, skip_existing):
     os.makedirs(os.path.join(destin, pid), exist_ok=True)
     
     # Check if the necessary files already exist
@@ -573,12 +573,16 @@ def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
         print(f'Skipping {pid}, already exists')
         return
 
-    if not os.path.isdir(os.path.join(pth, pid)):
+    if not os.path.isdir(os.path.join(ct_pth, pid)):
         print(f'Patient {pid} not found')
         return
     
-    if 'ct.nii.gz' not in os.listdir(os.path.join(pth, pid)):
+    if 'ct.nii.gz' not in os.listdir(os.path.join(ct_pth, pid)):
         print(f'CT not found for {pid}')
+        return
+    
+    if not os.path.isdir(os.path.join(mask_pth, pid)):
+        print(f'Mask {pid} not found')
         return
 
     # Process the file
@@ -586,17 +590,23 @@ def process_single_file(pid, pth, destin, organ, axis, device, skip_existing):
     start_proj = time.time()
     
     # Call the function to project CT and masks (assuming this function is defined elsewhere)
-    project_ct_and_masks(pid, datapath=pth, device=device, axis=axis, th=0.5, save=True, save_path=os.path.join(destin, pid), organs=[organ])
+    project_ct_and_masks(pid, ct_pth=ct_pth, mask_pth=mask_pth, device=device, axis=axis, th=0.5, save=True, save_path=os.path.join(destin, pid), organs=[organ])
     
-    print(f'Projected {pid} and saved in {os.path.join(destin, pid)}')
+    print(f'Projected {mask_pth}/{pid} and saved in {os.path.join(destin, pid)}')
     print('Time to project:', time.time() - start_proj)
     print('')
 
 
 # Main function that uses multiprocessing to parallelize the task
-def project_files(pth, destin, organ, file_list=None, axis=1, device='cpu', skip_existing=True, num_processes=10):
+def project_files(pth=None, destin=None, organ='liver', file_list=None, axis=1, device='cpu', skip_existing=True, num_processes=10, ct_pth=None, mask_pth=None):
+    if ct_pth is None:
+        ct_pth = pth
+    if mask_pth is None:
+        mask_pth = pth
+
     if 'cuda' in device:
-        project_files_standard(pth=pth, destin=destin, organ=organ, file_list=file_list, axis=axis,device=device,skip_existing=skip_existing)
+        project_files_standard(ct_pth=ct_pth, mask_pth=mask_pth, destin=destin, organ=organ, 
+                               file_list=file_list, axis=axis,device=device,skip_existing=skip_existing)
         return
     
     if file_list is None:
@@ -608,7 +618,7 @@ def project_files(pth, destin, organ, file_list=None, axis=1, device='cpu', skip
         # Prepare arguments for the helper function
         pool.starmap(
             process_single_file, 
-            [(pid, pth, destin, organ, axis, device, skip_existing) for pid in file_list]
+            [(pid, ct_pth, mask_pth, destin, organ, axis, device, skip_existing) for pid in file_list]
         )
 
 
