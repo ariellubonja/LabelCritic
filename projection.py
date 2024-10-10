@@ -73,20 +73,7 @@ def plot_organ_projection_3_axis(list_of_array, organ_name, pid,
     return projections
 
 
-def get_orientation_transform(nii, orientation=('L', 'A', 'S')):
-    """
-    Compute the transformation needed to reorient the image to LAS standard orientation.
-    """
-    current_orientation = nib.orientations.io_orientation(nii.affine)
-    standard_orientation = nib.orientations.axcodes2ornt(orientation)
-    transform = nib.orientations.ornt_transform(current_orientation, standard_orientation)
-    return transform
 
-def apply_transform(data, transform):
-    """
-    Apply the orientation transformation to the image data.
-    """
-    return nib.orientations.apply_orientation(data, transform)
 
 def resample_image(image, original_spacing, target_spacing=(1, 1, 1),order=1):
     """
@@ -160,44 +147,69 @@ def load_ct_and_mask(pid, organ, datapath,
     mask = apply_transform(mask_nii.get_fdata(), transform).astype(np.uint8)
 
     return ct, mask
+def get_orientation_transform(nii, orientation=('L', 'A', 'S')):
+    """
+    Compute the transformation needed to reorient the image to LAS standard orientation.
+    """
+    current_orientation = nib.orientations.io_orientation(nii.affine)
+    standard_orientation = nib.orientations.axcodes2ornt(orientation)
+    transform = nib.orientations.ornt_transform(current_orientation, standard_orientation)
+    return transform
 
+def apply_transform(data, transform):
+    """
+    Apply the orientation transformation to the image data.
+    """
+    return nib.orientations.apply_orientation(data, transform)
 
-def load_ct(pid, datapath, ct_path,device='cuda'):
+def apply_spacing_transform(spacing, transform):
+    """
+    Apply the orientation transformation to the spacing values.
+    """
+    # Rearrange the spacing based on the reordering in the transform matrix
+    reoriented_spacing = [spacing[int(t[0])] for t in transform]
+    
+    # Take into account the flips (axis direction changes) indicated by the transform
+    reoriented_spacing = [sp if t[1] == 1 else -sp for sp, t in zip(reoriented_spacing, transform)]
+    
+    return tuple(np.abs(reoriented_spacing))
+
+def load_ct(pid, datapath, ct_path, device='cuda'):
     """
     Load and reorient the CT scan to the standard LAS orientation.
 
     Parameters:
         pid (str): Patient ID.
-        organ (str): Name of the organ for the mask file.
         datapath (str): Path to the dataset.
         ct_path (str): Path to the CT scan.
 
     Returns:
         ct (np.ndarray): Reoriented CT scan data.
+        spacing (tuple): Reoriented spacing values.
     """
     # Load the CT scan
     if ct_path is None:
         ct_path = os.path.join(datapath, pid, 'ct.nii.gz')
-    #start=time.time()
     ct_nii = nib.load(ct_path)
-    #print('time to nib.load:',time.time()-start)
-    spacing=ct_nii.header.get_zooms()
+    
+    # Get original spacing
+    original_spacing = ct_nii.header.get_zooms()
 
     # Calculate the orientation transformation based on the CT scan
-    transform = get_orientation_transform(ct_nii, orientation=('L', 'A', 'S')) 
+    transform = get_orientation_transform(ct_nii, orientation=('L', 'A', 'S'))
 
     # Apply the transformation to the CT scan data
-    #start=time.time()
     ct = apply_transform(ct_nii.get_fdata(), transform)
-    #print('time to reorient:',time.time()-start)
 
-    #start=time.time()
-    ct=torch.from_numpy(ct.copy()).float()
-    if device!='cpu':
-        ct=ct.to(device)
-    #print('time to move to device:',time.time()-start)
+    # Apply the transformation to the spacing
+    reoriented_spacing = apply_spacing_transform(original_spacing, transform)
 
-    return ct, spacing
+    # Move to tensor and device
+    ct = torch.from_numpy(ct.copy()).float()
+    if device != 'cpu':
+        ct = ct.to(device)
+
+    return ct, reoriented_spacing
 
 def window_ct(ct):
     """
@@ -263,6 +275,8 @@ def project_cts(cts, spacing, axis=1):
     remaining_spacing = [spacing[remaining_axis[i]] for i in range(2)]
     new_size = [int(remaining_dims[i] * remaining_spacing[i]) for i in range(2)]
 
+    print('New size:',new_size)
+
     # Resample using bilinear interpolation to 1x1 mm spacing
     resampled_images = F.interpolate(stacked_images, size=new_size, mode='bilinear', align_corners=False)
 
@@ -308,6 +322,8 @@ def clahe_n_gamma(ct, clip_limit=2.0, tile_grid_size=(8, 8), gamma=0.3, apply_cl
 def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,device='cpu'):
     #start=time.time()
     ct,spacing=load_ct(pid, datapath, ct_path, device=device)
+    print('Spacing:',spacing)
+    print('Shape of CT:',ct.shape)
     #print('time to load:',time.time()-start)
     #start=time.time()
     cts=window_ct(ct)
@@ -434,7 +450,7 @@ def load_n_project_masks(pid, datapath, size=None, device='cuda',axis=1,th=0.5,s
 
     return masks,organs
 
-def overlap_ct_and_masks(cts, masks, organs):
+def overlap_ct_and_masks(cts, masks, organs,device='cpu'):
     """
     Overlay CT scans and masks for different organs and save the resulting images.
 
@@ -464,9 +480,13 @@ def overlap_ct_and_masks(cts, masks, organs):
             mask [mask > 0.5] = 1
             mask [mask <= 0.5] = 0
             mask = mask.bool()
+            if 'cuda' in device:
+                mask = mask.to(device)
 
             # Overlay the CT scan with the mask
             overlay=ct.clone().unsqueeze(0).repeat(3,1,1)
+            if 'cuda' in device:
+                overlay=overlay.to(device)
             overlay[1][mask] = 0.0
             overlay[2][mask] = 0.0
 
@@ -498,7 +518,9 @@ def project_ct_and_masks(pid, datapath, device='cuda',axis=1,th=0.5,save=False,s
     #start=time.time()
     masks,organs=load_n_project_masks(pid, datapath, size=cts['organs'].shape[-2:], device=device,axis=axis,th=th,save=save,save_path=save_path,organs=organs)
     #print('time to load and project masks:',time.time()-start)
-    overlay=overlap_ct_and_masks(cts, masks, organs)
+    if 'cuda' in device:
+        masks=masks.to(device)
+    overlay=overlap_ct_and_masks(cts, masks, organs,device=device)
     if save:
         for window in overlay:
             for organ in overlay[window]:
@@ -1116,7 +1138,7 @@ def project_files_slow(pth, destin, organ, file_list, axis=1,device='cuda:0',ski
                                     ct_path=None, mask_path=None, axis=1, device=device,
                                     precision=32)
         
-def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None):
+def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None,fast=False):
     path1=bad_path
     path2=good_path
     if organ is None:
@@ -1142,6 +1164,10 @@ def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None):
             y1_seleton=os.path.join(path1,organ,file,file+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
             y2_seleton=os.path.join(path2,organ,file,file+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'.png')
 
+            #if os.path.isfile(os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y2.png')):
+            #    print(f'Skipping {file}, already exists')
+            #    continue
+
             if not os.path.exists(ct):
                 print(f'File {file} does not exist in {path2}')
                 #raise ValueError(f'File {file} does not exist in {path2},skipping')
@@ -1155,14 +1181,16 @@ def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None):
             shutil.copy(skeleton, os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_skeleton_axis_'+str(axis)+'.png'))
             shutil.copy(y1_seleton, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y1.png'))
             shutil.copy(y2_seleton, os.path.join(output_dir,organ,file.split('.')[0]+'_overlay_window_skeleton_axis_'+str(axis)+'_'+organ+'_y2.png'))
+            print('Copied files: ', os.path.join(output_dir,organ,file.split('.')[0]+'_ct_window_bone_axis_'+str(axis)+'.png'))
 
-            create_composite_image(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone, y1_organs=y1_organs, y2_organs=y2_organs,name=file.split('.')[0]+'_')
-            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
-            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_seleton, y2_bone=y2_seleton,name=file.split('.')[0]+'_',window='skeleton')
-            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=ct, y2_bone=skeleton,name=file.split('.')[0]+'_',window='skeleton',just_ct_name=True)
-            create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y2_bone, y2_bone=y1_bone,name=file.split('.')[0]+'_best1_')#invert y1 and y2
-            highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=True)
-            highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=False)
+            if not fast:
+                create_composite_image(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone, y1_organs=y1_organs, y2_organs=y2_organs,name=file.split('.')[0]+'_')
+                create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_bone, y2_bone=y2_bone,name=file.split('.')[0]+'_')
+                create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y1_seleton, y2_bone=y2_seleton,name=file.split('.')[0]+'_',window='skeleton')
+                create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=ct, y2_bone=skeleton,name=file.split('.')[0]+'_',window='skeleton',just_ct_name=True)
+                create_composite_image_2figs(os.path.join(output_dir,organ), organ, axis, y1_bone=y2_bone, y2_bone=y1_bone,name=file.split('.')[0]+'_best1_')#invert y1 and y2
+                highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=True)
+                highlight_skeleton(ct_path=ct, skeleton_path=skeleton, pth=os.path.join(output_dir,organ),name=file.split('.')[0]+'_',red=False)
 
 
 def join_left_and_right_colorful(image_path1, image_path2):
@@ -1367,9 +1395,14 @@ def join_left_and_right_dataset(folder1, folder2, destination):
         if '_ct_' in file_name:
             shutil.copy(os.path.join(folder1, file_name), os.path.join(destination, file_name.replace('kidney_right', 'kidneys')))
             continue
+        
         # Construct the full paths for the images in folder1 and folder2
         image1_path = os.path.join(folder1, file_name)
         image2_path = os.path.join(folder2, file_name.replace('right', 'left'))
+
+        if not os.path.isfile(image2_path):
+            print(f"File {image2_path} does not exist, skipping")
+            continue
 
         print(image1_path, image2_path)
 
