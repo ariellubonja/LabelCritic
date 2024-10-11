@@ -129,12 +129,14 @@ def load_ct_and_mask(pid, organ, datapath,
     # Apply the transformation to the CT scan data
     ct = apply_transform(ct_nii.get_fdata(), transform)
 
-    # Load the mask using the same transformation
+   # Load the mask using the same transformation
     if mask_path is None:
-        try:
+        # Try the 'predictions' path first
+        mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
+        
+        # If the file doesn't exist in 'predictions', check 'segmentations'
+        if not os.path.exists(mask_path):
             mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
-        except:
-            mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
 
     mask_nii = nib.load(mask_path)
 
@@ -351,10 +353,12 @@ def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,de
 def load_mask(pid, organ, datapath, mask_path,device='cuda'):
     # Load the CT scan
     if mask_path is None:
-        try:
+        # Try the 'predictions' path first
+        mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
+        
+        # If the file doesn't exist in 'predictions', check 'segmentations'
+        if not os.path.exists(mask_path):
             mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
-        except:
-            mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
     mask_nii = nib.load(mask_path)
 
 
@@ -375,9 +379,11 @@ def load_mask(pid, organ, datapath, mask_path,device='cuda'):
     return mask
 
 def load_all_masks(pid, datapath, device='cuda',organs=['spleen','stomach','gall_bladder','liver']):
-    try:
-        mask_path = os.path.join(datapath, pid, 'segmentations')
-    except:
+    # Try the first path
+    mask_path = os.path.join(datapath, pid, 'segmentations')
+    
+    # Check if the path exists, if not, use the fallback
+    if not os.path.exists(mask_path):
         mask_path = os.path.join(datapath, pid, 'predictions')
 
     if organs is None:
