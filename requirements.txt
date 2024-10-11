@@ -1,4 +1,3 @@
-timm
 nibabel
 matplotlib
 opencv-python
