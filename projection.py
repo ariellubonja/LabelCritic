@@ -131,9 +131,9 @@ def load_ct_and_mask(pid, organ, datapath,
 
     # Load the mask using the same transformation
     if mask_path is None:
-        try:
+        if not os.path.exists(os.path.join(datapath, pid, 'predicitons')):
             mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
-        except:
+        else:
             mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
 
     mask_nii = nib.load(mask_path)
@@ -351,9 +351,9 @@ def load_n_project_ct(pid, datapath, ct_path,axis=1,save=False,save_path=None,de
 def load_mask(pid, organ, datapath, mask_path,device='cuda'):
     # Load the CT scan
     if mask_path is None:
-        try:
+        if not os.path.exists(os.path.join(datapath, pid, 'predicitons')):
             mask_path = os.path.join(datapath, pid, 'segmentations', organ + '.nii.gz')
-        except:
+        else:
             mask_path = os.path.join(datapath, pid, 'predictions', organ + '.nii.gz')
     mask_nii = nib.load(mask_path)
 
@@ -375,9 +375,9 @@ def load_mask(pid, organ, datapath, mask_path,device='cuda'):
     return mask
 
 def load_all_masks(pid, datapath, device='cuda',organs=['spleen','stomach','gall_bladder','liver']):
-    try:
+    if not os.path.exists(os.path.join(datapath, pid, 'predicitons')):
         mask_path = os.path.join(datapath, pid, 'segmentations')
-    except:
+    else:
         mask_path = os.path.join(datapath, pid, 'predictions')
 
     if organs is None:
