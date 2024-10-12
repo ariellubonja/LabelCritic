@@ -6,6 +6,19 @@
 
 ### Installation and running
 
+<details>
+<summary style="margin-left: 25px;">[Optional] Install Anaconda on Linux</summary>
+<div style="margin-left: 25px;">
+    
+```bash
+wget https://repo.anaconda.com/archive/Anaconda3-2024.06-1-Linux-x86_64.sh
+bash Anaconda3-2024.06-1-Linux-x86_64.sh -b -p ./anaconda3
+./anaconda3/bin/conda init
+source ~/.bashrc
+```
+</div>
+</details>
+
 Install
 ```bash
 git clone https://github.com/PedroRASB/AnnotationVLM
