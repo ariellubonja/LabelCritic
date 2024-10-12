@@ -53,6 +53,10 @@ if args.file_structure == 'auto':
         args.file_structure = 'all_good'
     elif 'bad' in path.lower() or 'error' in path.lower():
         args.file_structure = 'all_bad'
+    else:
+        args.file_structure = 'dual'
+
+print('file structure:', args.file_structure)
 
 base_url = 'http://0.0.0.0:8000/v1'.replace('8000', args.port)
 
