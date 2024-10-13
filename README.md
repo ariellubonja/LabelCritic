@@ -1,10 +1,23 @@
 # Use VLM to compare the per-voxel organ annotations of 2 semantic segmenters
 
 <p align="center">
-  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/Cerberus.png" alt="Project Logo" width="250"/>
+  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCritic.png" alt="Project Logo" width="250"/>
 </p>
 
 ### Installation and running
+
+<details>
+<summary style="margin-left: 25px;">[Optional] Install Anaconda on Linux</summary>
+<div style="margin-left: 25px;">
+    
+```bash
+wget https://repo.anaconda.com/archive/Anaconda3-2024.06-1-Linux-x86_64.sh
+bash Anaconda3-2024.06-1-Linux-x86_64.sh -b -p ./anaconda3
+./anaconda3/bin/conda init
+source ~/.bashrc
+```
+</div>
+</details>
 
 Install
 ```bash
@@ -12,8 +25,8 @@ git clone https://github.com/PedroRASB/AnnotationVLM
 cd AnnotationVLM
 conda create -n vllm python=3.12 -y
 conda activate vllm
-conda install ipykernel
-conda install pip
+conda install -y ipykernel
+conda install -y pip
 pip install vllm==0.6.1.post2
 pip install git+https://github.com/huggingface/transformers@21fac7abba2a37fae86106f87fcf9974fd1e3830
 pip install -r requirements.txt
@@ -46,7 +59,7 @@ python3 ProjectDatasetFlex.py --good_folder /mnt/T9/AbdomenAtlasPro/ --bad_folde
 ### (faster than using high level API)
 
 ```bash
-python3 RunAPI.py --path projections/directory/organ/ > organ.log 2>&1
+python3 RunAPI.py --path projections/directory/organ/ > comparisons.log 2>&1
 ```
 
 # Run Error Detection

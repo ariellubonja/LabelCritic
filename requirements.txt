@@ -1,3 +1,4 @@
+pandas
 nibabel
 matplotlib
 opencv-python
