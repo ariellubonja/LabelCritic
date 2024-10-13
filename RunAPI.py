@@ -48,6 +48,9 @@ if path[-1] != '/':
 
 base_url = 'http://0.0.0.0:8000/v1'.replace('8000', args.port)
 
+if '.csv' in args.csv_path:
+    args.csv_path=args.csv_path[:-4]
+
 for organ in organs:
     print('PROCESSING ORGAN: ', organ)
     # Call the function with the extracted organ and provided path
@@ -63,6 +66,6 @@ for organ in organs:
         conservative_dual=False,
         dice_th=float(args.dice_th),
         base_url=base_url,
-        csv_file=args.csv_path,
+        csv_file=args.csv_path+organ+'.csv',
         restart=(not args.continuing)
     )
