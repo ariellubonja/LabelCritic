@@ -19,6 +19,7 @@ import shutil
 import copy
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
+import csv
 
 
 
@@ -4573,6 +4574,13 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:8000
         for k,v in outputs.items():
             print(k,v)
 
+
+
+def check_case_exists(csv_file, case_name):
+    import pandas as pd
+    df = pd.read_csv(csv_file)
+    return case_name in df['case'].values
+
 def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
                             text_region=BodyRegionText, 
@@ -4587,7 +4595,16 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             solid_overlay='auto',multi_image_prompt_2='auto',
                             text_multi_image_prompt_2=Compare2Images,
                             dice_th=0.75,file_list=None,
-                            dual_confirmation=False,conservative_dual=False):
+                            dual_confirmation=False,conservative_dual=False,
+                            csv_file=None,restart=True):
+
+        if csv_file is not None:
+            column_names = ['case', 'answer', 'label', 'correct', 'organ', 'answer_1', 'answer_2']
+            if os.path.exists(csv_file) and restart:
+                os.remove(csv_file)
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(column_names)
         
         if multi_image_prompt_2=='auto':
             if organ in ['kidneys','liver','pancreas']:
@@ -4623,6 +4640,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
         
 
         for target in os.listdir(pth):
+
             if file_list is not None:
                 #print ('Target:',target[:14] )
                 if target[:14] not in file_list:
@@ -4635,7 +4653,11 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 continue
             clean=os.path.join(pth,target)
 
-
+            if ((csv_file is not None) and (not restart)):
+                if check_case_exists(csv_file, target):
+                    print('Already exists, skipping case ',target)
+                    continue
+            
             if best==2:
                 y1=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')
                 y2=clean.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')
@@ -4744,6 +4766,16 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                                 window=window,solid_overlay=solid_overlay)
             
             print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
+            if csv_file is not None:
+                if dual_confirmation:
+                    row = [target, answer, str(best), best==answer, organ, answer_dual[0], answer_dual[1]]
+                else:
+                    row = [target, answer, str(best), best==answer, organ, '-', '-']
+
+                # Append the row to the CSV file
+                with open(csv_file, mode='a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(row)
             answers.append(answer)
             labels.append(best)
             if dual_confirmation:
@@ -4866,6 +4898,9 @@ def check_dice(image_path1, image_path2):
     # Create binary mask where image is not greyscale
     mask1 = (tensor1[:, :, 0] != tensor1[:, :, 1]).to(torch.uint8)
     mask2 = (tensor2[:, :, 0] != tensor2[:, :, 1]).to(torch.uint8)
+
+    if torch.equal(mask1,mask2):
+        return 1.0
 
     # Calculate the Dice coefficient
     intersection = torch.sum(mask1 & mask2)

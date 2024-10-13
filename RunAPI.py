@@ -13,7 +13,9 @@ parser.add_argument('--path', help='Path to the annotations')
 parser.add_argument('--port', help='VLLM port to use', default='8000')
 parser.add_argument('--dice_th', help='VLLM port to use', default='0.75')
 parser.add_argument('--organ_list', help='List of organs to process', default='auto')
-
+parser.add_argument('--csv_path', help='path of casv to save results', default=None)
+parser.add_argument('--continuing', action='store_true', help="Continues from interrupted run.")
+    
 
 # Parse the arguments
 args = parser.parse_args()
@@ -60,5 +62,7 @@ for organ in organs:
         dual_confirmation=True,
         conservative_dual=False,
         dice_th=float(args.dice_th),
-        base_url=base_url
+        base_url=base_url,
+        csv_file=args.csv_path,
+        restart=(not args.continuing)
     )
