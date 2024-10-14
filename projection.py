@@ -604,7 +604,8 @@ def process_single_file(pid, ct_pth, mask_pth, destin, organ, axis, device, skip
 
 
 # Main function that uses multiprocessing to parallelize the task
-def project_files(pth=None, destin=None, organ='liver', file_list=None, axis=1, device='cpu', skip_existing=True, num_processes=10, ct_pth=None, mask_pth=None):
+def project_files(pth=None, destin=None, organ='liver', file_list=None, axis=1, device='cpu', skip_existing=True, num_processes=10, 
+                  ct_pth=None, mask_pth=None):
     if ct_pth is None:
         ct_pth = pth
     if mask_pth is None:
@@ -616,8 +617,10 @@ def project_files(pth=None, destin=None, organ='liver', file_list=None, axis=1, 
         return
     
     if file_list is None:
-        file_list = [f for f in os.listdir(pth) if os.path.isdir(os.path.join(pth, f))]  # Load all files in the directory if no list is provided
-        file_list = [f for f in file_list if 'ct.nii.gz' in os.listdir(os.path.join(pth, f))]  # Filter out files without a CT scan
+        file_list = [f for f in os.listdir(mask_pth) \
+                     if (os.path.isfile(os.path.join(mask_pth, f,'segmentations',organ+'.nii.gz')) \
+                         or os.path.isfile(os.path.join(mask_pth, f,'predictions',organ+'.nii.gz')))]  # Load all files in the directory if no list is provided
+        file_list = [f for f in file_list if 'ct.nii.gz' in os.listdir(os.path.join(ct_pth, f))]  # Filter out files without a CT scan
 
     # Create a pool of workers for parallel processing
     with multiprocessing.Pool(processes=num_processes) as pool:
@@ -1091,9 +1094,13 @@ def create_composite_image_2figs(pth, organ, axis=1, y1_bone=None, y2_bone=None,
 
 # to improve speed: project ct just once. Then you project the masks using lower precision and overlay them. Use torch for resampling (current function has bug)
 
-def composite_dataset_liver(output_dir='projections',path='projections_bad_liver_overlay_bone/', axis=1, organ='liver'):
+def composite_dataset_liver(output_dir='projections',path='projections_bad_liver_overlay_bone/', axis=1, organ='liver',
+                            file_list=None):
     os.makedirs(output_dir, exist_ok=True)
-    for file in os.listdir(path):
+    if file_list is None:
+        file_list=os.listdir(path)
+
+    for file in file_list:
         if 'overlay_axis_'+str(axis) not in file:
             continue
         ct='projections_bad_liver_overlay_bone/'+file.replace('overlay_','ct_')
@@ -1154,7 +1161,8 @@ def project_files_slow(pth, destin, organ, file_list, axis=1,device='cuda:0',ski
                                     ct_path=None, mask_path=None, axis=1, device=device,
                                     precision=32)
         
-def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None,fast=False):
+def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None,fast=False,
+                            file_list=None):
     path1=bad_path
     path2=good_path
     if organ is None:
@@ -1165,7 +1173,11 @@ def composite_dataset(output_dir, good_path, bad_path, axis=1,organ=None,fast=Fa
         if organ=='all_classes':
             continue
         os.makedirs(os.path.join(output_dir,organ), exist_ok=True)
-        for file in os.listdir(os.path.join(path1,organ)):
+        if file_list is None:
+            lst=os.listdir(os.path.join(path1,organ))
+        else:
+            lst=file_list[organ]
+        for file in lst:
             if file not in os.listdir(os.path.join(path2,organ)):
                 print(f'File {file} does not exist in {path2},skipping')
                 #raise ValueError(f'File {file} does not exist in {path2},skipping')
