@@ -2648,7 +2648,7 @@ def CreateConversation(img_file_list, text, conver,size=None,prt=True,solid_over
         if prt:
             image_size, file_size = get_image_size_from_base64(f"data:image/png;base64,{img}")
             print(f"Image Size (WxH) in prompt: {image_size}, File Size: {file_size} bytes")
-            print(text)
+            #print(text)
     return cnv
 
 def print_conv(conver):
@@ -2685,7 +2685,7 @@ def request_VLM(cv,model_name,client,max_tokens):
             top_p=1)
 
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
-                        size=None,prt=False,print_conversation=False,max_tokens=None,
+                        size=None,prt=True,print_conversation=False,max_tokens=None,
                         solid_overlay=False,
                         batch=1):
     """
@@ -5042,9 +5042,9 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
         #print('File list:',file_list)
         
         if dice_list is not None and dice_check:
-            cases=os.listdir(pth)
-        else:
             cases=cases_below_threshold
+        else:
+            cases=os.listdir(pth)
 
         for target in cases:
 
@@ -5108,19 +5108,26 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             print('multi_image_prompt_2:',multi_image_prompt_2)
 
             if examples>0:
-                good_examples=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
+                #good_examples=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
                 #use y2 over all good examples
-                good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples]
-                bad_examples=random.sample(cases_below_threshold,examples)
-                #use y1 over all bad examples
-                bad_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples]
+                #good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples]
+                
+                examples_sel=random.sample(cases_below_threshold,examples)
+                good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in examples_sel]
+                bad_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in examples_sel]
 
-                good_examples_conf=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
+                #good_examples_conf=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
                 #use y2 over all good examples
-                good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples_conf]
-                bad_examples_conf=random.sample(cases_below_threshold,examples)
+                #good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples_conf]
+                #bad_examples_conf=random.sample(cases_below_threshold,examples)
                 #use y1 over all bad examples
-                bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples_conf]
+                #bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples_conf]
+
+                examples_conf=random.sample(cases_below_threshold,examples)
+                good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in examples_conf]
+                bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in examples_conf]
+
+
 
                 if organ not in clean[clean.rfind('ct'):]:
                     good_examples=[x.replace('_y2.png','_'+organ+'_y2.png') for x in good_examples]
@@ -5137,7 +5144,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                                     base_url=base_url,size=size,
                                     text_region=text_region, 
                                     organ_descriptions=organ_descriptions,
-                                    text_compare=text_multi_image_prompt_2,
+                                    text_compare=text_compare,
                                     text_summarize=text_summarize,
                                     organ=organ,save_memory=save_memory,
                                     window=window,solid_overlay=solid_overlay,
