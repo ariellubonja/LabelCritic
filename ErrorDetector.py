@@ -4988,6 +4988,10 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             csv_file=None,restart=True,
                             examples=0,dice_list=None):
 
+        if examples>0:
+            text_compare=Compare2ImagesInContext
+            text_summarize=CompareSummarizeInContext
+
         if csv_file is not None:
             column_names = ['case', 'answer', 'label', 'correct', 'organ', 'answer_1', 'answer_2']
             if os.path.exists(csv_file) and restart:
