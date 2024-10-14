@@ -59,7 +59,7 @@ python3 ProjectDatasetFlex.py --good_folder /mnt/T9/AbdomenAtlasPro/ --bad_folde
 ### (faster than using high level API)
 
 ```bash
-python3 RunAPI.py --path projections/directory/organ/ > comparisons.log 2>&1
+python3 RunAPI.py --path projections/directory/ > comparisons.log 2>&1
 ```
 
 # Run Error Detection
