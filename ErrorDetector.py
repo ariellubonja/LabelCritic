@@ -4966,7 +4966,8 @@ def SystematicComparison3MessagesLMDeploy2Figs(pth,base_url='http://0.0.0.0:8000
 
 def check_case_exists(csv_file, case_name):
     import pandas as pd
-    df = pd.read_csv(csv_file)
+    df=pd.read_csv(csv_file,header=None, names=['case', 'answer', 'label', 'correct', 'organ', 'answer_1', 'answer_2'])
+    print('csv file:',csv_file)
     return case_name in df['case'].values
     
 
@@ -4999,6 +5000,11 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 with open(csv_file, mode='w', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow(column_names)
+            elif not os.path.exists(csv_file):
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(column_names)
+
 
         if dice_list is not None:
             import pandas as pd
