@@ -13,15 +13,13 @@ parser.add_argument('--path', help='Path to the annotations')
 parser.add_argument('--port', help='VLLM port to use', default='8000')
 parser.add_argument('--dice_th', help='VLLM port to use', default='0.75')
 parser.add_argument('--organ_list', help='List of organs to process', default='auto')
-parser.add_argument('--csv_path', help='path of casv to save results', default=None)
+parser.add_argument('--csv_path', help='path of csv to save results', default=None)
 parser.add_argument('--continuing', action='store_true', help="Continues from interrupted run.")
-    
+parser.add_argument('--dice_list', help='path of csvs with dice scores', default=None)
+parser.add_argument('--examples', help='number of examples for in-context learning', default=0,type=int)
 
 # Parse the arguments
 args = parser.parse_args()
-
-
-
 
 all_organs=['aorta','liver','kidneys','spleen','pancreas','postcava','stomach','gall_bladder']
 
@@ -51,9 +49,14 @@ base_url = 'http://0.0.0.0:8000/v1'.replace('8000', args.port)
 if '.csv' in args.csv_path:
     args.csv_path=args.csv_path[:-4]
 
+
 for organ in organs:
     print('PROCESSING ORGAN: ', organ)
     # Call the function with the extracted organ and provided path
+    if args.dice_list is not None:
+        dice_list = os.path.join(args.dice_list, 'DSC'+organ+'.csv')
+    else:
+        dice_list = None
     ed.SystematicComparisonLMDeploySepFigures(
         pth=os.path.join(path,organ),
         size=512,
@@ -67,5 +70,7 @@ for organ in organs:
         dice_th=float(args.dice_th),
         base_url=base_url,
         csv_file=args.csv_path+organ+'.csv',
-        restart=(not args.continuing)
+        restart=(not args.continuing),
+        dice_list=dice_list,
+        examples=args.examples
     )

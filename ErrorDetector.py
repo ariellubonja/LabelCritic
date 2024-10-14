@@ -2685,7 +2685,7 @@ def request_VLM(cv,model_name,client,max_tokens):
             top_p=1)
 
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
-                        size=None,prt=True,print_conversation=True,max_tokens=None,
+                        size=None,prt=False,print_conversation=False,max_tokens=None,
                         solid_overlay=False,
                         batch=1):
     """
@@ -2988,31 +2988,38 @@ NoOrganSimple2Classes=("I am sending you 2 images, 'Image 1' on the left, and 'I
 CompareSummarize=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 "The overlays were positioned over 4 images, Image 1 and Image 2 showed Overlay 1, and Image 3 and Image 4 showed Overlay 2. "
                 "A LVLM like you compared the 2 overlays by analyzing the 4 images. Its answer is the text below."
-                "The text explains which overlay is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
+                "The text explains which overlay is better. I want you to answer me which overlay is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
+                "If the text does not mention any overlay or if it is blank, answer 'none'. The text is:\n")
+
+
+CompareSummarizeInContext=("The text below represents a comparisons of 2 overlays, 'Overlay X' and 'Overlay Y', which were present in Image X and Image Y. "
+                "A LVLM like you compared the 2 overlays by analyzing the images. Its answer is the text below."
+                "Notice, however, that this VLM received %(n)s pairs of images as examples, but I only care about the Images X and Y from last pair, pair %(o)s. "
+                "The text explains which overlay is better. I want you to answer me which overlay is better according to the text. Answer me with only 2 words: 'Overlay X' or 'Overlay Y'. "
                 "If the text does not mention any overlay or if it is blank, answer 'none'. The text is:\n")
 
 CompareSummarize2Figs=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 " Image 1 showed Overlay 1, and Image 2 showed Overlay 2. "
                 "A VLM like you compared the 2 overlays by analyzing the 2 images. Its answer is the text below."
-                "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
+                "The text explains which overlay (or image) is better. I want you to answer me which overlay is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "The text is:\n")
 
 CompareSummarize2Figs=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 " Image 1 showed Overlay 1, and Image 2 showed Overlay 2. "
                 "A VLM like you compared the 2 overlays by analyzing the 2 images. Its answer is the text below."
-                "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only these words: 'Overlay 1', 'Overlay 2' or 'Neither'. "
+                "The text explains which overlay (or image) is better. I want you to answer me which overlay is better according to the text. Answer me with only these words: 'Overlay 1', 'Overlay 2' or 'Neither'. "
                 "The text is:\n")
 
 CompareSummarize6Figs=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 " Image 1 and 4 showed Overlay 1 in red, and Images 2 and 5 showed Overlay 2 in yellow. Images 3 and 6 showed the superposition of both overlays. "
                 "A LVLM like you compared the 2 overlays by analyzing the 6 images. Its answer is the text below."
-                "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
+                "The text explains which overlay (or image) is better. I want you to answer me which overlay is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "In case the text does not mention any overlay or if it is blank, answer 'none'. The text is:\n")
 
 CompareSummarize1Fig=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 " They were placed over one image, overlay 1 was red, overlay 2 was yellow, and their overlap was orange. "
                 "A LVLM like you compared the 2 overlays. Its answer is the text below."
-                "The text explains which overlay is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
+                "The text explains which overlay is better. I want you to answer me which overlay is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "If the text does not mention any overlay or if it is blank, answer 'none'. The text is:\n")
 
 
@@ -3166,11 +3173,25 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
     
     if AnswerNo:
         a1=RedArea(y1)
@@ -3238,17 +3259,24 @@ def Prompt3MessagesSepFiguresLMDeploy(clean, y1, y2,
     else:
         return 0.5
 
-def CompareAnswers(answer,conservative):
-    if 'overlay 1' in answer[0].lower() and 'overlay 2' not in answer[0].lower():
+def CompareAnswers(answer,conservative,in_context=False):
+    if in_context:
+        o1='overlay x'
+        o2='overlay y'
+    else:
+        o1='overlay 1'
+        o2='overlay 2'
+
+    if o1 in answer[0].lower() and o2 not in answer[0].lower():
         a1 = 1
-    elif 'overlay 2' in answer[0].lower() and 'overlay 1' not in answer[0].lower():
+    elif o2 in answer[0].lower() and o1 not in answer[0].lower():
         a1 = 2
     else:
         a1 = 0.5
 
-    if 'overlay 1' in answer[1].lower() and 'overlay 2' not in answer[1].lower():
+    if o1 in answer[1].lower() and o2 not in answer[1].lower():
         a2 = 1
-    elif 'overlay 2' in answer[1].lower() and 'overlay 1' not in answer[1].lower():
+    elif o2 in answer[1].lower() and o1 not in answer[1].lower():
         a2 = 2
     else:
         a2 = 0.5
@@ -3314,11 +3342,25 @@ def Prompt3MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1, [1,2]
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2, [2,1]
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1, [1,2]
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2, [2,1]
     
     if AnswerNo:
         a1=RedArea(y1)
@@ -3719,6 +3761,117 @@ Compare2Images={
 
 
 
+
+# In context learning comparisons
+
+Compare2ImagesAortaInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, answer the following questions. The points represent positive qualities that the images should satisfy.
+Point 1: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down close to the lumbar spine height?
+Point 2: In which image is the red shape continuos and tubular?
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. Notice that examples may have diverse field of views, some may show the aorta in its entirety (with a curve on top), while others may show only a portion of it, as is probably the case for the last 2 images. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesFullAortaInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, answer the following questions. The points represent positive qualities that the images should satisfy.
+Point 1: In which one does the red shape reach the thoracic region (high ribs), showing a curve in this area, image X or image Y?
+Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down close to the lumbar spine height?
+Point 3: In which image is the red shape continuos and tubular?
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. Notice that examples may have diverse field of views, some may show the aorta in its entirety (as is probably the case of the 2 images you must evaluate), while others may show only a portion of it.
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesPostcavaInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, answer the following questions. The points represent positive qualities that the images should satisfy.
+Point 1: In which one does the red shape reach the thoracic region (high ribs), image X or image Y?
+Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?
+Point 3: In which image is the red shape continuos and tubular?
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay.
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesKidneysInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information:
+A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point.
+Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete.
+The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay.
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesLiverInContext = """The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information:
+a) The liver is a large organ, with a triangular or wedge-like shape.
+b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.
+c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesStomachInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, a sac with a downwards curvature, or a hourglass.
+b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs.
+"As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay.
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesPancreasInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+c) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesSpleenInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information:
+a) Shape: The shape of the spleen red overlay should resemble an oval or crescent. It should follow the natural curve of the spleen, with no small recesses.
+b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
+c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
+d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesGallbladderInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information:
+a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curved sack.
+b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
+c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesInContext={
+    'descending aorta':Compare2ImagesAortaInContext,#better here
+    'aorta':Compare2ImagesFullAortaInContext,#better here
+    'liver':Compare2ImagesLiverInContext,
+    'postcava':Compare2ImagesPostcavaInContext,#better here
+    'kidneys':Compare2ImagesKidneysInContext,#worst than putting one image per prompt and sending more prompts
+    'stomach':Compare2ImagesStomachInContext,#much better than putting one image per prompt and sending more prompts
+    'pancreas':Compare2ImagesPancreasInContext,
+    'spleen':Compare2ImagesSpleenInContext,
+    'gall_bladder':Compare2ImagesGallbladderInContext
+}
+
+
+
+
+
 def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2, 
                             base_url='http://0.0.0.0:8000/v1', size=512,
                             text_region=BodyRegionText, 
@@ -3750,12 +3903,26 @@ def Prompt2MessagesSepFiguresLMDeploy(clean, y1, y2,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
                 text_compare=Compare2ImagesFullAorta
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
     
     if AnswerNo:
         a1=RedArea(y1)
@@ -3841,12 +4008,26 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1, [1,2]
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2, [2,1]
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
                 text_compare=Compare2ImagesFullAorta
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1, [1,2]
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2, [2,1]
     
     if AnswerNo:
         a1=RedArea(y1)
@@ -3897,6 +4078,127 @@ def Prompt2MessagesSepFiguresLMDeployDualConfirmation(clean, y1, y2,
 
     return CompareAnswers(answer,conservative)
     
+def Prompt2MessagesSepFiguresLMDeployDualConfirmationInContext(clean, y1, y2, 
+                            good_examples, bad_examples,
+                            good_examples_conf, bad_examples_conf,
+                            base_url='http://0.0.0.0:8000/v1', size=512,
+                            text_region=BodyRegionText, 
+                            organ_descriptions=None,
+                            text_compare=Compare2ImagesInContext,
+                            text_summarize=CompareSummarizeInContext, organ='liver',
+                            save_memory=False, window='bone',solid_overlay=False,
+                            conservative=False):
+    
+    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+
+    if organ=='aorta':
+        if window=='skeleton':
+            organRegion+=AorticArchTextSkeleton
+        else:
+            organRegion+=AorticArchText
+
+    if organ=='liver':
+        organRegion+=LiverDescriptionLocation
+    if organ=='gall_bladder':
+        organRegion+=GallbladderDescriptionLocation
+
+    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                base_url=base_url, size=size)
+    q='q2'
+    if 'skeleton' in window:
+        q='q4'
+    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+    if organ=='aorta':
+        if 'skeleton' in window:
+            if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
+                organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1, [1,2]
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2, [2,1]
+                
+        else:
+            if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
+                organ='aorta'
+            else:
+                organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1, [1,2]
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2, [2,1]
+    
+    if AnswerNo:
+        a1=RedArea(y1)
+        a2=RedArea(y2)
+        print('Annotation should be zero')
+        if a1==0 and a2==0:
+            return 0.5, [1,1]
+        elif a1==0:
+            return 1, [1,2]
+        elif a2==0:
+            return 2, [2,1]
+        else:
+            return 0.5, [-1,-1]
+
+    if isinstance(text_compare, dict):
+        text_compare=text_compare[organ]
+    text_compare=text_compare % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder'),'n':len(good_examples),'o':len(good_examples)+1}
+
+    if save_memory:
+        conversation=[[],[]]
+    else:
+        conversation=[conversation,conversation]
+    imgs=[[],[]]
+    text=[text_compare+'\n',text_compare+'\n']
+    
+    i=0
+    for good_ex, bad_ex, good_ex_conf, bad_ex_conf in zip(good_examples, bad_examples, good_examples_conf, bad_examples_conf):
+        i+=1
+        best_ex=random.randint(1,2)
+        best_ex_conf=random.randint(1,2)
+        if best_ex==1:
+            imgs[0].append(good_ex)
+            imgs[0].append(bad_ex)
+            text[0]+="Pair "+str(i)+": Image X is better\n"
+        else:
+            imgs[0].append(bad_ex)
+            imgs[0].append(good_ex)
+            text[0]+="Pair "+str(i)+": Image Y is better\n"
+        if best_ex_conf==1:
+            imgs[1].append(good_ex_conf)
+            imgs[1].append(bad_ex_conf)
+            text[1]+="Pair "+str(i)+": Image X is better\n"
+        else:
+            imgs[1].append(bad_ex_conf)
+            imgs[1].append(good_ex_conf)
+            text[1]+="Pair "+str(i)+": Image Y is better\n"
+        
+    imgs[0].append(y1)
+    imgs[0].append(y2)
+    imgs[1].append(y2)
+    imgs[1].append(y1)
+    text[0]+="Pair "+str(i+1)+": \n"
+    text[1]+="Pair "+str(i+1)+": \n"
+
+    conversation, answer = SendMessageLmdeploy(imgs,text=text, conver=conversation,
+                                                base_url=base_url, size=size, solid_overlay=solid_overlay,
+                                                batch=2)
+    
+    imgs=[[],[]]
+    text_summarize=text_summarize % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder'),'n':len(good_examples),'o':len(good_examples)+1}
+    text=[text_summarize+answer[0],text_summarize+answer[1]]
+    conver=[[],[]]
+    conversation, answer = SendMessageLmdeploy(imgs, text=text, conver=conver,
+                                               base_url=base_url, size=size,
+                                               batch=2)
+
+    return CompareAnswers(answer,conservative,in_context=True)
 
 def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
                             base_url='http://0.0.0.0:8000/v1', size=512,
@@ -3926,11 +4228,25 @@ def Prompt4MessagesSepFiguresLMDeploySuperposition(clean, y1, y2, y_super,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
     
     if AnswerNo:
         a1=RedArea(y1)
@@ -4023,11 +4339,25 @@ def Prompt4MessagesSepFiguresLMDeploy(clean, y1, y2,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
     
     if AnswerNo:
         a1=RedArea(y1)
@@ -4120,11 +4450,25 @@ def Prompt3MessagesLMDeploy(img1, img2, img3,
         if 'skeleton' in window:
             if ('no' in answer.lower()[answer.lower().rfind('q6'):answer.lower().rfind('q6')+7]):#no lungs
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
         else:
             if ('yes' in answer.lower()[answer.lower().rfind('q5'):answer.lower().rfind('q5')+7]):#aortic arch present
                 organ='aorta'
             else:
                 organ='descending aorta'
+                #check for red on top of the images
+                if red_on_top(y1) and not red_on_top(y2):
+                    print('There should be red on top of the images, only image 1 has it')
+                    return 1
+                elif red_on_top(y2) and not red_on_top(y1):
+                    print('There should be red on top of the images, only image 2 has it')
+                    return 2
     
     if AnswerNo:
         #text2 = NoOrganText % {'organ': organ.replace('_',' ')}
@@ -4219,6 +4563,50 @@ def MultiTurnMultiImageComparisonLMDeploy(clean, y1, y2, compImg,
         return 2
     else:
         return 0.5
+    
+
+def SaveDices(pth, organ='liver',file_list=None,
+            ):
+        
+        best=2
+        dice_csv_path=os.path.join(pth,'DSC.csv')
+        if file_list is not None:
+            with open(file_list, 'r') as file:
+                file_list = file.readlines()
+            # Removing the newline characters at the end of each line (optional)
+            file_list = [line.strip() for line in file_list]
+
+        #print('File list:',file_list)
+        
+
+        for target in os.listdir(pth):
+            if file_list is not None:
+                #print ('Target:',target[:14] )
+                if target[:14] not in file_list:
+                    #print('Skipping:',target)
+                    continue
+            
+            if 'ct_window_bone_axis_1' not in target:
+                continue
+
+            clean=os.path.join(pth,target)
+
+            y1=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y1.png')
+            y2=clean.replace('ct_window_bone','overlay_window_bone').replace('.png','_y2.png')
+
+            print('y1:',y1)
+            print('y2:',y2)
+            
+
+            if organ not in clean[clean.rfind('ct'):]:
+                y1=y1.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+                y2=y2.replace('_y1.png','_'+organ+'_y1.png').replace('_y2.png','_'+organ+'_y2.png')
+
+            dice=check_dice(y1,y2)
+            #save dice to csv
+            with open(dice_csv_path, 'a') as f:
+                f.write(f'{target},{dice}\n')
+            print('Dice:',dice)
 
 def SimpleMultiImageComparisonLMDeploy(clean, y1, y2, compImg, 
                             base_url='http://0.0.0.0:8000/v1', size=448,
@@ -4580,6 +4968,7 @@ def check_case_exists(csv_file, case_name):
     import pandas as pd
     df = pd.read_csv(csv_file)
     return case_name in df['case'].values
+    
 
 def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1', 
                                           size=512,
@@ -4596,7 +4985,8 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             text_multi_image_prompt_2=Compare2Images,
                             dice_th=0.75,file_list=None,
                             dual_confirmation=False,conservative_dual=False,
-                            csv_file=None,restart=True):
+                            csv_file=None,restart=True,
+                            examples=0,dice_list=None):
 
         if csv_file is not None:
             column_names = ['case', 'answer', 'label', 'correct', 'organ', 'answer_1', 'answer_2']
@@ -4605,6 +4995,15 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 with open(csv_file, mode='w', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow(column_names)
+
+        if dice_list is not None:
+            import pandas as pd
+            print('Loading dice list:',dice_list)
+            df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
+            filtered_df = df[df["dice"] < dice_th]
+            # Get the list of 'case' values where 'dice' is below the threshold
+            cases_below_threshold = filtered_df["case"].tolist()
+            cases_high_dice=df[df["dice"] >= 0.95]["case"].tolist()
         
         if multi_image_prompt_2=='auto':
             if organ in ['kidneys','liver','pancreas']:
@@ -4638,8 +5037,12 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
 
         #print('File list:',file_list)
         
+        if dice_list is not None and dice_check:
+            cases=os.listdir(pth)
+        else:
+            cases=cases_below_threshold
 
-        for target in os.listdir(pth):
+        for target in cases:
 
             if file_list is not None:
                 #print ('Target:',target[:14] )
@@ -4681,17 +5084,15 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             print(target)
             print('Best is:',best)
 
-            if dice_check:
+            if dice_check and dice_list is None:
+                #only check dice if no dice list is provided, otherwise we already filtered the cases before the loop
                 dice=check_dice(y1,y2)
                 print('2D dice coefficient between 2 projections on axis 1:',dice)
                 if dice>dice_th:
-                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct compare slices (holes?).')
+                    print('The projections are too similar for case {target}, skipping the comparison. Try another axis or ct slices (holes?).')
                     continue
             
             if window=='skeleton':
-                #clean=clean[:clean.rfind('ct_window_bone')]+'composite_ct_2_figs_axis_1_skeleton.png'
-                #clean=clean.replace('ct_window_bone','composite')
-                #clean=clean[:clean.rfind('ct_window_bone')]+'highlighted_skeleton.png'
                 clean=clean.replace('ct_window_bone','ct_window_skeleton')
                 print('clean:',clean)
 
@@ -4702,59 +5103,75 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             print('dual_confirmation:',dual_confirmation)
             print('multi_image_prompt_2:',multi_image_prompt_2)
 
-            if dual_confirmation:
-                if multi_image_prompt_2:
-                    print('Using dual confirmation and sending images together.')
-                    answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmation(
-                                clean=clean,y1=y1,y2=y2,
-                                base_url=base_url,size=size,
-                                text_region=text_region, 
-                                organ_descriptions=organ_descriptions,
-                                text_compare=text_multi_image_prompt_2,
-                                text_summarize=text_summarize,
-                                organ=organ,save_memory=save_memory,
-                                window=window,solid_overlay=solid_overlay,
-                                conservative=conservative_dual)
-                else:
-                    print('Using dual confirmation and sending images separately.')
-                    answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
+            if examples>0:
+                good_examples=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
+                #use y2 over all good examples
+                good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples]
+                bad_examples=random.sample(cases_below_threshold,examples)
+                #use y1 over all bad examples
+                bad_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples]
+
+                good_examples_conf=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
+                #use y2 over all good examples
+                good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples_conf]
+                bad_examples_conf=random.sample(cases_below_threshold,examples)
+                #use y1 over all bad examples
+                bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples_conf]
+
+                if organ not in clean[clean.rfind('ct'):]:
+                    good_examples=[x.replace('_y2.png','_'+organ+'_y2.png') for x in good_examples]
+                    bad_examples=[x.replace('_y1.png','_'+organ+'_y1.png') for x in bad_examples]
+                    good_examples_conf=[x.replace('_y2.png','_'+organ+'_y2.png') for x in good_examples_conf]
+                    bad_examples_conf=[x.replace('_y1.png','_'+organ+'_y1.png') for x in bad_examples_conf]
+
+
+                if dual_confirmation:
+                    answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmationInContext(
                                     clean=clean,y1=y1,y2=y2,
+                                    bad_examples=bad_examples,good_examples=good_examples,
+                                    bad_examples_conf=bad_examples_conf,good_examples_conf=good_examples_conf,
                                     base_url=base_url,size=size,
                                     text_region=text_region, 
                                     organ_descriptions=organ_descriptions,
-                                    text_y1=text_y1, 
-                                    text_y2=text_y2,
-                                    text_compare=text_compare,
+                                    text_compare=text_multi_image_prompt_2,
                                     text_summarize=text_summarize,
                                     organ=organ,save_memory=save_memory,
                                     window=window,solid_overlay=solid_overlay,
                                     conservative=conservative_dual)
-            elif superpose:
-                answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
-                            clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
-                            base_url=base_url,size=size,
-                            text_region=text_region, 
-                            organ_descriptions=organ_descriptions,
-                            text_y1=text_y1, 
-                            text_y2=text_y2,
-                            text_compare=text_compare,
-                            text_summarize=text_summarize,
-                            organ=organ,save_memory=save_memory,
-                            window=window,solid_overlay=solid_overlay)
-            elif multi_image_prompt_2:
-                answer=Prompt2MessagesSepFiguresLMDeploy(
-                                clean=clean,y1=y1,y2=y2,
-                                base_url=base_url,size=size,
-                                text_region=text_region, 
-                                organ_descriptions=organ_descriptions,
-                                text_compare=text_multi_image_prompt_2,
-                                text_summarize=text_summarize,
-                                organ=organ,save_memory=save_memory,
-                                window=window,solid_overlay=solid_overlay)
+                else:
+                    raise ValueError('Examples are only implemented for dual confirmation and multiple images in one prompt.')
 
             else:
-                answer=Prompt3MessagesSepFiguresLMDeploy(
-                                clean=clean,y1=y1,y2=y2,
+                if dual_confirmation:
+                    if multi_image_prompt_2:
+                        print('Using dual confirmation and sending images together.')
+                        answer,answer_dual=Prompt2MessagesSepFiguresLMDeployDualConfirmation(
+                                    clean=clean,y1=y1,y2=y2,
+                                    base_url=base_url,size=size,
+                                    text_region=text_region, 
+                                    organ_descriptions=organ_descriptions,
+                                    text_compare=text_multi_image_prompt_2,
+                                    text_summarize=text_summarize,
+                                    organ=organ,save_memory=save_memory,
+                                    window=window,solid_overlay=solid_overlay,
+                                    conservative=conservative_dual)
+                    else:
+                        print('Using dual confirmation and sending images separately.')
+                        answer,answer_dual=Prompt3MessagesSepFiguresLMDeployDualConfirmation(
+                                        clean=clean,y1=y1,y2=y2,
+                                        base_url=base_url,size=size,
+                                        text_region=text_region, 
+                                        organ_descriptions=organ_descriptions,
+                                        text_y1=text_y1, 
+                                        text_y2=text_y2,
+                                        text_compare=text_compare,
+                                        text_summarize=text_summarize,
+                                        organ=organ,save_memory=save_memory,
+                                        window=window,solid_overlay=solid_overlay,
+                                        conservative=conservative_dual)
+                elif superpose:
+                    answer=Prompt4MessagesSepFiguresLMDeploySuperposition(
+                                clean=fake_file,y1=y1,y2=y2,y_super=fake_file,
                                 base_url=base_url,size=size,
                                 text_region=text_region, 
                                 organ_descriptions=organ_descriptions,
@@ -4764,6 +5181,29 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                                 text_summarize=text_summarize,
                                 organ=organ,save_memory=save_memory,
                                 window=window,solid_overlay=solid_overlay)
+                elif multi_image_prompt_2:
+                    answer=Prompt2MessagesSepFiguresLMDeploy(
+                                    clean=clean,y1=y1,y2=y2,
+                                    base_url=base_url,size=size,
+                                    text_region=text_region, 
+                                    organ_descriptions=organ_descriptions,
+                                    text_compare=text_multi_image_prompt_2,
+                                    text_summarize=text_summarize,
+                                    organ=organ,save_memory=save_memory,
+                                    window=window,solid_overlay=solid_overlay)
+
+                else:
+                    answer=Prompt3MessagesSepFiguresLMDeploy(
+                                    clean=clean,y1=y1,y2=y2,
+                                    base_url=base_url,size=size,
+                                    text_region=text_region, 
+                                    organ_descriptions=organ_descriptions,
+                                    text_y1=text_y1, 
+                                    text_y2=text_y2,
+                                    text_compare=text_compare,
+                                    text_summarize=text_summarize,
+                                    organ=organ,save_memory=save_memory,
+                                    window=window,solid_overlay=solid_overlay)
             
             print('Traget:',target,'Answer:',answer,'Label: Overlay '+str(best), 'Correct:',best==answer)
             if csv_file is not None:
@@ -5172,7 +5612,7 @@ SinglePromptSepImages=("The images I am sending are frontal projections of one C
 "Q3- The %(organ)s region in the images should be marked in red, using an overlay. However, the red overlays may correctly or incorrectly mark the %(organ)s. The letters R (blue) and L (green) inside the images represent the right and left sides of the human body. Compare overlay 1 (shown in images 1 and 2) to overlay 2 (shown in images 3 and 4) and tell me which one is a better overlay for the %(organ)s.\n")
 compareSummarizeSepImages=("The text below represents a comparisons of 2 overlays, 'Overlay 1' and 'Overlay 2'. "
                 "A LVLM like you compared the 2 overlays by analyzing images. Its answer is the text below."
-                "The text explains which overlay (or image) is better. I want you to answer me which overaly is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
+                "The text explains which overlay (or image) is better. I want you to answer me which overlay is better according to the text. Answer me with only 2 words: 'Overlay 1' or 'Overlay 2'. "
                 "The text is:\n")
 
 def Prompt2MessagesLMDeploy(img, base_url='http://0.0.0.0:8000/v1', size=512,
