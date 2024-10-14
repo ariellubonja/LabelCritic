@@ -3770,7 +3770,7 @@ Evaluate each image individually, carefully compare the %(organ)s overlays, and 
 When comparing the images, answer the following questions. The points represent positive qualities that the images should satisfy.
 Point 1: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down close to the lumbar spine height?
 Point 2: In which image is the red shape continuos and tubular?
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. Notice that examples may have diverse field of views, some may show the aorta in its entirety (with a curve on top), while others may show only a portion of it, as is probably the case for the last 2 images. 
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. Notice that examples may have diverse field of views, some may show the aorta in its entirety (with a curve on top), while others may show only a portion of it, as is probably the case for the last 2 images. 
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesFullAortaInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3780,7 +3780,7 @@ When comparing the images, answer the following questions. The points represent 
 Point 1: In which one does the red shape reach the thoracic region (high ribs), showing a curve in this area, image X or image Y?
 Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down close to the lumbar spine height?
 Point 3: In which image is the red shape continuos and tubular?
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. Notice that examples may have diverse field of views, some may show the aorta in its entirety (as is probably the case of the 2 images you must evaluate), while others may show only a portion of it.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. Notice that examples may have diverse field of views, some may show the aorta in its entirety (as is probably the case of the 2 images you must evaluate), while others may show only a portion of it.
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesPostcavaInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3790,7 +3790,7 @@ When comparing the images, answer the following questions. The points represent 
 Point 1: In which one does the red shape reach the thoracic region (high ribs), image X or image Y?
 Point 2: Consider the bones in the image, both images display the same bones. Is the lumbar spine visible? If it is, in which image does the red shape comes down to the lumbar spine height?
 Point 3: In which image is the red shape continuos and tubular?
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay.
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesKidneysInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3800,7 +3800,7 @@ When comparing the images, consider the following anatomical information:
 A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point.
 Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete.
 The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs.
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay.
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesLiverInContext = """The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3810,7 +3810,7 @@ When comparing the images, consider the following anatomical information:
 a) The liver is a large organ, with a triangular or wedge-like shape.
 b) The liver is located in the upper right quadrant of the abdomen (left of the figure, like an AP X-ray), just below the diaphragm. It spans across the midline, partially extending into the left upper quadrant of the abdomen. The liver is not near the pelvis.
 c) The liver position is primarily under the rib cage. The overlay must show red in the ribs region.
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. 
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesStomachInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3821,7 +3821,7 @@ a) Shape: The shape of the stomach red overlay should resemble the letter J, an 
 b) Shape 2: The stomach red overlay should not be a random shape. It should not have many random points, nor internal gaps.
 c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs.
-"As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay.
+"As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay.
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesPancreasInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3831,7 +3831,7 @@ When comparing the images, consider the following anatomical information:
 a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
 c) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges.
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. 
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesSpleenInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3842,7 +3842,7 @@ a) Shape: The shape of the spleen red overlay should resemble an oval or crescen
 b) Shape 2: The spleen red overlay should not have irregular or random shapes. It should not include internal gaps or sharp, angular points.
 c) Unity: The spleen red overlay must be a single, continuous structure. Multiple structures are a significant error.
 d) Location: The spleen red overlay should be located in the upper left quadrant of the abdomen (right side of the image, which is oriented like an AP X-ray), slightly under the ribs and diaphragh, and adjacent to the stomach and left kidney.
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. 
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesGallbladderInContext="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
@@ -3853,7 +3853,7 @@ a) Shape: The gallbladder red overlay should be pear-shaped or an elongated curv
 b) Shape 2: The gallbladder red overlay should be smooth. It should not have many random points.
 c) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage.
-As examples to help you, I am sending you %(n)s other pairs of images. Each example pair represents one CT scan and contains one good overlay and one bad %(organ)s overlay. 
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. 
 Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
 
 Compare2ImagesInContext={
@@ -5088,7 +5088,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             print(target)
             print('Best is:',best)
 
-            if dice_check and dice_list is None:
+            if dice_check:# and dice_list is None:
                 #only check dice if no dice list is provided, otherwise we already filtered the cases before the loop
                 dice=check_dice(y1,y2)
                 print('2D dice coefficient between 2 projections on axis 1:',dice)
@@ -5108,13 +5108,25 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             print('multi_image_prompt_2:',multi_image_prompt_2)
 
             if examples>0:
-                #good_examples=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
+                good_examples=random.sample(cases_high_dice,examples)
                 #use y2 over all good examples
-                #good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples]
+                good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples]
+                bad_examples=random.sample([x for x in cases_below_threshold if x!=target],examples)
+                #use y1 over all bad examples
+                bad_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples]
                 
-                examples_sel=random.sample(cases_below_threshold,examples)
-                good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in examples_sel]
-                bad_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in examples_sel]
+                good_examples_conf=random.sample(cases_high_dice,examples)
+                #use y2 over all good examples
+                good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in good_examples_conf]   
+                bad_examples_conf=random.sample([x for x in cases_below_threshold if x!=target],examples)
+                #use y1 over all bad examples
+                bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples_conf]
+
+
+
+                #examples_sel=random.sample(cases_below_threshold,examples)
+                #good_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in examples_sel]
+                #bad_examples=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in examples_sel]
 
                 #good_examples_conf=random.sample(cases_high_dice,(examples-examples//2))+random.sample(cases_below_threshold,examples//2)
                 #use y2 over all good examples
@@ -5123,9 +5135,9 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                 #use y1 over all bad examples
                 #bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in bad_examples_conf]
 
-                examples_conf=random.sample(cases_below_threshold,examples)
-                good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in examples_conf]
-                bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in examples_conf]
+                #examples_conf=random.sample(cases_below_threshold,examples)
+                #good_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y2.png')) for x in examples_conf]
+                #bad_examples_conf=[os.path.join(pth,x.replace('ct_window_bone','overlay_window_'+comparison_window).replace('.png','_y1.png')) for x in examples_conf]
 
 
 
