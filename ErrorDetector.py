@@ -2675,14 +2675,16 @@ def request_VLM(cv,model_name,client,max_tokens):
             model=model_name,
             messages=cv,
             temperature=0,
-            top_p=1)
+            top_p=1,
+            timeout=600)
     else:
         return client.chat.completions.create(
             model=model_name,
             messages=cv,
             max_tokens=max_tokens,
             temperature=0,
-            top_p=1)
+            top_p=1,
+            timeout=600)
 
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
                         size=None,prt=True,print_conversation=False,max_tokens=None,
@@ -5010,10 +5012,20 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             import pandas as pd
             print('Loading dice list:',dice_list)
             df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
+
+            #change dice threshold according to mean and std of dice in list
+            a=df['dice'].mean()-df['dice'].std()
+            #order dice in ascending order and get the 100th value
+            b=df['dice'].sort_values().iloc[100]
+            dice_th=max(dice_th,min(a,b))
+            print('Dice threshold re-defined to:',dice_th)
+
             filtered_df = df[df["dice"] < dice_th]
             # Get the list of 'case' values where 'dice' is below the threshold
             cases_below_threshold = filtered_df["case"].tolist()
             cases_high_dice=df[df["dice"] >= 0.95]["case"].tolist()
+
+
         
         if multi_image_prompt_2=='auto':
             if organ in ['kidneys','liver','pancreas']:
