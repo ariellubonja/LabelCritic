@@ -4,9 +4,9 @@ import ast
 import importlib
 import json
 try:
-    import AnnotationVLM.projection as pj
+    import AnnotationVLM.Projection as pj
 except:
-    import projection as pj
+    import Projection as pj
 importlib.reload(pj)
 
 def parse_organs_arg(organs_str):
@@ -81,10 +81,31 @@ def main():
     file_list={}
     for organ in organs:
         if '00' in os.listdir(bad_folder_mask)[0]:
-            file_list[organ]=os.listdir(bad_folder_mask)
+            #file_list[organ]=os.listdir(bad_folder_mask)
+            pth=bad_folder_mask
         else:
-            file_list[organ]=os.listdir(os.path.join(bad_folder_mask,organ))
+            #file_list[organ]=os.listdir(os.path.join(bad_folder_mask,organ))
+            pth=os.path.join(bad_folder_mask,organ)
 
+        file_list[organ]=[f for f in os.listdir(pth) if (os.path.isdir(os.path.join(pth, f,'segmentations')))]
+        file_list[organ]=[f for f in file_list[organ] \
+                     if (os.path.isfile(os.path.join(pth, f,'segmentations',organ+'.nii.gz')) or \
+                         os.path.isfile(os.path.join(pth, f,'predictions',organ+'.nii.gz')))]
+        
+        if '00' in os.listdir(bad_folder_mask)[0]:
+            #file_list[organ]=os.listdir(bad_folder_mask)
+            pth=good_folder_mask
+        else:
+            #file_list[organ]=os.listdir(os.path.join(bad_folder_mask,organ))
+            pth=os.path.join(good_folder_mask,organ)
+
+        file_list[organ]=[f for f in file_list[organ] if (os.path.isdir(os.path.join(pth, f,'segmentations')))]
+        file_list[organ]=[f for f in file_list[organ] \
+                     if (os.path.isfile(os.path.join(pth, f,'segmentations',organ+'.nii.gz')) or \
+                         os.path.isfile(os.path.join(pth, f,'predictions',organ+'.nii.gz')))]
+        #print(organ,len(file_list[organ]))
+
+        
 
     #get intersection between file list and file_list_loaded
     if args.file_list is not None:
@@ -174,7 +195,8 @@ def main():
             good_path=good_projection_path,
             bad_path=bad_projection_path,
             organ=organ,
-            fast= args.no_composite_images
+            fast= args.no_composite_images,
+            file_list=file_list
         )
 
     # Join left and right datasets

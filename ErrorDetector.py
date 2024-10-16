@@ -2676,7 +2676,7 @@ def request_VLM(cv,model_name,client,max_tokens):
             messages=cv,
             temperature=0,
             top_p=1,
-            timeout=600)
+            timeout=6000)
     else:
         return client.chat.completions.create(
             model=model_name,
@@ -2684,7 +2684,7 @@ def request_VLM(cv,model_name,client,max_tokens):
             max_tokens=max_tokens,
             temperature=0,
             top_p=1,
-            timeout=600)
+            timeout=6000)
 
 def SendMessageLmdeploy(img_file_list, text, conver, base_url='http://0.0.0.0:8000/v1',  
                         size=None,prt=True,print_conversation=False,max_tokens=None,
