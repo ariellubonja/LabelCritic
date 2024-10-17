@@ -113,7 +113,7 @@ b) Shape 2: The stomach red overlay should not be a random shape. It should not 
 c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 
-PancreasErrorDetect="""Consider the following anatomical information:
+PancreasErrorDetectV0="""Consider the following anatomical information:
 a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
 C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
@@ -150,6 +150,30 @@ DescriptionsErrorDetect={
 
 
 
+StomachErrorDetectShapeless="""Consider the following anatomical information, you must ignore the shape of the overlay, and evaluate only the location and unity of the red overlay:
+a) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+
+GallbladderErrorDetectShapeless="""Consider the following anatomical information, you must ignore the shape of the overlay, and evaluate only the location and unity of the red overlay:
+a) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+
+PancreasErrorDetectShapeless="""Consider the following anatomical information, you must ignore the shape of the overlay, and evaluate only the location and unity of the red overlay:
+a) Unity: The pancreas red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage."""
+
+
+DescriptionsErrorDetectShapeless={
+    "aorta":FullAortaErrorDetect,
+    "descending aorta":DescendingAortaErrorDetect,
+    "postcava":PostcavaErrorDetect,
+    "liver":LiverErrorDetect,
+    "kidneys":KidneysErrorDetect,
+    "spleen":SpleenErrorDetect,
+    "stomach":StomachErrorDetectShapeless,
+    "pancreas":PancreasErrorDetectShapeless,
+    "gall_bladder":GallbladderErrorDetectShapeless}
+
 
 
 
@@ -180,6 +204,13 @@ ZeroShotInstructions=("The image I am sending is a frontal projection of a CT sc
                       "or incorrectly marks the %(organ)s. Check if the red region is coherent with "
                       "the expected shape and location of a %(organ)s.")
 
+ZeroShotInstructionsShapeless=("The image I am sending is a frontal projection of a CT scan. "
+                      "It is not a CT slice, we have transparency and can see through the entire body, "
+                      "like a X-ray. The left side of the image represents the right side of the human body. "
+                      "The %(organ)s region in the image should be marked in red, "
+                      "using an overlay. However, I am not sure if the red overlay correctly "
+                      "or incorrectly marks the %(organ)s location.")
+
 FindErrors=("The image I am sending now, we can call it Image %(number)s, is a frontal projection of a CT scan. "
                       "It is not a CT slice, we have transparency and can see through the entire body, "
                       "like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. "
@@ -188,6 +219,12 @@ FindErrors=("The image I am sending now, we can call it Image %(number)s, is a f
                       "or incorrectly marks the %(organ)s. Check if the red region is coherent with "
                       "the expected shape and location of a %(organ)s, and analyze potential mistakes, if any.")
 
+FindErrorsShapeless=("The image I am sending now, we can call it Image %(number)s, is a frontal projection of a CT scan. "
+                      "It is not a CT slice, we have transparency and can see through the entire body, "
+                      "like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. "
+                      "The %(organ)s region in the image should be marked in red, "
+                      "using an overlay. However, I am not sure if the red overlay correctly "
+                      "or incorrectly marks the %(organ)s location.")
 
 FindErrorsSkeleton=("The image I am sending now, we can call it Image %(number)s, is a frontal projection of a CT scan. "
                       "It is not a CT slice, we have transparency and can see through the entire body, "
@@ -222,6 +259,17 @@ OneShotFirstPart=("The images I am sending are a frontal projections of CT scans
                       "I will send you the image for evaluation after you see the example. "
                       "Take a good look and learn with it.")
 
+OneShotFirstPartShapeless=("The images I am sending are a frontal projections of CT scans. "
+                     "They are not CT slices, instead, they have transparency and let you see throgh "
+                     "the entire human body, like an X-ray does. They are oriented like AP X-rays, "
+                      "i.e., the left side of the image represents the right side of the human body. "
+                      "The %(organ)s region in the images should "
+                     "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
+                      "or incorrectly marks the %(organ)s location."
+                      "However, now I am sending you just an example image, which is a 'good annotation'. "
+                      "I will send you the image for evaluation after you see the example. "
+                      "Take a good look and learn with it.")
+
 FewShotFirstPart=("The images I am sending are a frontal projections of CT scans. "
                      "They are not CT slices, instead, they have transparency and let you see throgh "
                      "the entire human body, like an X-ray does. They are oriented like AP X-rays, "
@@ -230,6 +278,17 @@ FewShotFirstPart=("The images I am sending are a frontal projections of CT scans
                      "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
                       "or incorrectly marks the %(organ)s. You must analyze if the red region is coherent with "
                       "the expected shape and location of a %(organ)s."
+                      "However, now I am sending you just an example image, which is a 'good annotation'. "
+                      "I will send mutiple examples in diverse prompts. "
+                      "Take a good look and learn with the examples.")
+
+FewShotFirstPartShapeless=("The images I am sending are a frontal projections of CT scans. "
+                     "They are not CT slices, instead, they have transparency and let you see throgh "
+                     "the entire human body, like an X-ray does. They are oriented like AP X-rays, "
+                      "i.e., the left side of the image represents the right side of the human body. "
+                      "The %(organ)s region in the images should "
+                     "be marked in red, using an overlay. However, I am not sure if the red overlay correctly "
+                      "or incorrectly marks the %(organ)s location."
                       "However, now I am sending you just an example image, which is a 'good annotation'. "
                       "I will send mutiple examples in diverse prompts. "
                       "Take a good look and learn with the examples.")
@@ -292,6 +351,8 @@ liver_describe=(" Consider the following anatomical information: the liver is a 
       "The liver position is primarily under the rib cage. \n"
       "Throuhgly describe the overlay: what is its shape? where is it? Then you say if it corresponds to the liver or not. ")
 
+
+
 KidneysDescriptionED=("Consider the following anatomical information: A person usually has two kidneys, check if the image display one, two or more red objects, this is a very important point. "
                       "Each kidney has a bean-shaped structure, with a slightly concave surface facing the spine, and a clearly convex surface facing outward. Check if the red objects resemble this shape and are complete. "
                       " The kidneys are located on either side of the spine, at the level of the lower ribs. Check if the red objects, if a pair, are on either side of the spine and at the level of the lower ribs. \n")
@@ -311,63 +372,6 @@ AortaDescriptionED = (
     "c) Completeness: The aorta should be visible from the heart down to the pelvis (or down to the image bottom, if the pelvis is not visible). Check if the red overlay accurately shows the full length of the aorta from the heart to the pelvis."
 )
 
-DescendingAortaDescriptionEDV0 = (
- "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
-)
-#70%
-DescendingAortaDescriptionEDV1 = (
- "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, and the aorta does NOT start at the diaphragm level. The aorta is tubular and continuous, it does not have any gap in the middle. \n"
-)
-#50%
-
-
-DescendingAortaDescriptionEDV2 = (
- "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. Therefore, the top end of the aorta shoud not visible in this image, being up from its upper boundary. The arota does NOT start on the lower chest, and the aorta does NOT start at the diaphragm level. The aorta does not have any gap or missing part, it is continuous. \n"
-)
-#60%
-
-DescendingAortaDescriptionEDV3=(
-    "The aorta runs vertically along the midline of the body, typically appearing parallel to the spine in "
-    "frontal CT projections. It closely follows the spine's curve if the spine is curved. "
-    "The descending aorta starts in the upper chest and extends into the lower abdomen. "
-    "It begins just after the arch of the aorta in the upper chest, continuing down toward the diaphragm, "
-    "but does NOT start at or below the diaphragm. "
-    "The aorta is a continuous tubular structure without gaps. "
-    "In radiology images, correct annotations should reflect this smooth, continuous path from the chest "
-    "down to the abdomen, properly aligned with the spine."
-)#GPT
-
-
-DescendingAortaDescriptionEDV4 = (
- "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The aorta should start at the upper chest. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
-)
-
-
-DescendingAortaDescriptionEDV5 = (
- "The aorta runs parallel to the spine and very close to it, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
-)
-#70% with skeleton view
-
-DescendingAortaDescriptionEDV6 = (
- "The descending aorta  (the part of the aorta without the aortic arch) runs parallel to the spine, which usually appears as a vertical line along the midline of the body. A correct descending aorta overlay can be central and excatcly over the spine, partially over the spine, or right next to the spine. It can be curved when the spine is curved. The descending aorta does NOT start on the lower chest, and the descending aorta does NOT start at the diaphragm level, it starts HIGHER. Since this image does not reach the top of the heart, we want the red overlay to extent AS HIGH AS POSSIBLE. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
-)
-
-DescendingAortaDescriptionEDV7 = (
-    "The descending aorta (the part of the aorta without the aortic arch) runs parallel to the spine, which appears as a vertical "
-    "or slightly curved line in the midline of the body. A correct descending aorta overlay should be central, exactly over the spine, "
-    "partially over the spine, or adjacent to the spine. The overlay may follow any curvature of the spine if present. The descending aorta "
-    "starts in the upper chest, extending as high as possible in the image, as this projection does not show the descending aorta starting point. The descending aorta does NOT start near the diaphragm or the lower ribs, "
-    "which is much lower in the body. The aorta is a continuous tubular structure."
-)
-#50%
-DescendingAortaDescriptionEDV8 = (
- "Closely follow the following instructions in evauating the image:\n"
- "1- Do you see a red overlay in the image? \n"
- "2- Does the red overlay resemble a long, vertical line approximatelly in the center of the body? It may be slightly curved if the spine is curved. \n" #The aortic arch is not present.
- "3- Does the red line touch the top of the image? it MUST. This is very important, check carefully. \n"
- "4- Does the red line extend as far as the end of the lumbar spine (if it is visible in the image)? \n"
-)
-#50 %
 
 DescendingAortaDescriptionED = (
  "Closely follow the following instructions in evauating the image:\n"
@@ -377,16 +381,6 @@ DescendingAortaDescriptionED = (
  "4- Does the red line extend as far as the end of the lumbar spine (if it is visible in the image)? \n"
 )
 #50 %
-
-
-DescendingAortaDescriptionEDSanity = (
- "To verify if the overlay is right or not, ignore anything you already know about aorta. Do just ONE SIMPLE THING: check if the red color TOUCHES the top of the image or not. That is the only thing you should car about when analyzing or comparing images. \n"
-)
-
-DescendingAortaDescriptionEDCheating = [(""
-),
-   (
-    "When comparing the 2 images, do just one thing: check which red overlay gets closer to the top of the heart and the head. ")]
 
 
 LiverDescriptionED=("When evaluating and comparing the overlays, consider the following anatomical information:\n"
@@ -402,193 +396,6 @@ SpleenDescriptionED=("When evaluating and comparing the overlays, consider the f
                     "c) The spleen is located beneath the diaphragm and behind the stomach. It lies at the level of the 9th to 11th ribs.\n"
                     "d) The spleen is situated near the LEFT kidney.")
 
-StomachDescriptionEDGPT="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is a hollow organ with a J-shaped or curved sac-like structure. It is not a solid organ, but it is not an amorphous blob.
-b) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs, between the esophagus and the small intestine.
-c) The stomach is situated between the esophagus (above) and the small intestine (below), and is in close proximity to the spleen and pancreas."""
-#GPT generated - 65 ACC
-
-StomachDescriptionEDV1="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
-b) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-c) The stomach red overlay should be a single shape, with a smooth surface and no holes."""
-
-
-StomachDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
-b) The stomach is NOT an amorphous blob and it does NOT have sharp edges.
-c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-d) The stomach red overlay should be a single smooth shape."""
-#0.75 Accuracy
-
-StomachDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The shape of the stomach red overlay should resemble an inverted L or inverted J or a curved sac-like structure. Its lower end should point to the right side of the body (left side of the image, which is oriented like an AP X-ray). 
-b) The stomach is NOT an amorphous blob.
-c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-d) The stomach red overlay should be a single smooth shape."""
-#0.62 accuracy
-
-StomachDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
-b) The stomach is NOT an amorphous blob and it does NOT have sharp edges.
-c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-d) The stomach red overlay should be a single smooth shape."""
-
-
-StomachDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
-b) Its curve does not point up.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-e) The stomach red overlay should be a single smooth shape."""
-#0.75 accuracy, erros actually make sense
-
-StomachDescriptionEDVX="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
-b) Its curve does not point up.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-e) The stomach red overlay should be a single structure."""
-#0.81 accuracy, erros actually make sense
-
-StomachDescriptionEDV5="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
-b) Its curve does not point up.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is mainly located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs. Its bottom part extends towards the right side of the body (left side of the image), and it may cross the spine.
-e) The stomach red overlay should be a single structure."""
-#75% acc
-
-StomachDescriptionEDV6="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
-b) Its curve does not point up.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is mainly located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs. Its lower part can cross the midline and enter the right side of the human body.
-e) The stomach red overlay should be a single structure."""
-#75% acc
-
-StomachDescriptionEDMultiStage="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach red overlay can have the follwoing shapes, depending on digestion: 
-- Empty stomach: a small J-shaped or curved sac-like structure.
-- Early digestion: the J-shape may still be visible, but it becomes bigger, more rounded and distended. It may look rounder at the top.
-- Mid-digestion: the stomach may have an hourglass shape, with a contraction in the middle and two bulging areas—one at the top and one at the bottom. It may also look like a rounded, distended sac, with some sesemblance of its J shape.
-b) Its curve does not point up, when the curve is clearly visible it resembles a J.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is mainly located in the upper part of the abdomen, just below the diaphragm.
-e) The stomach red overlay should be a single structure."""
-#68%
-
-StomachDescriptionEDV8="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The stomach is an organ with a J-shaped or curved sac-like structure. The stomach red overlay should be a single structure.
-b) Wrong shapes: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-c) Location: The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#68%
-
-StomachDescriptionEDV9="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is an organ with a J-shaped or curved sac-like structure.
-b) Its curve does not point up.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-e) The stomach red overlay should be a single structure."""
-#68%
-
-StomachDescriptionEDV10="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The stomach is a J-shaped or curved sac-like structure. When empty, it is small and compact, and may look folded. During digestion, it becomes larger and more rounded but still maintains some of its J-shape; it may become rounded at the top, at the middle, at the bottom or it also take on an hourglass shape with a contraction in the middle and two bulging areas.
-b) Its curve does not point up.
-c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
-e) The stomach red overlay should be a single structure."""
-#52%
-
-
-
-StomachDescriptionEDV11="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The stomach is an organ with a J shape or curved sac-like structure. With a J shape, tts curve points down. During some time of diggestion, it may be more inflated in different regions, or have a hourglass shape.
-c) Defined and smooth shape: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
-e) Unity: The stomach red overlay should be a single structure. Not being a single structure is an obvious overlay error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-
-
-
-StomachDescriptionEDV12="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
-b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
-c) Unity: The stomach red overlay should be a single structure. If the overlay shows disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-
-StomachDescriptionEDV12="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
-b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
-c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-
-StomachDescriptionEDV13="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
-b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
-c) Unity: The stomach red overlay should be a single structure. If the overlay shows disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#Above 80% accuracy
-
-
-
-StomachDescriptionEDBad="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass-like shape.
-b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random sharp edges or internal holes.
-c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#65% accuracy
-
-StomachDescriptionEDVXX="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass shape.
-b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
-c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#100% accuracr with 5 samples rejected as "do not know".
-
-
-StomachDescriptionEDV14="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, or a flipped letter L, or a sac with a downwards curve. During some time of diggestion, it may be more rounded in different regions, or have a hourglass shape with two bulges.
-b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
-c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#75% accuracy
-
-StomachDescriptionEDV15="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. The stomach can resemble a J-shape, flipped L-shape, or a sac-like structure with a downward curve. It is not expected to be perfectly uniform but should follow these general contours. It may be more rounded in different regions, or have a hourglass shape with 2 round areas.
-b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
-c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#100% acc, 4 rejections
-
-StomachDescriptionEDV16="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, it may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
-b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
-c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#88% accuracy 6 rejections
-
-StomachDescriptionEDV17="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, but should follow these general contours. It may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
-b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
-c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
-#82% 2 prompts non conservative
-
-StomachDescriptionEDV18="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass shape.
-b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
-c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
-d) Location: The stomach is located mainly in the upper abdomen, just below the diaphragm. It lies mostly under the ribs."""
-#82% 2 prompts non conservative, 4 rejections
-#cnservative: would give 100% with 11 rejections!
-#If you force yes or no answers, you get 100% accuracy with 9 rejections
-
-
-StomachDescriptionEDV20="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature. It is not expected to be perfectly uniform but should follow these general contours. It may be more rounded in different regions, or have a hourglass shape with two bulges.
-c) Unity: The stomach red overlay should be a single connected structure. Big errors overlay are: showing multiple structures, disconnected parts, or internal voids.
-d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
-#Force yes or no answers: 72% accuracy, 4 rejections
 
 StomachDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature.
@@ -599,81 +406,10 @@ d) Location: The stomach red overlay should be located mainly in the upper abdom
 # Conservative: 100%, 10 rejections
 
 
-PancreasDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like or elongated S-shape.
-b) The pancreas is located in the upper abdomen, behind the stomach. It extends horizontally from the right side of the abdomen (left side of the image, like an AP X-ray) to the left side (right side of the image).
-c) The head of the pancreas is situated on the right side of the abdomen (left side of the image), nestled in the curve of the duodenum, while the tail extends toward the spleen on the left side (right side of the image), near the left kidney."""
-#GPT generated
-
-PancreasDescriptionEDV1="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like shape, with its tail pointing to the left side of the body (right side of the image, like an AP X-ray).
-a) The pancreas head is its thickest part.
-b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-c) The pancreas is a single smooth shape, it is not fragmented."""
-
-PancreasDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like shape.
-a) The pancreas head is its thickest part. Thus, the pancreas is thicker in the left side of the image/right side of the body (the image is oriented like an AP X-ray).
-b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-c) The pancreas is a single smooth shape, it is not fragmented."""
-
-
-
-PancreasDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. The pancreas is significantly thicker in one of its sides. 
-a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
-b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
-
-PancreasDescriptionEDV4="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. It has a thicker head at one side and a thinner tail at the other. The head is notably thicker than the tail.
-a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
-b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
-
-PancreasDescriptionEDV5="""When evaluating and comparing the overlays, individually adress each of the following points:
-a) The pancreas is an elongated organ with a tadpole-like shape. It has a thicker head at one side and a thinner tail at the other.
-b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
-c) The pancreas is located in the upper abdomen near the bottom of the rib cage.
-d) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges.
-e) Position: the pancreas is mainly horizontal, with a curve pointing upwards. The head can be at the tail height or lower, the tail cannot go much lower than the head."""
-#bad
-
-
-PancreasDescriptionEDv6="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. The pancreas is significantly thicker in one of its sides. 
-b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
-b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-c) The pancreas is a single smooth shape, it is not fragmented.
-d) The head of the pancreas usually sits lower than the tail."""
-#bad
-
-
-PancreasDescriptionEDV7="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
-b) The pancreas is an elongated, flat organ with a tadpole-like shape. It is mostly horizontal, with a curve pointing up. 
-c) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
-d) The head of the pancreas usually sits lower than the tail.
-e) The pancreas is a single smooth shape and it does not have very sharp edges."""
-#horrible
-
-PancreasDescriptionEDV8="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. Besides its head, the pancreas is thin.
-b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The head of the pancreas is usually lower than the tail.
-C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
-#good
-
 PancreasDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
 a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
 C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
-
-GallbladderDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
-a) The gallbladder is a small, pear-shaped organ.
-b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
-c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in frontal projections.
-d) The gallbladder is a single structure."""
-#GPT generated
 
 
 GallbladderDescriptionED="""When evaluating and comparing the overlays, consider the following anatomical information:
@@ -698,6 +434,30 @@ DescriptionsED={
     "stomach":StomachDescriptionED,
     "pancreas":PancreasDescriptionED,
     "gall_bladder":GallbladderDescriptionED}
+
+StomachDescriptionEDShapeless="""When evaluating and comparing the overlays, consider only the overlay unity and location, do NOT consider its shape:
+a) Unity: The stomach red overlay should be a single connected structure. If it has multiple structures or small disconnected parts, the overlay has a big error.
+b) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+
+PancreasDescriptionEDShapeless="""When evaluating and comparing the overlays, consider only the overlay unity and location, do NOT consider its shape:
+a) Location: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
+b) Unity: The pancreas red overlay should be a single connected structure. If it has multiple structures or small disconnected parts, the overlay has a big error."""
+
+
+GallbladderDescriptionEDShapeless="""When evaluating and comparing the overlays, consider only the overlay unity and location, do NOT consider its shape:
+a) Unity: The gallbladder red overlay should be a single connected structure. If it has multiple structures or small disconnected parts, the overlay has a big error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+
+DescriptionsEDShapeless={
+    "aorta":AortaDescriptionED,
+    "descending aorta":DescendingAortaDescriptionED,
+    "liver":LiverDescriptionED,
+    "kidneys":KidneysDescriptionED,
+    "adrenal_glands":AdrenalGlandDescriptionED,
+    "spleen":SpleenDescriptionED,
+    "stomach":StomachDescriptionEDShapeless,
+    "pancreas":PancreasDescriptionEDShapeless,
+    "gall_bladder":GallbladderDescriptionEDShapeless}
 
 
 organ_descriptions={'liver':liver}
@@ -1496,7 +1256,7 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
                            organ_descriptions=DescriptionsED,
                            text_summarize=CompareSummarizeED, organ='liver',
                            save_memory=True, location_window='skeleton',solid_overlay=False,
-                           print_examples=True):
+                           print_examples=True,shapeless=False):
     """
     clean: X-ray withouth annotation
     y: X-ray with annotation
@@ -1568,7 +1328,10 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
 
     if len(good_examples)==1 and len(bad_examples)==0:
         final_instructions=OneShotSecondPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_description
-        text=OneShotFirstPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        if shapeless:
+            text=OneShotFirstPartShapeless % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        else:
+            text=OneShotFirstPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
         text=text+organ_description
         conversation=CreateConversation(img_file_list=good_examples, text=text, conver=conversation,size=size,prt=True,solid_overlay=solid_overlay,
                                   role='user')
@@ -1577,7 +1340,10 @@ def ErrorDetectionLMDeployFewShot(clean, y, good_examples,bad_examples,
                                   role='assistant')
     else:
         final_instructions=FewShotSecondPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_description
-        text=FewShotFirstPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        if shapeless:
+            text=FewShotFirstPartShapeless % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        else:
+            text=FewShotFirstPart % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
         text=text+organ_description
         for i in range(len(good_examples)):
             if i>0:
@@ -1816,7 +1582,12 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                     dice_threshold=0.5,dice_threshold_max=0.9,
                                     dice_check=False,
                                     limit=None,skip_good=False,skip_bad=False,
-                                    csv_file=None,restart=False,dice_list=None,):
+                                    csv_file=None,restart=False,dice_list=None,
+                                    shapeless=False):
+        
+        if shapeless:
+            organ_descriptions=DescriptionsErrorDetectShapeless
+            instructions=ZeroShotInstructionsShapeless
         
         if solid_overlay=='auto':
             if organ in ['aorta','postcava']:
@@ -1990,8 +1761,12 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                                     dice_threshold=0.5,dice_threshold_max=0.9,dice_check=False,
                                     good_examples_path=None,bad_examples_path=None,
                                     limit=None,skip_good=False,skip_bad=False,
-                                    csv_file=None,restart=False,dice_list=None,):
+                                    csv_file=None,restart=False,dice_list=None,
+                                    shapeless=False):
         
+        if shapeless:
+            organ_descriptions=DescriptionsErrorDetectShapeless
+
         if solid_overlay=='auto':
             if organ in ['aorta','postcava']:
                 solid_overlay=True
@@ -2111,7 +1886,8 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                                 organ_descriptions=organ_descriptions,
                                 text_summarize=text_summarize, organ=organ,
                                 save_memory=save_memory, location_window=location_window,
-                                solid_overlay=solid_overlay)
+                                solid_overlay=solid_overlay,
+                                shapeless=shapeless)
                     
                     answers.append(answer_good)
                     labels.append(1.0)
@@ -3864,7 +3640,7 @@ Evaluate each image individually, carefully compare them and conclude which over
 Consider the following anatomical information:
 a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. The other side of the pancreas is thin.
 b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The organ is mostly horizontal, but may be slightly curved and its head usually sits lower than its tail.
-C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+c) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
 
 Compare2ImagesSpleen="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the spleen, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
@@ -3903,7 +3679,39 @@ Compare2Images={
 }
 
 
+Compare2ImagesStomachShapeless="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the stomach, the one in Image 1 or in Image 2. 
+Consider the following anatomical information, but do NOT consider the shape of the stomach overlay:
+c) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
 
+
+Compare2ImagesPancreasShapeless="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the pancreas, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them and conclude which overlay better represents the pancreas, the one in Image 1 or in Image 2. 
+Consider the following anatomical information, but do NOT consider the shape of the pancreas overlay:
+a) Location: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) Unity: The pancreas red overlay must be a single connected structure. Showing multiple strucutres is a major error."""
+
+Compare2ImagesGallbladderShapeless="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
+A red shape (overlay) over the images demarks the gallbladder, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
+Evaluate each image individually, carefully compare them, and conclude which overlay better represents the gallbladder, the one in Image 1 or in Image 2.
+Consider the following anatomical information, but do NOT consider the shape of the gallbladder overlay:
+a) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage."""
+
+Compare2ImagesShapeless={
+    'descending aorta':Compare2ImagesAorta,#better here
+    'aorta':Compare2ImagesFullAorta,#better here
+    'liver':Compare2ImagesLiver,
+    'postcava':Compare2ImagesPostcava,#better here
+    'kidneys':Compare2ImagesKidneys,#worst than putting one image per prompt and sending more prompts
+    'stomach':Compare2ImagesStomachShapeless,
+    'pancreas':Compare2ImagesPancreasShapeless,
+    'spleen':Compare2ImagesSpleen,
+    'gall_bladder':Compare2ImagesGallbladderShapeless
+}
 
 
 # In context learning comparisons
@@ -4010,6 +3818,47 @@ Compare2ImagesInContext={
     'pancreas':Compare2ImagesPancreasInContext,
     'spleen':Compare2ImagesSpleenInContext,
     'gall_bladder':Compare2ImagesGallbladderInContext
+}
+
+
+
+Compare2ImagesStomachInContextShapeless="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information, but do NOT consider the shape of the stomach overlay:
+a) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs.
+"As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay.
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesPancreasInContextShapeless="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information, but do NOT consider the shape of the pancreas overlay:
+a) Unity: The pancreas red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. 
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesGallbladderInContextShapeless="""The images I am sending are frontal projections of CT scans. They are not CT slices; rather, they have transparency, showing through the entire body. They are oriented like AP X-rays, where the right image side is the left side of the human body, and the left image side is the right side of the human body.
+Red shapes (overlays) on the images demarcate the %(organ)s, but the accuracy of these overlays is uncertain. Your task is to compare the last two images I am sending, which we will call image X (penultimate image) and image Y (last image). These two images represent the same CT scan but have different %(organ)s overlays.
+Evaluate each image individually, carefully compare the %(organ)s overlays, and determine which overlay better represents the %(organ)s: the one in image X or the one in image Y.
+When comparing the images, consider the following anatomical information, but do NOT consider the shape of the gallbladder overlay:
+a) Unity: The gallbladder red overlay must be a single connected structure. Showing multiple strucutres is a major error.
+b) Location: The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray). It sits near the lower edge of the liver and the rib cage.
+As examples to help you, I am sending you %(n)s other pairs of images. Each example pair contains one good overlay and one bad %(organ)s overlay. 
+Again, you must compare Images X and Y, the last 2 I am sending (pair %(o)s)."""
+
+Compare2ImagesInContextShapeless={
+    'descending aorta':Compare2ImagesAortaInContext,#better here
+    'aorta':Compare2ImagesFullAortaInContext,#better here
+    'liver':Compare2ImagesLiverInContext,
+    'postcava':Compare2ImagesPostcavaInContext,#better here
+    'kidneys':Compare2ImagesKidneysInContext,#worst than putting one image per prompt and sending more prompts
+    'stomach':Compare2ImagesStomachInContextShapeless,
+    'pancreas':Compare2ImagesPancreasInContextShapeless,
+    'spleen':Compare2ImagesSpleenInContext,
+    'gall_bladder':Compare2ImagesGallbladderInContextShapeless
 }
 
 
@@ -5131,11 +4980,20 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             dice_th=0.75,file_list=None,
                             dual_confirmation=False,conservative_dual=False,
                             csv_file=None,restart=True,
-                            examples=0,dice_list=None):
+                            examples=0,dice_list=None,
+                            shapeless=False):
 
         if examples>0:
             text_compare=Compare2ImagesInContext
             text_summarize=CompareSummarizeInContext
+
+        if shapeless:
+            organ_descriptions=DescriptionsEDShapeless
+            text_multi_image_prompt_2=Compare2ImagesShapeless
+            text_y1=FindErrorsShapeless
+            text_y2=FindErrorsShapeless
+            if examples>0:
+                text_compare=Compare2ImagesInContextShapeless
 
         if csv_file is not None:
             column_names = ['case', 'answer', 'label', 'correct', 'organ', 'answer_1', 'answer_2']
@@ -6031,3 +5889,350 @@ def SystematicComparison3MessagesQwen(pth,model,processor,process_vision_info,
         acc=np.array(answers).sum()/len(answers)
         acc=np.round(100*acc,1)
         print('Accuracy: ',acc, '(',np.array(answers).sum(),'/',len(answers), ')')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+StomachDescriptionEDGPT="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is a hollow organ with a J-shaped or curved sac-like structure. It is not a solid organ, but it is not an amorphous blob.
+b) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs, between the esophagus and the small intestine.
+c) The stomach is situated between the esophagus (above) and the small intestine (below), and is in close proximity to the spleen and pancreas."""
+#GPT generated - 65 ACC
+
+StomachDescriptionEDV1="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
+b) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+c) The stomach red overlay should be a single shape, with a smooth surface and no holes."""
+
+
+StomachDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
+b) The stomach is NOT an amorphous blob and it does NOT have sharp edges.
+c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+d) The stomach red overlay should be a single smooth shape."""
+#0.75 Accuracy
+
+StomachDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The shape of the stomach red overlay should resemble an inverted L or inverted J or a curved sac-like structure. Its lower end should point to the right side of the body (left side of the image, which is oriented like an AP X-ray). 
+b) The stomach is NOT an amorphous blob.
+c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+d) The stomach red overlay should be a single smooth shape."""
+#0.62 accuracy
+
+StomachDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure. 
+b) The stomach is NOT an amorphous blob and it does NOT have sharp edges.
+c) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+d) The stomach red overlay should be a single smooth shape."""
+
+
+StomachDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single smooth shape."""
+#0.75 accuracy, erros actually make sense
+
+StomachDescriptionEDVX="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single structure."""
+#0.81 accuracy, erros actually make sense
+
+StomachDescriptionEDV5="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is mainly located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs. Its bottom part extends towards the right side of the body (left side of the image), and it may cross the spine.
+e) The stomach red overlay should be a single structure."""
+#75% acc
+
+StomachDescriptionEDV6="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or L-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is mainly located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs. Its lower part can cross the midline and enter the right side of the human body.
+e) The stomach red overlay should be a single structure."""
+#75% acc
+
+StomachDescriptionEDMultiStage="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach red overlay can have the follwoing shapes, depending on digestion: 
+- Empty stomach: a small J-shaped or curved sac-like structure.
+- Early digestion: the J-shape may still be visible, but it becomes bigger, more rounded and distended. It may look rounder at the top.
+- Mid-digestion: the stomach may have an hourglass shape, with a contraction in the middle and two bulging areas—one at the top and one at the bottom. It may also look like a rounded, distended sac, with some sesemblance of its J shape.
+b) Its curve does not point up, when the curve is clearly visible it resembles a J.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is mainly located in the upper part of the abdomen, just below the diaphragm.
+e) The stomach red overlay should be a single structure."""
+#68%
+
+StomachDescriptionEDV8="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J-shaped or curved sac-like structure. The stomach red overlay should be a single structure.
+b) Wrong shapes: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+c) Location: The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#68%
+
+StomachDescriptionEDV9="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is an organ with a J-shaped or curved sac-like structure.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single structure."""
+#68%
+
+StomachDescriptionEDV10="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The stomach is a J-shaped or curved sac-like structure. When empty, it is small and compact, and may look folded. During digestion, it becomes larger and more rounded but still maintains some of its J-shape; it may become rounded at the top, at the middle, at the bottom or it also take on an hourglass shape with a contraction in the middle and two bulging areas.
+b) Its curve does not point up.
+c) The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+d) The stomach is located in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs.
+e) The stomach red overlay should be a single structure."""
+#52%
+
+
+
+StomachDescriptionEDV11="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure. With a J shape, tts curve points down. During some time of diggestion, it may be more inflated in different regions, or have a hourglass shape.
+c) Defined and smooth shape: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges, gaps or fragmentation.
+e) Unity: The stomach red overlay should be a single structure. Not being a single structure is an obvious overlay error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+
+
+StomachDescriptionEDV12="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+StomachDescriptionEDV12="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+
+StomachDescriptionEDV13="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The stomach is an organ with a J shape or curved sac-like structure, with a curvature flexing downwards. During some time of diggestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges and gaps.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#Above 80% accuracy
+
+
+
+StomachDescriptionEDBad="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass-like shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random sharp edges or internal holes.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#65% accuracy
+
+StomachDescriptionEDVXX="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass shape.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
+c) Unity: The stomach red overlay should be a single structure. If the overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#100% accuracr with 5 samples rejected as "do not know".
+
+
+StomachDescriptionEDV14="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, or a flipped letter L, or a sac with a downwards curve. During some time of diggestion, it may be more rounded in different regions, or have a hourglass shape with two bulges.
+b) Shape 2: The stomach is NOT an amorphous blob. It is also NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#75% accuracy
+
+StomachDescriptionEDV15="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. The stomach can resemble a J-shape, flipped L-shape, or a sac-like structure with a downward curve. It is not expected to be perfectly uniform but should follow these general contours. It may be more rounded in different regions, or have a hourglass shape with 2 round areas.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#100% acc, 4 rejections
+
+StomachDescriptionEDV16="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, it may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#88% accuracy 6 rejections
+
+StomachDescriptionEDV17="""The image I am sending now, we can call it Image 2, is a frontal projection of a CT scan. It is not a CT slice, we have transparency and can see through the entire body, like a X-ray. The left side of the image represents the right side of the human body, it looks like an AP (anterior-to-posterior) X-ray. The stomach region in the image should be marked in red, using an overlay. However, I am not sure if the red overlay correctly or incorrectly marks the stomach. Check if the red region is coherent with the expected shape and location of a stomach, and analyze potential mistakes, if any.When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach resembles the letter J, an inverted letter L, or a sac with a downwards curvature. It is not perfectly uniform, but should follow these general contours. It may be more rounded in different areas, or have a hourglass shape with 2 rounded areas.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper left quadrant of the abdomen (right side of the figure, like an AP X-ray), just below the diaphragm. It lies mostly under the left ribs."""
+#82% 2 prompts non conservative
+
+StomachDescriptionEDV18="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach can resemble the letter J, an inverted letter L, or a sac with a downwards curvature. During some time of digestion, it may be more inflated in different regions, or have a hourglass shape.
+b) Shape 2: The stomach is NOT a random shape with random edges or internal holes.
+c) Unity: The stomach is a single connected structure. If the red overlay shows multiple structures or small disconnected parts, it has a big error.
+d) Location: The stomach is located mainly in the upper abdomen, just below the diaphragm. It lies mostly under the ribs."""
+#82% 2 prompts non conservative, 4 rejections
+#cnservative: would give 100% with 11 rejections!
+#If you force yes or no answers, you get 100% accuracy with 9 rejections
+
+
+StomachDescriptionEDV20="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The shape of the stomach red overlay should resemble the letter J, an inverted letter L, or a sac with a downwards curvature. It is not expected to be perfectly uniform but should follow these general contours. It may be more rounded in different regions, or have a hourglass shape with two bulges.
+c) Unity: The stomach red overlay should be a single connected structure. Big errors overlay are: showing multiple structures, disconnected parts, or internal voids.
+d) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
+#Force yes or no answers: 72% accuracy, 4 rejections
+
+
+GallbladderDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The gallbladder is a small, pear-shaped organ.
+b) The gallbladder is located in the upper right quadrant of the abdomen (left side of the figure, like an AP X-ray).
+c) The gallbladder sits near the lower edge of the liver and may overlap with the liver in frontal projections.
+d) The gallbladder is a single structure."""
+#GPT generated
+PancreasDescriptionEDV0="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like or elongated S-shape.
+b) The pancreas is located in the upper abdomen, behind the stomach. It extends horizontally from the right side of the abdomen (left side of the image, like an AP X-ray) to the left side (right side of the image).
+c) The head of the pancreas is situated on the right side of the abdomen (left side of the image), nestled in the curve of the duodenum, while the tail extends toward the spleen on the left side (right side of the image), near the left kidney."""
+#GPT generated
+
+PancreasDescriptionEDV1="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape, with its tail pointing to the left side of the body (right side of the image, like an AP X-ray).
+a) The pancreas head is its thickest part.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented."""
+
+PancreasDescriptionEDV2="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape.
+a) The pancreas head is its thickest part. Thus, the pancreas is thicker in the left side of the image/right side of the body (the image is oriented like an AP X-ray).
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented."""
+
+
+
+PancreasDescriptionEDV3="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. The pancreas is significantly thicker in one of its sides. 
+a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
+
+PancreasDescriptionEDV4="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. It has a thicker head at one side and a thinner tail at the other. The head is notably thicker than the tail.
+a) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges."""
+
+PancreasDescriptionEDV5="""When evaluating and comparing the overlays, individually adress each of the following points:
+a) The pancreas is an elongated organ with a tadpole-like shape. It has a thicker head at one side and a thinner tail at the other.
+b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+c) The pancreas is located in the upper abdomen near the bottom of the rib cage.
+d) The pancreas is a single smooth shape, it is not fragmented, and it does not have very sharp edges.
+e) Position: the pancreas is mainly horizontal, with a curve pointing upwards. The head can be at the tail height or lower, the tail cannot go much lower than the head."""
+#bad
+
+
+PancreasDescriptionEDv6="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is an elongated, flat organ with a tadpole-like shape. Its can also look like a curved ribbon or a comma. The pancreas is significantly thicker in one of its sides. 
+b) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+b) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+c) The pancreas is a single smooth shape, it is not fragmented.
+d) The head of the pancreas usually sits lower than the tail."""
+#bad
+
+
+PancreasDescriptionEDV7="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage.
+b) The pancreas is an elongated, flat organ with a tadpole-like shape. It is mostly horizontal, with a curve pointing up. 
+c) The pancreas head is its thickest part. This thickest part points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray.
+d) The head of the pancreas usually sits lower than the tail.
+e) The pancreas is a single smooth shape and it does not have very sharp edges."""
+#horrible
+
+PancreasDescriptionEDV8="""When evaluating and comparing the overlays, consider the following anatomical information:
+a) Shape: The pancreas is an elongated organ with a tadpole-like shape. The pancreas head is its thickest part and points to the left side of the image, which is the right side of the body because the image is oriented like an AP X-ray. Besides its head, the pancreas is thin.
+b) Position: The pancreas is located in the upper abdomen, behind the stomach and near the bottom of the rib cage. The head of the pancreas is usually lower than the tail.
+C) Smoothness: The pancreas is a single smooth shape and it does not have very sharp edges."""
+#good
+
+
+DescendingAortaDescriptionEDV0 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+#70%
+DescendingAortaDescriptionEDV1 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, and the aorta does NOT start at the diaphragm level. The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+#50%
+
+
+DescendingAortaDescriptionEDV2 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. Therefore, the top end of the aorta shoud not visible in this image, being up from its upper boundary. The arota does NOT start on the lower chest, and the aorta does NOT start at the diaphragm level. The aorta does not have any gap or missing part, it is continuous. \n"
+)
+#60%
+
+DescendingAortaDescriptionEDV3=(
+    "The aorta runs vertically along the midline of the body, typically appearing parallel to the spine in "
+    "frontal CT projections. It closely follows the spine's curve if the spine is curved. "
+    "The descending aorta starts in the upper chest and extends into the lower abdomen. "
+    "It begins just after the arch of the aorta in the upper chest, continuing down toward the diaphragm, "
+    "but does NOT start at or below the diaphragm. "
+    "The aorta is a continuous tubular structure without gaps. "
+    "In radiology images, correct annotations should reflect this smooth, continuous path from the chest "
+    "down to the abdomen, properly aligned with the spine."
+)#GPT
+
+
+DescendingAortaDescriptionEDV4 = (
+ "The aorta runs parallel to the spine, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The aorta should start at the upper chest. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+
+
+DescendingAortaDescriptionEDV5 = (
+ "The aorta runs parallel to the spine and very close to it, which usually appears as a vertical line along the midline of the body. It can be curved when the spine is curved. The descending aorta is the part of the aorta that extends from the upper chest to the lower abdomen. The arota does NOT start on the lower chest, the aorta does NOT start at the diaphragm level. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+#70% with skeleton view
+
+DescendingAortaDescriptionEDV6 = (
+ "The descending aorta  (the part of the aorta without the aortic arch) runs parallel to the spine, which usually appears as a vertical line along the midline of the body. A correct descending aorta overlay can be central and excatcly over the spine, partially over the spine, or right next to the spine. It can be curved when the spine is curved. The descending aorta does NOT start on the lower chest, and the descending aorta does NOT start at the diaphragm level, it starts HIGHER. Since this image does not reach the top of the heart, we want the red overlay to extent AS HIGH AS POSSIBLE. \n"#The aorta is tubular and continuous, it does not have any gap in the middle. \n"
+)
+
+DescendingAortaDescriptionEDV7 = (
+    "The descending aorta (the part of the aorta without the aortic arch) runs parallel to the spine, which appears as a vertical "
+    "or slightly curved line in the midline of the body. A correct descending aorta overlay should be central, exactly over the spine, "
+    "partially over the spine, or adjacent to the spine. The overlay may follow any curvature of the spine if present. The descending aorta "
+    "starts in the upper chest, extending as high as possible in the image, as this projection does not show the descending aorta starting point. The descending aorta does NOT start near the diaphragm or the lower ribs, "
+    "which is much lower in the body. The aorta is a continuous tubular structure."
+)
+#50%
+DescendingAortaDescriptionEDV8 = (
+ "Closely follow the following instructions in evauating the image:\n"
+ "1- Do you see a red overlay in the image? \n"
+ "2- Does the red overlay resemble a long, vertical line approximatelly in the center of the body? It may be slightly curved if the spine is curved. \n" #The aortic arch is not present.
+ "3- Does the red line touch the top of the image? it MUST. This is very important, check carefully. \n"
+ "4- Does the red line extend as far as the end of the lumbar spine (if it is visible in the image)? \n"
+)
+#50 %

@@ -28,6 +28,7 @@ parser.add_argument('--good_examples_pth',  default=None)
 parser.add_argument('--bad_examples_pth',  default=None)
 parser.add_argument('--dice_list',  default=None)
 parser.add_argument('--csv_path',  default=None)
+parser.add_argument('--shapeless',  action='store_true', default=False, help='Ignores shape of gallbladder, stomach and pancreas')
 
 
 all_organs=['aorta','liver','kidneys','spleen','pancreas','postcava','stomach','gall_bladder']
@@ -97,7 +98,8 @@ for organ in organs:
             limit=int(args.limit),
             skip_bad=args.skip_bad,skip_good=args.skip_good,
             csv_file=args.csv_path+organ+'.csv',
-            dice_list=dice_list
+            dice_list=dice_list,
+            shapeless=args.shapeless
             )
     else:
         print('Few-shot')
@@ -118,5 +120,6 @@ for organ in organs:
             bad_examples_path=args.bad_examples_pth,
             csv_file=args.csv_path+organ+'.csv',
             restart=(not args.continuing),
-            dice_list=dice_list
+            dice_list=dice_list,
+            shapeless=args.shapeless
             )

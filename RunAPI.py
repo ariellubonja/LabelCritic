@@ -17,6 +17,7 @@ parser.add_argument('--csv_path', help='path of csv to save results', default=No
 parser.add_argument('--continuing', action='store_true', help="Continues from interrupted run.")
 parser.add_argument('--dice_list', help='path of csvs with dice scores', default=None)
 parser.add_argument('--examples', help='number of examples for in-context learning', default=0,type=int)
+parser.add_argument('--shapeless',  action='store_true', default=False, help='Ignores shape of gallbladder, stomach and pancreas')
 
 # Parse the arguments
 args = parser.parse_args()
@@ -34,6 +35,8 @@ if args.organ_list == 'auto':
         organs = [file for file in os.listdir(path) if (('right' not in file) and ('left' not in file))]
 elif args.organ_list == 'all':
     organs = [file for file in os.listdir(path) if (('right' not in file) and ('left' not in file))]
+elif args.organ_list == 'all_shapeless':
+    organs = ['pancreas','stomach','gall_bladder']
 else:
     organs = re.findall(r'\w+', args.organ_list)
 
@@ -72,5 +75,6 @@ for organ in organs:
         csv_file=args.csv_path+organ+'.csv',
         restart=(not args.continuing),
         dice_list=dice_list,
-        examples=args.examples
+        examples=args.examples,
+        shapeless=args.shapeless
     )
