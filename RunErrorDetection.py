@@ -18,21 +18,25 @@ parser.add_argument('--organ_list', help='List of organs to process', default='a
 parser.add_argument('--size', help='Size of the images', default=512)
 parser.add_argument('--dice_check', action='store_true',
                     help='Whether to check for dice similarity', default=False)
-parser.add_argument('--dice_threshold', help='Threshold for dice similarity', default=0.75)
+parser.add_argument('--dice_threshold', help='Threshold for dice similarity', default=0.5)
 parser.add_argument('--examples', help='Number of examples to use for in-context learning.', default='0')
 parser.add_argument('--limit', help='Maximum number of images analyzed', default='10000')
 parser.add_argument('--skip_good', action='store_true', default=False)
 parser.add_argument('--skip_bad', action='store_true', default=False)
+parser.add_argument('--continuing', action='store_true', default=False)
 parser.add_argument('--good_examples_pth',  default=None)
 parser.add_argument('--bad_examples_pth',  default=None)
-
-
+parser.add_argument('--dice_list',  default=None)
+parser.add_argument('--csv_path',  default=None)
 
 
 all_organs=['aorta','liver','kidneys','spleen','pancreas','postcava','stomach','gall_bladder']
 
 # Parse the arguments
 args = parser.parse_args()
+
+if '.csv' in args.csv_path:
+    args.csv_path=args.csv_path[:-4]
 
 # Extract the organ from the path
 path = args.path
@@ -71,7 +75,13 @@ for organ in organs:
         pth = os.path.join(path, organ)
     else:
         pth = path
+    if args.dice_list is not None:
+        dice_list = os.path.join(args.dice_list, 'DSC'+organ+'.csv')
+    else:
+        dice_list = None
     # Call the function with the extracted organ and provided path
+    print(pth)
+    print(os.listdir(pth)[:10])
     if args.examples=='0':
         print('Zero-shot')
         ed.ZeroShotErrorDetectionSystematicEvalLMDeploy(
@@ -86,6 +96,8 @@ for organ in organs:
             dice_threshold=float(args.dice_threshold),
             limit=int(args.limit),
             skip_bad=args.skip_bad,skip_good=args.skip_good,
+            csv_file=args.csv_path+organ+'.csv',
+            dice_list=dice_list
             )
     else:
         print('Few-shot')
@@ -103,5 +115,8 @@ for organ in organs:
             limit=int(args.limit),
             skip_bad=args.skip_bad,skip_good=args.skip_good,
             good_examples_path=args.good_examples_pth,
-            bad_examples_path=args.bad_examples_pth
+            bad_examples_path=args.bad_examples_pth,
+            csv_file=args.csv_path+organ+'.csv',
+            restart=(not args.continuing),
+            dice_list=dice_list
             )

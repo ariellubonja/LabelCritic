@@ -39,8 +39,11 @@ def main():
     parser.add_argument('--file_list', default=None)
     parser.add_argument('--restart', action='store_true',default=False)
     parser.add_argument('--no_composite_images', action='store_true',default=False)
+    parser.add_argument('--axis', action='store_true',default=1,type=int)
+
 
     args = parser.parse_args()
+
 
     good_folder = args.good_folder
     bad_folder = args.bad_folder
@@ -165,7 +168,8 @@ def main():
             organ=organ,
             device=args.device,
             num_processes=int(args.num_processes),
-            skip_existing=(not args.restart)
+            skip_existing=(not args.restart),
+            axis=args.axis
         )
         if organ != 'none':
             if '00' not in os.listdir(bad_folder_mask)[0]:
@@ -186,7 +190,8 @@ def main():
             organ=organ,
             device=args.device,
             num_processes=int(args.num_processes),
-            skip_existing=(not args.restart)
+            skip_existing=(not args.restart),
+            axis=args.axis
         )
         
         # Composite datasets
@@ -196,7 +201,8 @@ def main():
             bad_path=bad_projection_path,
             organ=organ,
             fast= args.no_composite_images,
-            file_list=file_list
+            file_list=file_list,
+            axis=args.axis
         )
 
     # Join left and right datasets

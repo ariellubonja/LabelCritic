@@ -1656,8 +1656,19 @@ def get_files(pth,file_list,anno_window,organ,window,best,file_structure='dual')
             return [],files
         else:
             raise ValueError('Invalid file structure for non composite folders.')
+        
+    #check if folder has y1 and y2 files
+    y1_present=False
+    y2_present=False
+    for target in os.listdir(pth):
+        if 'y1.' in target:
+            y1_present=True
+        if 'y2.' in target:
+            y2_present=True
+        if y1_present and y2_present:
+            break
 
-    if not any('y1.png' in f and 'y2.png' in f for f in os.listdir(pth)):
+    if (not y1_present) and (not y2_present):
         if file_structure not in ['all_good','all_bad','pick_good_only','pick_bad_only']:
             raise ValueError('No y1 or y2 files found in folder. Use all_good, all_bad, pick_good_only or pick_bad_only file_structure.')
         files=[]
@@ -1802,8 +1813,10 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                     anno_window='bone',best=2,
                                     file_list=None,
                                     file_structure='dual',
-                                    dice_threshold=0.75,dice_check=False,
-                                    limit=None,skip_good=False,skip_bad=False):
+                                    dice_threshold=0.5,dice_threshold_max=0.9,
+                                    dice_check=False,
+                                    limit=None,skip_good=False,skip_bad=False,
+                                    csv_file=None,restart=False,dice_list=None,):
         
         if solid_overlay=='auto':
             if organ in ['aorta','postcava']:
@@ -1811,67 +1824,135 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
             else:
                 solid_overlay=False
 
+
+        if csv_file is not None:
+            column_names = ['case', 'answer', 'label', 'correct', 'organ']
+            if os.path.exists(csv_file) and restart:
+                os.remove(csv_file)
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(column_names)
+            elif not os.path.exists(csv_file):
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(column_names)
+
+        if dice_list is not None:
+            import pandas as pd
+            print('Loading dice list:',dice_list)
+            df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
+
+            #change dice threshold according to mean and std of dice in list
+            a=df['dice'].mean()-df['dice'].std()
+            #order dice in ascending order and get the 100th value
+            b=df['dice'].sort_values().iloc[100]
+            dice_threshold=max(dice_threshold,min(a,b))
+            dice_threshold=min(dice_threshold,dice_threshold_max)
+            print('Dice threshold re-defined to:',dice_threshold)
+
+            filtered_df = df[df["dice"] < dice_threshold]
+            # Get the list of 'case' values where 'dice' is below the threshold
+            cases_below_threshold = filtered_df["case"].tolist()
+            print('Number of cases below threshold:',len(cases_below_threshold))
+
         answers=[]
         labels=[]
         outputs={}
 
         print('Getting files')
         files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
-        print('Good files:',files_good)
-        print('Bad files:',files_bad)
+        #print('Good files:',files_good)
+        #print('Bad files:',files_bad)
         #print('Files:',files_good+files_bad)
         #print('path:',pth)
         #print('files in path:',os.listdir(pth))
 
         for i in list(range(max(len(files_good),len(files_bad)))):
+            skip_good=False
+            skip_bad=False
             if dice_check:
-                good_file=files_good[i][1]
-                bad_file=files_bad[i][1]
-                dice=check_dice(good_file,bad_file)
-                print('Dice:',dice)
-                if dice>dice_threshold:
-                    print('Dice below th, skipping:',dice)
+                if dice_list is None:
+                    good_file=files_good[i][1]
+                    bad_file=files_bad[i][1]
+                    dice=check_dice(good_file,bad_file)
+                    high_dice=dice>dice_threshold
+                    print('Dice:',dice)
+                else:
+                    clean=files_good[i][0]
+
+                    if '/' in clean:
+                        high_dice=clean[clean.rfind('/')+1:].replace('ct_window_skeleton','ct_window_bone') not in cases_below_threshold
+                    else:
+                        high_dice=clean.replace('ct_window_skeleton','ct_window_bone') not in cases_below_threshold
+
+                    #print('clean:',clean)
+                    #print('cases_below_threshold:',cases_below_threshold)
+                
+                if high_dice:
+                    #print('Dice above th, skipping')
                     continue
-            if i<len(files_good) and not skip_good:
+            if i<len(files_good):
                 clean,good_file=files_good[i]
-                print('Case below:',good_file)
-                answer_good=ErrorDetectionLMDeployZeroShot(clean=clean, y=good_file, 
-                            base_url=base_url, size=size,
-                            text_region=text_region, 
-                            organ_descriptions=organ_descriptions,
-                            instructions=instructions,
-                            text_summarize=text_summarize, organ=organ,
-                            save_memory=save_memory, location_window=location_window,
-                            solid_overlay=solid_overlay)
-                
-                answers.append(answer_good)
-                labels.append(1.0)
-                outputs[good_file]=answer_good
+                if ((csv_file is not None) and (not restart)):
+                    if check_case_exists(csv_file, good_file):
+                        print('Already exists, skipping case ',good_file)
+                        skip_good=True
+                if not skip_good:
+                    print('Case below:',good_file)
+                    answer_good=ErrorDetectionLMDeployZeroShot(clean=clean, y=good_file, 
+                                base_url=base_url, size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                instructions=instructions,
+                                text_summarize=text_summarize, organ=organ,
+                                save_memory=save_memory, location_window=location_window,
+                                solid_overlay=solid_overlay)
+                    
+                    answers.append(answer_good)
+                    labels.append(1.0)
+                    outputs[good_file]=answer_good
 
-                print('Answer:',answer_good,'Label:',1.0,'Correct:',answer_good==1.0)
+                    print('Answer:',answer_good,'Label:',1.0,'Correct:',answer_good==1.0)
+                    if csv_file is not None:
+                        row = [good_file, answer_good, 1.0, answer_good==1.0, organ]
+                        # Append the row to the CSV file
+                        with open(csv_file, mode='a', newline='') as file:
+                            writer = csv.writer(file)
+                            writer.writerow(row)
 
-                del answer_good
+                    del answer_good
             
-            if i<len(files_bad) and not skip_bad:
+            if i<len(files_bad):
                 clean,bad_file=files_bad[i]
-                print('Case below:',bad_file)
-                answer_bad=ErrorDetectionLMDeployZeroShot(clean=clean, y=bad_file, 
-                            base_url=base_url, size=size,
-                            text_region=text_region, 
-                            organ_descriptions=organ_descriptions,
-                            instructions=instructions,
-                            text_summarize=text_summarize, organ=organ,
-                            save_memory=save_memory, location_window=location_window,
-                            solid_overlay=solid_overlay)
-                
-                answers.append(answer_bad)
-                labels.append(0.0)
-                outputs[bad_file]=answer_bad
+                if ((csv_file is not None) and (not restart)):
+                    if check_case_exists(csv_file, bad_file):
+                        print('Already exists, skipping case ',good_file)
+                        skip_bad=True
+                if not skip_bad:
+                    print('Case below:',bad_file)
+                    answer_bad=ErrorDetectionLMDeployZeroShot(clean=clean, y=bad_file, 
+                                base_url=base_url, size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                instructions=instructions,
+                                text_summarize=text_summarize, organ=organ,
+                                save_memory=save_memory, location_window=location_window,
+                                solid_overlay=solid_overlay)
+                    
+                    answers.append(answer_bad)
+                    labels.append(0.0)
+                    outputs[bad_file]=answer_bad
 
-                print('Answer:',answer_bad,'Label:',0.0,'Correct:',answer_bad==0.0)
+                    print('Answer:',answer_bad,'Label:',0.0,'Correct:',answer_bad==0.0)
+                    if csv_file is not None:
+                        row = [bad_file, answer_bad, 0.0, answer_bad==0.0, organ]
+                        # Append the row to the CSV file
+                        with open(csv_file, mode='a', newline='') as file:
+                            writer = csv.writer(file)
+                            writer.writerow(row)
 
-                # Clean up
-                del answer_bad
+                    # Clean up
+                    del answer_bad
             torch.cuda.empty_cache()
             gc.collect()
 
@@ -1906,9 +1987,10 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                                     anno_window='bone',best=2,
                                     file_list=None,
                                     file_structure='dual',
-                                    dice_threshold=0.75,dice_check=False,
+                                    dice_threshold=0.5,dice_threshold_max=0.9,dice_check=False,
                                     good_examples_path=None,bad_examples_path=None,
-                                    limit=None,skip_good=False,skip_bad=False):
+                                    limit=None,skip_good=False,skip_bad=False,
+                                    csv_file=None,restart=False,dice_list=None,):
         
         if solid_overlay=='auto':
             if organ in ['aorta','postcava']:
@@ -1916,10 +1998,39 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
             else:
                 solid_overlay=False
 
+        if csv_file is not None:
+            column_names = ['case', 'answer', 'label', 'correct', 'organ']
+            if os.path.exists(csv_file) and restart:
+                os.remove(csv_file)
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(column_names)
+            elif not os.path.exists(csv_file):
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(column_names)
+
+        if dice_list is not None:
+            import pandas as pd
+            print('Loading dice list:',dice_list)
+            df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
+
+            #change dice threshold according to mean and std of dice in list
+            a=df['dice'].mean()-df['dice'].std()
+            #order dice in ascending order and get the 100th value
+            b=df['dice'].sort_values().iloc[100]
+            dice_threshold=max(dice_threshold,min(a,b))
+            dice_threshold=min(dice_threshold,dice_threshold_max)
+            print('Dice threshold re-defined to:',dice_threshold)
+
+            filtered_df = df[df["dice"] < dice_threshold]
+            # Get the list of 'case' values where 'dice' is below the threshold
+            cases_below_threshold = filtered_df["case"].tolist()
+            print('Number of cases below threshold:',len(cases_below_threshold))
+
         answers=[]
         labels=[]
         outputs={}
-
         
         files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
         #print('File list:',file_list)
@@ -1937,29 +2048,42 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
         print('Good examples:',files_good_ex)
         print('Bad examples:',files_bad_ex)
         
-        if dice_check:
-            tmp_good=[]
-            tmp_bad=[]
-            for i in range(len(files_good)):
-                good_file=files_good[i][1]
-                bad_file=files_bad[i][1]
-                dice=check_dice(good_file,bad_file)
-                if dice<=dice_threshold:
-                    tmp_good.append(files_good[i])
-                    tmp_bad.append(files_bad[i])
-            print('Dice check completed. Number of original files:',len(files_good)+len(files_bad))
-            print('Number of files after dice check:',len(tmp_good)+len(tmp_bad))
-            files_good=tmp_good
-            files_bad=tmp_bad
+        #if dice_check:
+        #    tmp_good=[]
+        #    tmp_bad=[]
+        #    for i in range(len(files_good)):
+        #        good_file=files_good[i][1]
+        #        bad_file=files_bad[i][1]
+        #        dice=check_dice(good_file,bad_file)
+        #        if dice_list is not None:
+        #            raise ValueError('Implement dice check using dice list')
+        #        if dice<=dice_threshold:
+        #            tmp_good.append(files_good[i])
+        #            tmp_bad.append(files_bad[i])
+        #    print('Dice check completed. Number of original files:',len(files_good)+len(files_bad))
+        #    print('Number of files after dice check:',len(tmp_good)+len(tmp_bad))
+        #    files_good=tmp_good
+        #    files_bad=tmp_bad
 
         for i in list(range(max(len(files_good),len(files_bad)))):
+            skip_good=False
+            skip_bad=False
             if dice_check:
-                good_file=files_good[i][1]
-                bad_file=files_bad[i][1]
-                dice=check_dice(good_file,bad_file)
-                print('Dice:',dice)
-                if dice>dice_threshold:
-                    print('Dice below th, skipping:',dice)
+                if dice_list is None:
+                    good_file=files_good[i][1]
+                    bad_file=files_bad[i][1]
+                    dice=check_dice(good_file,bad_file)
+                    high_dice=dice>dice_threshold
+                    print('Dice:',dice)
+                else:
+                    clean=files_good[i][0]
+                    if '/' in clean:
+                        high_dice=clean[clean.rfind('/')+1:].replace('ct_window_skeleton','ct_window_bone') not in cases_below_threshold
+                    else:
+                        high_dice=clean.replace('ct_window_skeleton','ct_window_bone') not in cases_below_threshold
+                
+                if high_dice:
+                    #print('Dice above th, skipping')
                     continue
             good_examples = files_good_ex[:i] + files_good_ex[i+1:]
             print(len(good_examples))
@@ -1972,48 +2096,66 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
             #print('Good examples:',good_examples)
             #print('Bad examples:',bad_examples)
 
-            if i<len(files_good) and not skip_good:
+            if i<len(files_good):
                 clean,good_file=files_good[i]
+                if ((csv_file is not None) and (not restart)):
+                    if check_case_exists(csv_file, good_file):
+                        print('Already exists, skipping case ',good_file)
+                        skip_good=True
+                if not skip_good:
+                    print('Case below:',good_file)
+                    answer_good=ErrorDetectionLMDeployFewShot(clean=clean, y=good_file,
+                                good_examples=good_examples, bad_examples=bad_examples,
+                                base_url=base_url, size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_summarize=text_summarize, organ=organ,
+                                save_memory=save_memory, location_window=location_window,
+                                solid_overlay=solid_overlay)
+                    
+                    answers.append(answer_good)
+                    labels.append(1.0)
+                    outputs[good_file]=answer_good
 
-                print('Case below:',good_file)
-
-                answer_good=ErrorDetectionLMDeployFewShot(clean=clean, y=good_file,
-                            good_examples=good_examples, bad_examples=bad_examples,
-                            base_url=base_url, size=size,
-                            text_region=text_region, 
-                            organ_descriptions=organ_descriptions,
-                            text_summarize=text_summarize, organ=organ,
-                            save_memory=save_memory, location_window=location_window,
-                            solid_overlay=solid_overlay)
-                
-                answers.append(answer_good)
-                labels.append(1.0)
-                outputs[good_file]=answer_good
-
-                print('Answer:',answer_good,'Label:',1.0,'Correct:',answer_good==1.0)
-
-                del answer_good
+                    print('Answer:',answer_good,'Label:',1.0,'Correct:',answer_good==1.0)
+                    if csv_file is not None:
+                        row = [good_file, answer_good, 1.0, answer_good==1.0, organ]
+                        # Append the row to the CSV file
+                        with open(csv_file, mode='a', newline='') as file:
+                            writer = csv.writer(file)
+                            writer.writerow(row)
+                    del answer_good
             
-            if i<len(files_bad) and not skip_bad:
+            if i<len(files_bad):
                 clean,bad_file=files_bad[i]
-                print('Case below:',bad_file)
-                answer_bad=ErrorDetectionLMDeployFewShot(clean=clean, y=bad_file, 
-                            good_examples=good_examples, bad_examples=bad_examples,
-                            base_url=base_url, size=size,
-                            text_region=text_region, 
-                            organ_descriptions=organ_descriptions,
-                            text_summarize=text_summarize, organ=organ,
-                            save_memory=save_memory, location_window=location_window,
-                            solid_overlay=solid_overlay)
-                
-                answers.append(answer_bad)
-                labels.append(0.0)
-                outputs[bad_file]=answer_bad
+                if ((csv_file is not None) and (not restart)):
+                    if check_case_exists(csv_file, bad_file):
+                        print('Already exists, skipping case ',good_file)
+                        skip_bad=True
+                if not skip_bad:
+                    print('Case below:',bad_file)
+                    answer_bad=ErrorDetectionLMDeployFewShot(clean=clean, y=bad_file, 
+                                good_examples=good_examples, bad_examples=bad_examples,
+                                base_url=base_url, size=size,
+                                text_region=text_region, 
+                                organ_descriptions=organ_descriptions,
+                                text_summarize=text_summarize, organ=organ,
+                                save_memory=save_memory, location_window=location_window,
+                                solid_overlay=solid_overlay)
+                    
+                    answers.append(answer_bad)
+                    labels.append(0.0)
+                    outputs[bad_file]=answer_bad
 
-                print('Answer:',answer_bad,'Label:',0.0,'Correct:',answer_bad==0.0)
-
-                # Clean up
-                del answer_bad
+                    print('Answer:',answer_bad,'Label:',0.0,'Correct:',answer_bad==0.0)
+                    if csv_file is not None:
+                        row = [bad_file, answer_bad, 0.0, answer_bad==0.0, organ]
+                        # Append the row to the CSV file
+                        with open(csv_file, mode='a', newline='') as file:
+                            writer = csv.writer(file)
+                            writer.writerow(row)
+                    # Clean up
+                    del answer_bad
             torch.cuda.empty_cache()
             gc.collect()
 
