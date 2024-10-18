@@ -8,15 +8,18 @@ We have tested the 2D Large Vision Lanaguage Models (LVLMs) LLaVA and LLaVA-Med,
 - Download link: <a href="https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf">
     <img src="https://huggingface.co/front/assets/huggingface_logo.svg" alt="Hugging Face" width="20"/>
 </a>
+- Local path: `/mnt/sdh/qwu59/ckpts/m3d/M3D-LaMed-Phi-3-4B`
 
 #### (2) LLaVA-Med
 - Version: LLaVA-Med-v1.5
 - Download link: <a href="https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b">
     <img src="https://huggingface.co/front/assets/huggingface_logo.svg" alt="Hugging Face" width="20"/>
 </a> 
+- Local path: `/mnt/sdh/qwu59/ckpts/llava-med-v1.5-mistral-7b`
 
 #### (3) M3D
 - Version: M3D-Phi3-4B
 - Download link: <a href="https://huggingface.co/GoodBaiBai88/M3D-LaMed-Phi-3-4B">
     <img src="https://huggingface.co/front/assets/huggingface_logo.svg" alt="Hugging Face" width="20"/>
 </a>
+- Local path: `/mnt/sdh/qwu59/ckpts/llava-med-v1.5-mistral-7b`
