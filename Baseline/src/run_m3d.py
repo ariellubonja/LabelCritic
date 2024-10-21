@@ -5,14 +5,13 @@
 
 #############################################################################
 import argparse
-from ast import arg
 import numpy as np
 import json, csv
 from tqdm import tqdm
 import torch, warnings, os
 import nibabel as nib
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import AnnotationVLM.src.custom_tf as ctf
+import custom_tf as ctf
 from importlib import reload
 reload(ctf)
 
@@ -25,7 +24,7 @@ dtype = torch.bfloat16 # or bfloat16, float16, float32
 model_path = '/mnt/sdh/qwu59/ckpts/m3d/M3D-LaMed-Phi-3-4B'
 proj_out_num = 256
 
-tasks = {
+tasks = [
     # task1, old bad 1
     {
         "file": "../tasks/bad_labels_AbdomenAtlasBeta.json",
@@ -85,14 +84,25 @@ tasks = {
         "mask_path": "/mnt/T8/AbdomenAtlasPre",
         "label2": "Uncertain",
     },
-}
+]
 
 def load_model(model_path, device, dtype):
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        torch_dtype=dtype,
-        device_map='auto',
-        trust_remote_code=True)
+    try:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=dtype,
+            device_map={'': 'cuda'},
+            trust_remote_code=True
+        )
+        print("Load all the model to GPU.")
+    except:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=dtype,
+            device_map="auto",
+            trust_remote_code=True
+        )
+        print("Offload part of the model to CPU.")
     tokenizer = AutoTokenizer.from_pretrained(
         model_path,
         model_max_length=512,
@@ -100,7 +110,7 @@ def load_model(model_path, device, dtype):
         use_fast=False,
         trust_remote_code=True
     )
-    model = model.to(device=device)
+    # model = model.to(device=device)
     return model, tokenizer
 
 def inference(model, tokenizer, question, ct_pro, seg_enable=False, branch='ct'):
@@ -127,7 +137,7 @@ def inference(model, tokenizer, question, ct_pro, seg_enable=False, branch='ct')
             input_id,
             attention_mask=attention_mask,
             seg_enable=seg_enable,
-            max_new_tokens=256,
+            max_new_tokens=32,
             do_sample=True,
             top_p=0.9,
             temperature=1.0
@@ -190,7 +200,7 @@ if __name__ == "__main__":
         question2 = step_2_q(organ)
         for j, case in enumerate(tqdm(task_data[organ])):
             # check whether the case exists in the final csv
-            check_table = os.path.join(result_path, "final", f"{task['part']}.csv")
+            check_table = os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv")
             skip_sign = False
             if os.path.exists(check_table):
                 with open(check_table, mode='r') as file:
@@ -202,18 +212,18 @@ if __name__ == "__main__":
             if skip_sign:
                 continue
             try:
-                mask_path = None
+                mask_path = False
                 if "mask_path" in task:
-                    mask_path = task["mask_path"]
+                    mask_path = os.path.join(task["mask_path"], case)
                 case_path = os.path.join(task["path"], case)
-                # print("Case:", case, case_path)
+                # print("Path:", case_path, mask_path)
                 ct_pro = ctf.CTImageProcessor(case_path, ct_name="ct", mask_name=organ, mask_path=mask_path)
-            except:
+            except Exception as e:
                 if "path_" in task:
                     case_path = os.path.join(task["path_"], case)
                     ct_pro = ctf.CTImageProcessor(case_path, ct_name="ct", mask_name=organ, mask_path=mask_path)
                 else:
-                    print("Case not found:", case)
+                    print("Case not found:", case, "Error:", e)
                     pass
             # Now I change the new loader so when init requires the mask path optional
             # this case is used for those image & mask are in the different folders
@@ -239,5 +249,5 @@ if __name__ == "__main__":
                 "label step 2": task["label2"],
             }
             print(task_single)
-            append_dict_to_csv(task_raw, os.path.join(result_path, "raw", f"{task['part']}.csv"))
-            append_dict_to_csv(task_single, os.path.join(result_path, "final", f"{task['part']}.csv"))
+            append_dict_to_csv(task_raw, os.path.join(result_path, "raw", f"{task['part']}_{task['subpart']}.csv"))
+            append_dict_to_csv(task_single, os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv"))
