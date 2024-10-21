@@ -1,3 +1,9 @@
+# Author: Qilong Wu
+# Institute: JHU CCVL, NUS
+# Description: Use this to get json tasks(Atlas, JHH) planner.
+# Use case: python get_task.py
+
+#############################################################################
 import os, json
 from tqdm import tqdm
 

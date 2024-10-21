@@ -1,3 +1,9 @@
+# Author: Qilong Wu
+# Institute: JHU CCVL, NUS
+# Description: This is self-defined data loader for M3D model.
+# Use case: CUDA_VISIBLE_DEVICES=0 python run_m3d.py --task 4 --organs liver kidneys
+
+#############################################################################
 from sympy import N
 import torch, os
 import monai.transforms as mtf

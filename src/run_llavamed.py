@@ -1,3 +1,9 @@
+# Author: Qilong Wu
+# Institute: JHU CCVL, NUS
+# Description: Use this to run error detection on the baseline LLaVA-Med model.
+# Use case: CUDA_VISIBLE_DEVICES=0 python run_llavamed.py --task 4 --organs liver kidneys
+
+#############################################################################
 # from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 import argparse
 from platform import processor
