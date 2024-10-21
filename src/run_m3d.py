@@ -1,5 +1,8 @@
+import argparse
 from ast import arg
 import numpy as np
+import json, csv
+from tqdm import tqdm
 import torch, warnings, os
 import nibabel as nib
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -11,12 +14,28 @@ warnings.filterwarnings("ignore")
 os.environ['TRANSFORMERS_CACHE'] = './HFCache'
 os.environ['HF_HOME'] = './HFCache'
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-
 device = torch.device('cuda') # 'cpu', 'cuda'
 dtype = torch.bfloat16 # or bfloat16, float16, float32
-
 model_name_or_path = '/mnt/sdh/qwu59/ckpts/m3d/M3D-LaMed-Phi-3-4B'
 proj_out_num = 256
+
+task1 = {
+    "file": "../tasks/bad_labels_AbdomenAtlasBeta.json",
+    "part": "errors_beta_full",
+    "path": "/mnt/sdc/pedro/JHH/nnUnetResults",
+    "path_": "/mnt/sdc/pedro/ErrorDetection/cropped_nnunet_results_250Epch_liver",
+    "label2": "Incorrect",
+}
+
+task1_path = "/mnt/sdh/pedro/AbdomenAtlasBeta/"
+task1 = "../tasks/bad_labels_AbdomenAtlasBeta.json"
+
+task2_path = "/mnt/sdc/pedro/JHH/nnUnetResults"
+task2_path_ = "/mnt/sdc/pedro/ErrorDetection/cropped_nnunet_results_250Epch_liver"
+task2 = "../tasks/bad_labels_nnUnet.json"
+
+task3_path = "/mnt/sdh/pedro/AbdomenAtlasBeta/"
+task3 = "../tasks/good_labels_AbdomenAtlasBeta.json"
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
@@ -71,9 +90,6 @@ def inference(question, ct_pro, seg_enable=False, branch='ct'):
     except:
         return "The image is damaged or the model is not able to generate the answer."
 
-import json, csv
-from tqdm import tqdm
-
 def append_dict_to_csv(dict_data, csv_path):
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, mode='a', newline='') as file:
@@ -92,19 +108,8 @@ def step_2_q(organ):
         "What do you think of this? Is it correct? Only answer yes or no."
     )
     
-result_path = "results/m3d/"
+result_path = "../results/m3d/"
 
-task1_path = "/mnt/sdh/pedro/AbdomenAtlasBeta/"
-task1 = "bad_labels_AbdomenAtlasBeta.json"
-
-task2_path = "/mnt/sdc/pedro/JHH/nnUnetResults"
-task2_path_ = "/mnt/sdc/pedro/ErrorDetection/cropped_nnunet_results_250Epch_liver"
-task2 = "bad_labels_nnUnet.json"
-
-task3_path = "/mnt/sdh/pedro/AbdomenAtlasBeta/"
-task3 = "good_labels_AbdomenAtlasBeta.json"
-
-import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--task", type=int, default=2)
 parser.add_argument("--organs", nargs='+', default=["liver", "kidney", "spleen"])
@@ -118,7 +123,7 @@ parser.add_argument("--organs", nargs='+', default=["liver", "kidney", "spleen"]
 args = parser.parse_args()
 
 if args.task == 2:
-    # load the json file for task 1
+    # load the json file for task 2
     with open(task2) as f:
         task2_data = json.load(f)
 
