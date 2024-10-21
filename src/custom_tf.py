@@ -6,7 +6,7 @@ import numpy as np
 from monai.data.meta_tensor import MetaTensor
 
 class CTImageProcessor:
-    def __init__(self, case_path, ct_name='ct', mask_name='liver'):
+    def __init__(self, case_path, ct_name='ct', mask_name='liver', mask_path=None):
         """
         Initialize the CTImageProcessor class, loading the CT image and retaining the affine and header information.
         
@@ -16,6 +16,7 @@ class CTImageProcessor:
         self.case_path = case_path
         self.ct_name = ct_name
         self.mask_name = mask_name
+        
         # Load the CT image
         try:
             print(case_path)
@@ -23,6 +24,13 @@ class CTImageProcessor:
         except:
             case = case_path.split("/")[-1]
             self.ct_nifti = nib.load(os.path.join("/mnt/T9/AbdomenAtlasPro", case, ct_name+".nii.gz"))
+        self.affine = self.ct_nifti.affine
+        self.header = self.ct_nifti.header
+        
+        # Load the mask
+        # If mask_path is not provided, assume the mask is in the same directory as the CT image
+        if not mask_path: # 
+            case_path = mask_path
         if mask_name == "kidneys":
             # load kidney_left and kidney_right masks and merge them into one mask kidneys
             self.mask1 = nib.load(os.path.join(case_path, "segmentations", "kidney_left.nii.gz"))
@@ -35,9 +43,8 @@ class CTImageProcessor:
             del self.mask1, self.mask2
         else:
             self.mask = nib.load(os.path.join(case_path, "segmentations", mask_name+".nii.gz")) 
-        self.affine = self.ct_nifti.affine
-        self.header = self.ct_nifti.header
  
+        # Convert the CT image and mask to MetaTensor objects
         self.ct_image = MetaTensor(
             self.ct_nifti.get_fdata().transpose(2, 0, 1)[np.newaxis, ...], 
             affine=self.affine,
