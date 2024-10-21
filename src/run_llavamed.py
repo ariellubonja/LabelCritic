@@ -1,4 +1,5 @@
 # from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
+import argparse
 from platform import processor
 import torch, os, csv, json
 from tqdm import tqdm
@@ -6,25 +7,65 @@ import nibabel as nib
 import numpy as np
 from PIL import Image
 
-task1 = {
-    "file": "bad_labels_AbdomenAtlasBeta.json",
-    "part": "errors_beta_full",
-    "path": "/mnt/sdc/pedro/ErrorDetection/errors_beta_full",
-    "label2": "Incorrect",
-}
-task2 = {
-    "file": "bad_labels_nnUnet.json",
-    "part": "errors_nnUnet_full",
-    "path": "/mnt/sdc/pedro/ErrorDetection/errors_nnUnet_full",
-    "label2": "Incorrect",
-}
-task3 = {
-    "file": "good_labels_AbdomenAtlasBeta.json",
-    "part": "good_labels_beta_full",
-    "path": "/mnt/sdc/pedro/ErrorDetection/good_labels_beta_full",
-    "label2": "Correct",
-}
-    
+tasks = [
+    # task1, old bad 1
+    {
+        "file": "../tasks/bad_labels_AbdomenAtlasBeta.json",
+        "part": "errors_beta_full",
+        "subpart": "y1",
+        "path": "/mnt/sdc/pedro/ErrorDetection/errors_beta_full",
+        "label2": "Incorrect",
+    },
+    # task2, old bad 2
+    {
+        "file": "../tasks/bad_labels_nnUnet.json",
+        "part": "errors_nnUnet_full",
+        "subpart": "y1",
+        "path": "/mnt/sdc/pedro/ErrorDetection/errors_nnUnet_full",
+        "label2": "Incorrect",
+    },
+    # task3, old good
+    {
+        "file": "../tasks/good_labels_AbdomenAtlasBeta.json",
+        "part": "good_labels_beta_full",
+        "subpart": "y1",
+        "path": "/mnt/sdc/pedro/ErrorDetection/good_labels_beta_full",
+        "label2": "Correct",
+    },
+    # task4, new atlas y1, label2 good or bad?
+    {
+        "file": "../tasks/AbdomenAtlas.json",
+        "part": "AbdomenAtlas",
+        "subpart": "y1",
+        "path": "/mnt/ccvl15/qwu59/project/error_detect/AnnotationVLM/data/projections_AtlasBench_beta_pro",
+        "label2": "Uncertain",
+    },
+    # task5, new atlas y2, label2 good or bad?
+    {
+        "file": "../tasks/AbdomenAtlas.json",
+        "part": "AbdomenAtlas",
+        "subpart": "y2",
+        "path": "/mnt/ccvl15/qwu59/project/error_detect/AnnotationVLM/data/projections_AtlasBench_beta_pro",
+        "label2": "Uncertain",
+    },
+    # task6, new jhh y1, label2 good or bad?
+    {
+        "file": "../tasks/JHH.json",
+        "part": "JHH",
+        "subpart": "y1",
+        "path": "/mnt/sdh/pedro/projections_JHHBench_nnUnet_JHH",
+        "label2": "Uncertain",
+    },
+    # task7, new jhh y2, label2 good or bad?
+    {
+        "file": "../tasks/JHH.jsonn",
+        "part": "JHH",
+        "subpart": "y2",
+        "path": "/mnt/sdh/pedro/projections_JHHBench_nnUnet_JHH",
+        "label2": "Uncertain",
+    }
+]
+
 def step_1_q(organ):
     return (
         "The image I am sending is frontal projections of one CT scan, focusing on showing the bone. "
@@ -39,6 +80,7 @@ def step_2_q(organ):
         "The left side of the image represents the right side of the human body. "
         f"Do you think the red overlay in the image is {organ}? Answer yes or no."
     )
+
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria, process_images
@@ -112,25 +154,6 @@ def check_step1_label(case, organ, path="/mnt/T9/AbdomenAtlasPro"):
     # check whether is all zero
     return "no" if np.all(temp == 0) else "present"
 
-task1 = {
-    "file": "bad_labels_AbdomenAtlasBeta.json",
-    "part": "errors_beta_full",
-    "path": "/mnt/sdc/pedro/ErrorDetection/errors_beta_full",
-    "label2": "Incorrect",
-}
-task2 = {
-    "file": "bad_labels_nnUnet.json",
-    "part": "errors_nnUnet_full",
-    "path": "/mnt/sdc/pedro/ErrorDetection/errors_nnUnet_full",
-    "label2": "Incorrect",
-}
-task3 = {
-    "file": "good_labels_AbdomenAtlasBeta.json",
-    "part": "good_labels_beta_full",
-    "path": "/mnt/sdc/pedro/ErrorDetection/good_labels_beta_full",
-    "label2": "Correct",
-}
-
 def append_dict_to_csv(dict_data, csv_path):
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, mode='a', newline='', encoding='utf-8') as file:
@@ -148,17 +171,17 @@ def get_one_result(task, case, organ):
     except:
         image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1_{organ}.png")
         answer1 = inference(image1_path, question1, device, processor)
-    image2_path = os.path.join(task["path"], organ, f"{case}_overlay_window_bone_axis_1_{organ}_y1.png")
+    image2_path = os.path.join(task["path"], organ, f"{case}_overlay_window_bone_axis_1_{organ}_{task['subpart']}.png")
     answer2 = inference(image2_path, question2, device, processor)
     judge1 = check_step1(answer1)
     judge2 = check_step2(answer2)
-    label1 = check_step1_label("BDMAP_00000055", organ)
+    label1 = check_step1_label(case, organ) # "BDMAP_00000055"
     label2 = task["label2"]
     
     task_raw = {
         "sample": case,
         "organ": organ,
-        "part": task["part"],
+        "part": task["part"] + "_" + task["subpart"],
         "question1": question1,
         "answer1": answer1,
         "question2": question2,
@@ -167,7 +190,7 @@ def get_one_result(task, case, organ):
     task_single = {
         "sample": case,
         "organ": organ,
-        "part": task["part"],
+        "part": task["part"] + "_" + task["subpart"],
         "result step 1": judge1,
         "label step 1": label1,
         "result step 2": judge2,
@@ -176,15 +199,19 @@ def get_one_result(task, case, organ):
     return task_raw, task_single
 
 if __name__ == "__main__":
-    import argparse
+    # Organs: ['postcava', 'kidney_right', 'liver', 'pancreas', 'stomach', 'kidneys', 'kidney_left', 'spleen', 'gall_bladder', 'aorta']
+    # ***** Example: *****
+    # CUDA_VISIBLE_DEVICES=0 python run_llavamed.py --task 4 --organs liver kidneys
+    
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device", type=str, default="cuda:1")
+    parser.add_argument("--device", type=str, default="cuda") # cuda:1
     parser.add_argument("--task", type=int, default=1)
+    parser.add_argument("--organs", nargs='+', default=["liver", "kidney", "spleen"])
     args = parser.parse_args()
     
     device = args.device
     model_path = '/mnt/sdh/qwu59/ckpts/llava-med-v1.5-mistral-7b'
-    result_path = "results/llava-med/"
+    result_path = "../results/llava-med/"
     
     # processor = LlavaNextProcessor.from_pretrained(model_path)
     # model = LlavaNextForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True)
@@ -197,12 +224,10 @@ if __name__ == "__main__":
     )
     # model = model.to(device)
     
-    if args.task == 1:
-        task = task1
-    elif args.task == 2:
-        task = task2
-    elif args.task == 3:
-        task = task3
+    for i, j in enumerate(tasks):
+        if args.task == i + 1:
+            task = j
+            break
         
     with open(task["file"]) as f:
         task_data = json.load(f)

@@ -25,6 +25,7 @@ def get_2d_cases(proj_path, save_path):
         cases[organ] = sorted(cases[organ])
     if weirdo != {}:
         print("Weirdo cases exists! As follow: ", weirdo)
+    # print(cases.keys())
     with open(save_path, "w") as f:
         json.dump(cases, f, indent=4)
 
@@ -32,8 +33,9 @@ def get_2d_cases(proj_path, save_path):
 """
     2D: 
         Figures: /mnt/sdg/pedro/data/projections_AtlasBench_beta_pro
-        Zip: /mnt/sdh/pedro/AbdomenAtlasBeta
-        **Note: ccvl19, for both y1 and y2
+        Zip: /ccvl/net/ccvl15/pedro/projections_AtlasBench_beta_pro.tar.gz
+        Copy: /mnt/ccvl15/qwu59/project/error_detect/AnnotationVLM/data/projections_AtlasBench_beta_pro
+        **Note: Copy in ccvl23, Figures in ccvl19, Zip in ccvl15
     3D: 
         (1) y1
         Image & Mask: /mnt/sdh/pedro/AbdomenAtlasBeta
@@ -41,7 +43,7 @@ def get_2d_cases(proj_path, save_path):
         Image & Mask: /mnt/ccvl15/zzhou82/data/AbdomenAtlas/image_mask/AbdomenAtlas1.0Mini/AbdomenAtlas1.0Mini
         **Note: ccvl23, for both y1 and y2
 """
-atlas_2d = "/mnt/sdg/pedro/data/projections_AtlasBench_beta_pro"
+atlas_2d = "/mnt/ccvl15/qwu59/project/error_detect/AnnotationVLM/data/projections_AtlasBench_beta_pro"
 atlas_2d_save = "../tasks/AbdomenAtlas.json"
 get_2d_cases(atlas_2d, atlas_2d_save)
 
