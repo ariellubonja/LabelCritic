@@ -43,7 +43,7 @@ tasks = [
         "file": "../tasks/AbdomenAtlas.json",
         "part": "AbdomenAtlas",
         "subpart": "y1",
-        "path": "/mnt/ccvl15/qwu59/project/error_detect/AnnotationVLM/data/projections_AtlasBench_beta_pro",
+        "path": "/mnt/ccvl15/qwu59/project/Error_Detection/AnnotationVLM/data/projections_AtlasBench_beta_pro",
         "label2": "Uncertain",
     },
     # task5, new atlas y2, label2 good or bad?
@@ -51,7 +51,7 @@ tasks = [
         "file": "../tasks/AbdomenAtlas.json",
         "part": "AbdomenAtlas",
         "subpart": "y2",
-        "path": "/mnt/ccvl15/qwu59/project/error_detect/AnnotationVLM/data/projections_AtlasBench_beta_pro",
+        "path": "/mnt/ccvl15/qwu59/project/Error_Detection/AnnotationVLM/data/projections_AtlasBench_beta_pro",
         "label2": "Uncertain",
     },
     # task6, new jhh y1, label2 good or bad?
@@ -149,7 +149,7 @@ def check_step2(answer):
     except:
         return "Incorrect"
     
-def check_step1_label(case, organ, path="/mnt/T9/AbdomenAtlasPro"):
+def check_step1_label(case, organ, path="/mnt/T8/AbdomenAtlasPre"):
     if organ == "kidneys":
         temp1 = nib.load(os.path.join(path, case, "segmentations", "kidney_left.nii.gz")).get_fdata()
         temp2 = nib.load(os.path.join(path, case, "segmentations", "kidney_right.nii.gz")).get_fdata()
@@ -171,12 +171,12 @@ def append_dict_to_csv(dict_data, csv_path):
 def get_one_result(task, case, organ):
     question1 = step_1_q(organ)
     question2 = step_2_q(organ)
-    try:
-        image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1.png")
-        answer1 = inference(image1_path, question1, device, processor)
-    except:
-        image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1_{organ}.png")
-        answer1 = inference(image1_path, question1, device, processor)
+    # try:
+    image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1.png")
+    answer1 = inference(image1_path, question1, device, processor)
+    # except:
+    #     image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1_{organ}.png")
+    #     answer1 = inference(image1_path, question1, device, processor)
     image2_path = os.path.join(task["path"], organ, f"{case}_overlay_window_bone_axis_1_{organ}_{task['subpart']}.png")
     answer2 = inference(image2_path, question2, device, processor)
     judge1 = check_step1(answer1)
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     for organ in tqdm(task_data):
         for case in tqdm(task_data[organ]):
             # check whether the case exists in the final csv
-            check_table = os.path.join(result_path, "final", f"{task['part']}.csv")
+            check_table = os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv")
             skip_sign = False
             if os.path.exists(check_table):
                 with open(check_table, mode='r') as file:
@@ -256,6 +256,6 @@ if __name__ == "__main__":
             # inference new case
             task_raw, task_single = get_one_result(task, case, organ)
             print(task_single)
-            append_dict_to_csv(task_raw, os.path.join(result_path, "raw", f"{task['part']}.csv"))
-            append_dict_to_csv(task_single, os.path.join(result_path, "final", f"{task['part']}.csv"))
+            append_dict_to_csv(task_raw, os.path.join(result_path, "raw", f"{task['part']}_{task['subpart']}.csv"))
+            append_dict_to_csv(task_single, os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv"))
     

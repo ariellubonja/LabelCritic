@@ -35,7 +35,7 @@ class CTImageProcessor:
         
         # Load the mask
         # If mask_path is not provided, assume the mask is in the same directory as the CT image
-        if not mask_path: # 
+        if mask_path:
             case_path = mask_path
         if mask_name == "kidneys":
             # load kidney_left and kidney_right masks and merge them into one mask kidneys
