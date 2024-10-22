@@ -1,12 +1,12 @@
 # Author: Qilong Wu
 # Institute: JHU CCVL, NUS
-# Description: This is self-defined data loader for M3D model.
+# Description: This is self-defined data loader for M3D model 4x faster version.
 
 #############################################################################
-import torch, os
-import monai.transforms as mtf
+import os, torch
 import nibabel as nib
 import numpy as np
+import monai.transforms as mtf
 from monai.data.meta_tensor import MetaTensor
 
 class CTImageProcessor:
@@ -20,88 +20,90 @@ class CTImageProcessor:
         self.case_path = case_path
         self.ct_name = ct_name
         self.mask_name = mask_name
+
+        # Use MONAI's LoadImage transform for optimized image loading
+        loader = mtf.LoadImage(image_only=False, dtype=np.float32)
         
         # Load the CT image
         try:
-            print(case_path)
-            self.ct_nifti = nib.load(os.path.join(case_path, ct_name+".nii.gz"))
-        except:
-            case = case_path.split("/")[-1]
-            self.ct_nifti = nib.load(os.path.join("/mnt/T9/AbdomenAtlasPro", case, ct_name+".nii.gz"))
-        self.affine = self.ct_nifti.affine
-        self.header = self.ct_nifti.header
-        
+            ct_path = os.path.join(case_path, f"{ct_name}.nii.gz")
+            print(f"Attempting to load CT image from: {ct_path}")
+            self.ct_image_data, meta_data = loader(ct_path)
+            self.affine = meta_data['affine']
+        except FileNotFoundError:
+            # 尝试备用路径
+            case = os.path.basename(case_path)
+            ct_path = os.path.join("/mnt/T9/AbdomenAtlasPro", case, f"{ct_name}.nii.gz")
+            print(f"First path failed, trying alternative path: {ct_path}")
+            self.ct_image_data, meta_data = loader(ct_path)
+            self.affine = meta_data['affine']
+        except Exception as e:
+            print(f"Failed to load CT image from {ct_path}: {e}")
+            raise
+
         # Load the mask
-        # If mask_path is not provided, assume the mask is in the same directory as the CT image
         if mask_path:
             case_path = mask_path
         if mask_name == "kidneys":
-            # load kidney_left and kidney_right masks and merge them into one mask kidneys
-            self.mask1 = nib.load(os.path.join(case_path, "segmentations", "kidney_left.nii.gz"))
-            self.mask2 = nib.load(os.path.join(case_path, "segmentations", "kidney_right.nii.gz"))
-            self.mask = nib.Nifti1Image(
-                np.maximum(self.mask1.get_fdata(), self.mask2.get_fdata()), 
-                affine=self.mask1.affine, 
-                header=self.mask1.header
-            )
-            del self.mask1, self.mask2
+            mask1_path = os.path.join(case_path, "segmentations", "kidney_left.nii.gz")
+            mask2_path = os.path.join(case_path, "segmentations", "kidney_right.nii.gz")
+            mask1_data, _ = loader(mask1_path)
+            mask2_data, _ = loader(mask2_path)
+            if isinstance(mask1_data, list):
+                mask1_data = mask1_data[0]
+            if isinstance(mask2_data, list):
+                mask2_data = mask2_data[0]
+            mask1_data = np.array(mask1_data)
+            mask2_data = np.array(mask2_data)
+            self.mask_data = np.maximum(mask1_data, mask2_data)
+            del mask1_data, mask2_data
         else:
-            self.mask = nib.load(os.path.join(case_path, "segmentations", mask_name+".nii.gz")) 
- 
-        # Convert the CT image and mask to MetaTensor objects
-        self.ct_image = MetaTensor(
-            self.ct_nifti.get_fdata().transpose(2, 0, 1)[np.newaxis, ...], 
-            affine=self.affine,
-            header=self.header
-        )
-        self.ct_mask = MetaTensor(
-            self.mask.get_fdata().transpose(2, 0, 1)[np.newaxis, ...], 
-            affine=self.affine,
-            header=self.header
-        )
-        
+            mask_path = os.path.join(case_path, "segmentations", f"{mask_name}.nii.gz")
+            self.mask_data = loader(mask_path)
+
+        # Add channel dimension
+        self.ct_image_data = np.expand_dims(self.ct_image_data, axis=0)
+        self.mask_data = np.expand_dims(self.mask_data, axis=0)
+
+        # Create MetaTensor objects
+        self.ct_image = MetaTensor(self.ct_image_data, affine=self.affine)
+        self.ct_mask = MetaTensor(self.mask_data, affine=self.affine)
+
         self.transformed = None
+        self.transforms = None
         self.apply_transforms()
-        
+
         self.ctmin_image = None
         self.get_ctmin()
         self.ctmin_transformed = None
         ctmin_pair = {"image": self.ctmin_image, "seg": self.ct_mask}
         self.ctmin_transformed = self.transforms(ctmin_pair)
-        
-        # del self.ct_nifti, self.mask  # Clear up memory
-        self.mask_present = False if np.all(self.mask.get_fdata() == 0) else True
+
+        self.mask_present = not np.all(self.mask_data == 0)
 
     def get_ctmin(self):
-        ctmin_np = self.ct_nifti.get_fdata().copy()
-        ctmin_np[self.mask.get_fdata()==1] = ctmin_np.min()
-        self.ctmin_image = MetaTensor(
-            ctmin_np.transpose(2, 0, 1)[np.newaxis, ...], 
-            affine=self.affine,
-            header=self.header
-        )
-        del ctmin_np
-        
+        # Set the values within the mask to the minimum value of the CT image
+        ct_data = self.ct_image_data.copy()
+        ct_data[self.mask_data == 1] = ct_data.min()
+        self.ctmin_image = MetaTensor(ct_data, affine=self.affine)
+        del ct_data
+
     def apply_transforms(self):
         """
         Apply specified transformations to the CT image and return the transformed image and transform object.
-        
-        Returns:
-        - transformed_image: Transformed image
-        - transforms: Transformation object for inverse transformation
         """
         # Define the transformations
         self.transforms = mtf.Compose([
             mtf.ScaleIntensityRangePercentilesd(
-                keys=["image"], lower=0.5, upper=99.5, b_max=1.0, b_min=0.0, clip=True
+                keys=["image"], lower=0.5, upper=99.5, b_min=0.0, b_max=1.0, clip=True
             ),
             mtf.CropForegroundd(
-                keys=["image", "seg"], 
+                keys=["image", "seg"],
                 source_key="image"
             ),
             mtf.Resized(
-                keys=["image", "seg"], 
-                spatial_size=[32, 256, 256], 
+                keys=["image", "seg"],
+                spatial_size=[32, 256, 256],
                 mode=['trilinear', 'nearest']
             ),
         ])
@@ -109,7 +111,7 @@ class CTImageProcessor:
         # Apply transformations
         pair = {"image": self.ct_image, "seg": self.ct_mask}
         self.transformed = self.transforms(pair)
-
+        
     def invert_mask(self, predicted_mask, output_path, get_noninver=False):
         """
         Apply inverse transformation to the predicted mask and save it as a NIfTI file.

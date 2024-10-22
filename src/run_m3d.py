@@ -11,7 +11,8 @@ from tqdm import tqdm
 import torch, warnings, os
 import nibabel as nib
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import custom_tf as ctf
+# import custom_tf as ctf
+import opti_tf as ctf
 from importlib import reload
 reload(ctf)
 
@@ -86,8 +87,8 @@ tasks = [
     },
 ]
 
-def load_model(model_path, device, dtype):
-    try:
+def load_model(model_path, choose, dtype):
+    if choose == "cuda":
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
@@ -95,7 +96,7 @@ def load_model(model_path, device, dtype):
             trust_remote_code=True
         )
         print("Load all the model to GPU.")
-    except:
+    elif choose == "auto":
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
@@ -180,8 +181,9 @@ if __name__ == "__main__":
     parser.add_argument("--organs", nargs='+', default=["liver", "kidney", "spleen"])
     args = parser.parse_args()
     
+    choose = "auto"
     result_path = "../results/m3d/"
-    model, tokenizer = load_model(model_path, device, dtype)
+    model, tokenizer = load_model(model_path, choose, dtype)
 
     for i, j in enumerate(tasks):
         if args.task == i + 1:
