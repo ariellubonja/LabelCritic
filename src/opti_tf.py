@@ -31,7 +31,6 @@ class CTImageProcessor:
             self.ct_image_data, meta_data = loader(ct_path)
             self.affine = meta_data['affine']
         except FileNotFoundError:
-            # 尝试备用路径
             case = os.path.basename(case_path)
             ct_path = os.path.join("/mnt/T9/AbdomenAtlasPro", case, f"{ct_name}.nii.gz")
             print(f"First path failed, trying alternative path: {ct_path}")
@@ -59,7 +58,11 @@ class CTImageProcessor:
             del mask1_data, mask2_data
         else:
             mask_path = os.path.join(case_path, "segmentations", f"{mask_name}.nii.gz")
-            self.mask_data = loader(mask_path)
+            mask_data, _ = loader(mask_path)
+            if isinstance(mask_data, list):
+                mask_data = mask_data[0]
+            self.mask_data = np.array(mask_data)
+            del mask_data
 
         # Add channel dimension
         self.ct_image_data = np.expand_dims(self.ct_image_data, axis=0)
