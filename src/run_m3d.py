@@ -179,11 +179,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", type=int, default=2)
     parser.add_argument("--organs", nargs='+', default=["liver", "kidney", "spleen"])
+    parser.add_argument("--choose", type=str, default="cuda") # "cuda" or "auto"
     args = parser.parse_args()
     
-    choose = "auto"
     result_path = "../results/m3d/"
-    model, tokenizer = load_model(model_path, choose, dtype)
+    model, tokenizer = load_model(model_path, args.choose, dtype)
 
     for i, j in enumerate(tasks):
         if args.task == i + 1:

@@ -27,13 +27,13 @@ class CTImageProcessor:
         # Load the CT image
         try:
             ct_path = os.path.join(case_path, f"{ct_name}.nii.gz")
-            print(f"Attempting to load CT image from: {ct_path}")
+            # print(f"Attempting to load CT image from: {ct_path}")
             self.ct_image_data, meta_data = loader(ct_path)
             self.affine = meta_data['affine']
         except FileNotFoundError:
             case = os.path.basename(case_path)
             ct_path = os.path.join("/mnt/T9/AbdomenAtlasPro", case, f"{ct_name}.nii.gz")
-            print(f"First path failed, trying alternative path: {ct_path}")
+            # print(f"First path failed, trying alternative path: {ct_path}")
             self.ct_image_data, meta_data = loader(ct_path)
             self.affine = meta_data['affine']
         except Exception as e:
