@@ -27,11 +27,11 @@ echo "DEVICE_ID: $DEVICE_ID, TASK_ID: $TASK_ID, ORGAN: $ORGAN"
 CUDA_VISIBLE_DEVICES=$DEVICE_ID python run_llava_slurm.py --task $TASK_ID --organ $ORGAN
 # bash -c "$COMMAND" >> $LOG 2>&1
 
-sbatch single.sh 0 4 kidneys & \
-sbatch single.sh 0 5 kidneys & \
-sbatch single.sh 0 4 stomach & \
-sbatch single.sh 0 5 stomach & \
-sbatch single.sh 0 6 stomach & \
-sbatch single.sh 0 7 stomach & \
-sbatch single.sh 0 6 aorta & \
-sbatch single.sh 0 7 aorta
+# sbatch single.sh 0 4 kidneys & \
+# sbatch single.sh 0 5 kidneys & \
+# sbatch single.sh 0 4 stomach & \
+# sbatch single.sh 0 5 stomach & \
+# sbatch single.sh 0 6 stomach & \
+# sbatch single.sh 0 7 stomach & \
+# sbatch single.sh 0 6 aorta & \
+# sbatch single.sh 0 7 aorta

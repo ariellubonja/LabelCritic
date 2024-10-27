@@ -220,8 +220,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     device = args.device
-    # model_path = '/mnt/sdh/qwu59/ckpts/llava-v1.6-mistral-7b-hf' # ccvl23
-    model_path = '/mnt/sdi/qwu59/llava-v1.6-mistral-7b-hf' # ccvl18
+    model_path = '/mnt/sdh/qwu59/ckpts/llava-v1.6-mistral-7b-hf' # ccvl23
+    # model_path = '/mnt/sdi/qwu59/llava-v1.6-mistral-7b-hf' # ccvl18
     result_path = "../results/llava/"
     
     processor = LlavaNextProcessor.from_pretrained(model_path)
@@ -245,7 +245,8 @@ if __name__ == "__main__":
             check_table = os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv")
             skip_sign = False
             if os.path.exists(check_table):
-                with open(check_table, mode='r') as file:
+                with open(check_table, mode='r', encoding="utf-8", errors="ignore") as file:
+                    reader = (line.replace("\x00", "") for line in file)  # 去除 NUL 字符
                     reader = csv.DictReader(file)
                     for row in reader:
                         if row["sample"] == case and row["organ"] == organ:
