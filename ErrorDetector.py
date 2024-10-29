@@ -1625,6 +1625,8 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
             # Get the list of 'case' values where 'dice' is below the threshold
             cases_below_threshold = filtered_df["case"].tolist()
             print('Number of cases below threshold:',len(cases_below_threshold))
+            print('Cases below threshold:',cases_below_threshold)
+
 
         answers=[]
         labels=[]
@@ -1632,6 +1634,12 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
 
         print('Getting files')
         files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
+        print('Number of good files:',len(files_good))
+        print('Number of bad files:',len(files_bad))    
+        #sort files
+        files_good.sort()
+        files_bad.sort()
+
         #print('Good files:',files_good)
         #print('Bad files:',files_bad)
         #print('Files:',files_good+files_bad)
@@ -1647,9 +1655,12 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                     bad_file=files_bad[i][1]
                     dice=check_dice(good_file,bad_file)
                     high_dice=dice>dice_threshold
-                    print('Dice:',dice)
+                    #print('Dice:',dice)
                 else:
                     clean=files_good[i][0]
+                    #print(clean[clean.rfind('/')+1:].replace('ct_window_skeleton','ct_window_bone'))
+                    #print(clean.replace('ct_window_skeleton','ct_window_bone'))
+                    #raise ValueError('Check dice')
 
                     if '/' in clean:
                         high_dice=clean[clean.rfind('/')+1:].replace('ct_window_skeleton','ct_window_bone') not in cases_below_threshold
@@ -1660,7 +1671,6 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                     #print('cases_below_threshold:',cases_below_threshold)
                 
                 if high_dice:
-                    #print('Dice above th, skipping')
                     continue
             if i<len(files_good):
                 clean,good_file=files_good[i]
@@ -1809,6 +1819,9 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
         
         files_good,files_bad=get_files(pth,file_list,anno_window,organ,location_window,best,file_structure=file_structure)
         #print('File list:',file_list)
+        #sort files
+        files_good.sort()
+        files_bad.sort()
 
         if good_examples_path is None:
             files_good_ex=files_good

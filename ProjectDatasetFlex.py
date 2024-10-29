@@ -39,7 +39,7 @@ def main():
     parser.add_argument('--file_list', default=None)
     parser.add_argument('--restart', action='store_true',default=False)
     parser.add_argument('--no_composite_images', action='store_true',default=False)
-    parser.add_argument('--axis', action='store_true',default=1,type=int)
+    parser.add_argument('--axis', default=1,type=int)
 
 
     args = parser.parse_args()
