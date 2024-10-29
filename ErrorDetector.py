@@ -147,9 +147,6 @@ DescriptionsErrorDetect={
     "pancreas":PancreasErrorDetect,
     "gall_bladder":GallbladderErrorDetect}
 
-
-
-
 StomachErrorDetectShapeless="""Consider the following anatomical information, you must ignore the shape of the overlay, and evaluate only the location and unity of the red overlay:
 a) Unity: The stomach red overlay must be a single connected structure. Showing multiple strucutres is a major error.
 b) Location: The stomach red overlay should be located mainly in the upper abdomen, starting just below the diaphragm. It lies mostly under the ribs."""
@@ -1170,69 +1167,75 @@ def ErrorDetectionLMDeployZeroShot(clean, y,
                            organ_descriptions=DescriptionsED,
                            instructions=ZeroShotInstructions,
                            text_summarize=CompareSummarizeED, organ='liver',
-                           save_memory=True, location_window='skeleton',solid_overlay=False):
+                           save_memory=True, location_window='skeleton',solid_overlay=False,
+                           simple_prompt_ablation=False):
     """
     clean: X-ray withouth annotation
     y: X-ray with annotation
     """
+
+    if not simple_prompt_ablation:
     
-    #check if organ should be in image
-    organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
+        #check if organ should be in image
+        organRegion=text_region % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}
 
-    if organ=='aorta':
-        if location_window=='skeleton':
-            organRegion+=AorticArchTextSkeleton
-        else:
-            organRegion+=AorticArchText
-
-    if organ=='liver':
-        organRegion+=LiverDescriptionLocation
-    if organ=='gall_bladder':
-        organRegion+=GallbladderDescriptionLocation
-
-    conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
-                                                base_url=base_url, size=size)
-    q='q2'
-    if 'skeleton' in location_window:
-        q='q4'
-
-    AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
-
-    if not AnswerNo:
         if organ=='aorta':
-            if 'skeleton' not in location_window:
-                if ('no' in answer.lower()[answer.lower().rfind('q6'):]):#no lungs
-                    organ='descending aorta'
-                    if not red_on_top(y):
-                        print('Aorta does not have red on top')
-                        return 0.0
+            if location_window=='skeleton':
+                organRegion+=AorticArchTextSkeleton
             else:
-                if ('yes' in answer.lower()[answer.lower().rfind('q5'):]):#aortic arch present
-                    organ='aorta'
+                organRegion+=AorticArchText
+
+        if organ=='liver':
+            organRegion+=LiverDescriptionLocation
+        if organ=='gall_bladder':
+            organRegion+=GallbladderDescriptionLocation
+
+        conversation, answer = SendMessageLmdeploy([clean], conver=[], text=organRegion,
+                                                    base_url=base_url, size=size)
+        q='q2'
+        if 'skeleton' in location_window:
+            q='q4'
+
+        AnswerNo=('no' in answer.lower()[answer.lower().rfind(q):answer.lower().rfind(q)+7])
+
+        if not AnswerNo:
+            if organ=='aorta':
+                if 'skeleton' not in location_window:
+                    if ('no' in answer.lower()[answer.lower().rfind('q6'):]):#no lungs
+                        organ='descending aorta'
+                        if not red_on_top(y):
+                            print('Aorta does not have red on top')
+                            return 0.0
                 else:
-                    organ='descending aorta'
-                    if not red_on_top(y):
-                        print('Aorta does not have red on top')
-                        return 0.0
-    
-    if AnswerNo:
-        a=RedArea(y)
-        print('Annotation should be zero, but it is not')
-        if a==0:
-            return 1.0
-        else:
-            return 0.0
-    #else:
-    #    if RedArea(y)==0:
-    #        print('Annotation is empty, but it should not be.')
-    #        return 0.0
+                    if ('yes' in answer.lower()[answer.lower().rfind('q5'):]):#aortic arch present
+                        organ='aorta'
+                    else:
+                        organ='descending aorta'
+                        if not red_on_top(y):
+                            print('Aorta does not have red on top')
+                            return 0.0
         
-    if save_memory:
+        if AnswerNo:
+            a=RedArea(y)
+            print('Annotation should be zero, but it is not')
+            if a==0:
+                return 1.0
+            else:
+                return 0.0
+        #else:
+        #    if RedArea(y)==0:
+        #        print('Annotation is empty, but it should not be.')
+        #        return 0.0
+        
+    if save_memory or simple_prompt_ablation:
         conversation=[]
 
     #organ should be present in image. Let's evaluate the label y
     #Analyze image
-    text=instructions % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_descriptions[organ]
+    if not simple_prompt_ablation:
+        text=instructions % {'organ': organ.replace('_',' ').replace('gall bladder','gallbladder')}+organ_descriptions[organ]
+    else:
+        text='The image I am sending you is a frontal projection of a CT scan, which looks like and is oriented like an AP X-ray. It has a red overlay representing the ' +organ.replace('_',' ').replace('gall bladder','gallbladder')+'. Considering the organ shape and position, evaluate if the red overlay is a good or a bad annotation for the '+organ.replace('_',' ').replace('gall bladder','gallbladder')+'. Justify your answer.'
     imgs=[y]
     conversation, answer = SendMessageLmdeploy(imgs,text=text, conver=conversation,
                                                 base_url=base_url, size=size, solid_overlay=solid_overlay)
@@ -1583,7 +1586,8 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                     dice_check=False,
                                     limit=None,skip_good=False,skip_bad=False,
                                     csv_file=None,restart=False,dice_list=None,
-                                    shapeless=False):
+                                    shapeless=False,
+                                    simple_prompt_ablation=False):
         
         if shapeless:
             organ_descriptions=DescriptionsErrorDetectShapeless
@@ -1687,7 +1691,7 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                 instructions=instructions,
                                 text_summarize=text_summarize, organ=organ,
                                 save_memory=save_memory, location_window=location_window,
-                                solid_overlay=solid_overlay)
+                                solid_overlay=solid_overlay,simple_prompt_ablation=simple_prompt_ablation)
                     
                     answers.append(answer_good)
                     labels.append(1.0)
@@ -1718,7 +1722,7 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                 instructions=instructions,
                                 text_summarize=text_summarize, organ=organ,
                                 save_memory=save_memory, location_window=location_window,
-                                solid_overlay=solid_overlay)
+                                solid_overlay=solid_overlay,simple_prompt_ablation=simple_prompt_ablation)
                     
                     answers.append(answer_bad)
                     labels.append(0.0)
@@ -3691,6 +3695,17 @@ Compare2Images={
     'gall_bladder':Compare2ImagesGallbladder
 }
 
+Compare2ImagesSimple={
+    'descending aorta':'These two images are frontal projecttions of the same CT scan. They look like and are oriented like X-rays. In which of these 2 images the red overlay better represents the aorta shape and location?',#better here
+    'aorta':'These two images are frontal projecttions of the same CT scan. They look like and are oriented like X-rays. In which of these 2 images the red overlay better represents the aorta shape and location?',#better here
+    'liver':Compare2ImagesLiver[:Compare2ImagesLiver.rfind('Consider the following')],
+    'postcava':'These two images are frontal projecttions of the same CT scan. They look like and are oriented like X-rays. In which of these 2 images the red overlay better represents the postcava shape and location?',#better here
+    'kidneys':Compare2ImagesKidneys[:Compare2ImagesKidneys.rfind('Consider the following')],#worst than putting one image per prompt and sending more prompts
+    'stomach':Compare2ImagesStomach[:Compare2ImagesStomach.rfind('Consider the following')],#much better than putting one image per prompt and sending more prompts
+    'pancreas':Compare2ImagesPancreas[:Compare2ImagesPancreas.rfind('Consider the following')],
+    'spleen':Compare2ImagesSpleen[:Compare2ImagesSpleen.rfind('Consider the following')],
+    'gall_bladder':Compare2ImagesGallbladder[:Compare2ImagesGallbladder.rfind('Consider the following')]
+}
 
 Compare2ImagesStomachShapeless="""I am sending you 2 images, Image 1 and Image 2. Both images are frontal projections of the same CT scan. They are not CT slices, they have transparency, showing through the entire body. They look like AP X-rays.
 A red shape (overlay) over the images demarks the stomach, but they may not be accurate. The overlays in Image 1 and Image 2 are different. 
@@ -4994,7 +5009,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             dual_confirmation=False,conservative_dual=False,
                             csv_file=None,restart=True,
                             examples=0,dice_list=None,
-                            shapeless=False):
+                            shapeless=False,simple_prompt_ablation=False):
 
         if examples>0:
             text_compare=Compare2ImagesInContext
@@ -5007,6 +5022,17 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             text_y2=FindErrorsShapeless
             if examples>0:
                 text_compare=Compare2ImagesInContextShapeless
+
+        if simple_prompt_ablation:
+            tmp={}
+            for k,v in organ_descriptions.items():
+                tmp[k]=''
+            organ_descriptions=tmp
+            text_multi_image_prompt_2=Compare2ImagesSimple
+            if examples>0:
+                raise ValueError('Examples not implemented for simple prompt ablation.')
+
+        
 
         if csv_file is not None:
             column_names = ['case', 'answer', 'label', 'correct', 'organ', 'answer_1', 'answer_2']

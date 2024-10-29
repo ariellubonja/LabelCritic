@@ -29,7 +29,7 @@ parser.add_argument('--bad_examples_pth',  default=None)
 parser.add_argument('--dice_list',  default=None)
 parser.add_argument('--csv_path',  default=None)
 parser.add_argument('--shapeless',  action='store_true', default=False, help='Ignores shape of gallbladder, stomach and pancreas')
-
+parser.add_argument('--simple_prompt_ablation', action='store_true', default=False)
 
 all_organs=['aorta','liver','kidneys','spleen','pancreas','postcava','stomach','gall_bladder']
 
@@ -99,9 +99,12 @@ for organ in organs:
             skip_bad=args.skip_bad,skip_good=args.skip_good,
             csv_file=args.csv_path+organ+'.csv',
             dice_list=dice_list,
-            shapeless=args.shapeless
+            shapeless=args.shapeless,
+            simple_prompt_ablation=args.simple_prompt_ablation
             )
     else:
+        if args.simplified_prompt_ablation:
+            raise ValueError('Simplified prompt ablation is not compatible with few-shot error detection.')
         print('Few-shot')
         ed.FewShotErrorDetectionSystematicEvalLMDeploy(
             n=int(args.examples),

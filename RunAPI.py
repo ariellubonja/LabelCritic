@@ -18,6 +18,7 @@ parser.add_argument('--continuing', action='store_true', help="Continues from in
 parser.add_argument('--dice_list', help='path of csvs with dice scores', default=None)
 parser.add_argument('--examples', help='number of examples for in-context learning', default=0,type=int)
 parser.add_argument('--shapeless',  action='store_true', default=False, help='Ignores shape of gallbladder, stomach and pancreas')
+parser.add_argument('--simple_prompt_ablation', action='store_true', default=False)
 
 # Parse the arguments
 args = parser.parse_args()
@@ -76,5 +77,6 @@ for organ in organs:
         restart=(not args.continuing),
         dice_list=dice_list,
         examples=args.examples,
-        shapeless=args.shapeless
+        shapeless=args.shapeless,
+        simple_prompt_ablation=args.simple_prompt_ablation
     )
