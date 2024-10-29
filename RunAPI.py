@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Run SystematicComparisonLMDeploySe
 parser.add_argument('--path', help='Path to the annotations')
 parser.add_argument('--port', help='VLLM port to use', default='8000')
 parser.add_argument('--dice_th', help='VLLM port to use', default='0.5')
-parser.add_argument('--dice_th_max', help='VLLM port to use', default='0.9')
+parser.add_argument('--dice_th_max', help='VLLM port to use', default='0.8')
 parser.add_argument('--organ_list', help='List of organs to process', default='auto')
 parser.add_argument('--csv_path', help='path of csv to save results', default=None)
 parser.add_argument('--continuing', action='store_true', help="Continues from interrupted run.")

@@ -5009,7 +5009,8 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             dual_confirmation=False,conservative_dual=False,
                             csv_file=None,restart=True,
                             examples=0,dice_list=None,
-                            shapeless=False,simple_prompt_ablation=False):
+                            shapeless=False,simple_prompt_ablation=False,
+                            min_cases=100,max_cases=500):
 
         if examples>0:
             text_compare=Compare2ImagesInContext
@@ -5053,17 +5054,31 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
 
             #change dice threshold according to mean and std of dice in list
-            a=df['dice'].mean()-df['dice'].std()
+            #a=df['dice'].mean()-df['dice'].std()
             #order dice in ascending order and get the 100th value
-            b=df['dice'].sort_values().iloc[100]
-            dice_th=max(dice_th,min(a,b))
-            dice_th=min(dice_th,dice_threshold_max)
+            #b=df['dice'].sort_values().iloc[100]
+            #dice_th=max(dice_th,min(a,b))
+            dice_th=min(df['dice'].mean()-df['dice'].std(),dice_threshold_max)
             print('Dice threshold re-defined to:',dice_th)
 
             filtered_df = df[df["dice"] < dice_th]
             # Get the list of 'case' values where 'dice' is below the threshold
             cases_below_threshold = filtered_df["case"].tolist()
             cases_high_dice=df[df["dice"] >= 0.95]["case"].tolist()
+            if len(cases_below_threshold)<min_cases:
+                #if too few cases, get 100 lowest dice cases to compare
+                dice_th=df['dice'].sort_values().iloc[100]
+                filtered_df = df[df["dice"] < dice_th]
+                # Get the list of 'case' values where 'dice' is below the threshold
+                cases_below_threshold = filtered_df["case"].tolist()
+            if len( cases_below_threshold)>max_cases:
+                #limit to 10% of dataset
+                dice_th=df['dice'].sort_values().iloc[500]
+                filtered_df = df[df["dice"] < dice_th]
+                # Get the list of 'case' values where 'dice' is below the threshold
+                cases_below_threshold = filtered_df["case"].tolist()
+
+            print('Number of cases to check:',len(cases_below_threshold))
 
 
         

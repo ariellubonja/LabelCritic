@@ -19,12 +19,12 @@ while ! curl -s http://localhost:8004/v1/models; do
     sleep 5
 done
 # API is ready, log this event
-echo "API is ready. Running RunAPI.py" >> ComparisonsAtlasBench0ShotDSC75.log
+echo "API is ready. Running RunAPI.py" >> ComparisonsAtlasBench0ShotDSC7.log
 
 # Run the Python script with real-time logging
 python3 RunAPI.py --path /fastwork/psalvador/JHU/data/AbdomenAtlas1.0Projections/projections_AtlasBench_beta_pro/ \
---csv_path ComparisonsAtlasBench0ShotMaxDSC75.csv --continuing --dice_list /fastwork/psalvador/JHU/data/AbdomenAtlas1.0Projections/ \
---organ_list [postcava] --dice_th_max 0.75 --port 8004 >> ComparisonsAtlasBench0ShotDSC75.log 2>&1
+--csv_path ComparisonsAtlasBench0ShotMaxDSC7.csv --continuing --dice_list /fastwork/psalvador/JHU/data/AbdomenAtlas1.0Projections/ \
+--organ_list [postcava] --dice_th_max 0.7 --port 8004 >> ComparisonsAtlasBench0ShotDSC7.log 2>&1
 
 # Log completion
-echo "RunAPI.py has finished executing." >> ComparisonsAtlasBench0ShotDSC75.log
+echo "RunAPI.py has finished executing." >> ComparisonsAtlasBench0ShotDSC7.log
