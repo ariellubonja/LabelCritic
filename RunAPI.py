@@ -80,5 +80,5 @@ for organ in organs:
         examples=args.examples,
         shapeless=args.shapeless,
         simple_prompt_ablation=args.simple_prompt_ablation,
-        dice_th_max=float(args.dice_th_max)
+        dice_threshold_max=float(args.dice_th_max)
     )

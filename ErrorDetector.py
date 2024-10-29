@@ -5005,7 +5005,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             superpose=False,comparison_window='bone',
                             solid_overlay='auto',multi_image_prompt_2='auto',
                             text_multi_image_prompt_2=Compare2Images,
-                            dice_th=0.75,file_list=None,
+                            dice_th=0.5,dice_threshold_max=0.9,file_list=None,
                             dual_confirmation=False,conservative_dual=False,
                             csv_file=None,restart=True,
                             examples=0,dice_list=None,
@@ -5057,6 +5057,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             #order dice in ascending order and get the 100th value
             b=df['dice'].sort_values().iloc[100]
             dice_th=max(dice_th,min(a,b))
+            dice_th=min(dice_th,dice_threshold_max)
             print('Dice threshold re-defined to:',dice_th)
 
             filtered_df = df[df["dice"] < dice_th]
