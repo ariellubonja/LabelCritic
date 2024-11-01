@@ -58,15 +58,15 @@ tasks = [
         "file": "../tasks/JHH.json",
         "part": "JHH",
         "subpart": "y1",
-        "path": "/mnt/sdh/pedro/projections_JHHBench_nnUnet_JHH",
+        "path": "/ccvl/net/ccvl15/qwu59/projections_JHHBench_nnUnet_JHH",
         "label2": "Uncertain",
     },
     # task7, new jhh y2, label2 good or bad?
     {
-        "file": "../tasks/JHH.jsonn",
+        "file": "../tasks/JHH.json",
         "part": "JHH",
         "subpart": "y2",
-        "path": "/mnt/sdh/pedro/projections_JHHBench_nnUnet_JHH",
+        "path": "/ccvl/net/ccvl15/qwu59/projections_JHHBench_nnUnet_JHH",
         "label2": "Uncertain",
     }
 ]
@@ -118,7 +118,12 @@ def inference(image_path, question, device, mute=True):
         },
     ]
     prompt = processor.apply_chat_template(conversation, add_generation_prompt=True)
-    inputs = processor(images=image, text=prompt, return_tensors="pt").to(device)
+    inputs = processor(images=image, text=prompt, return_tensors="np")
+    for k, v in inputs.items():
+        if k != "pixel_values":
+            inputs[k] = torch.tensor(v, dtype=torch.int).to(device)
+        else:
+            inputs[k] = torch.tensor(v, dtype=torch.float32).to(device)
 
     # autoregressively complete prompt
     output = model.generate(**inputs, max_new_tokens=256)
@@ -215,7 +220,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     device = args.device
-    model_path = '/mnt/sdh/qwu59/ckpts/llava-v1.6-mistral-7b-hf'
+    model_path = '/mnt/sdh/qwu59/ckpts/llava-v1.6-mistral-7b-hf' # ccvl23
+    # model_path = '/mnt/sdi/qwu59/llava-v1.6-mistral-7b-hf' # ccvl18
     result_path = "../results/llava/"
     
     processor = LlavaNextProcessor.from_pretrained(model_path)
@@ -231,12 +237,16 @@ if __name__ == "__main__":
         task_data = json.load(f)
         
     for organ in tqdm(task_data):
+        print("Organ:", organ)
+        if organ not in args.organs:
+            continue
         for case in tqdm(task_data[organ]):
             # check whether the case exists in the final csv
             check_table = os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv")
             skip_sign = False
             if os.path.exists(check_table):
-                with open(check_table, mode='r') as file:
+                with open(check_table, mode='r', encoding="utf-8", errors="ignore") as file:
+                    reader = (line.replace("\x00", "") for line in file)  # 去除 NUL 字符
                     reader = csv.DictReader(file)
                     for row in reader:
                         if row["sample"] == case and row["organ"] == organ:
