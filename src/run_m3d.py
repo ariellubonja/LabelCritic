@@ -166,7 +166,7 @@ def step_1_q(organ):
 
 def step_2_q(organ):
     return (
-        "The lowest intensity white area within the body in this bone ct image"
+        "The lowest intensity black area within the body in this bone ct image"
         "is the {} mask annotation. ".format(organ) +
         "What do you think of this? Is it correct? Only answer yes or no."
     )
