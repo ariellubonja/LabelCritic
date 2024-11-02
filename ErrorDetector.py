@@ -1587,7 +1587,7 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                                     limit=None,skip_good=False,skip_bad=False,
                                     csv_file=None,restart=False,dice_list=None,
                                     shapeless=False,
-                                    simple_prompt_ablation=False):
+                                    simple_prompt_ablation=False,min_cases=100,max_cases=10000):
         
         if shapeless:
             organ_descriptions=DescriptionsErrorDetectShapeless
@@ -1612,25 +1612,57 @@ def ZeroShotErrorDetectionSystematicEvalLMDeploy(pth,
                     writer = csv.writer(file)
                     writer.writerow(column_names)
 
+        #if dice_list is not None:
+        #    import pandas as pd
+        #    print('Loading dice list:',dice_list)
+        #    df=pd.read_csv(dice_list,header=None, names=["case", "dice"])#
+
+            #change dice threshold according to mean and std of dice in list
+        #    a=df['dice'].mean()-df['dice'].std()
+        #    #order dice in ascending order and get the 100th value
+        #    b=df['dice'].sort_values().iloc[100]
+        #    dice_threshold=max(dice_threshold,min(a,b))
+        #    dice_threshold=min(dice_threshold,dice_threshold_max)
+        #    print('Dice threshold re-defined to:',dice_threshold)
+
+        #    filtered_df = df[df["dice"] < dice_threshold]
+        #    # Get the list of 'case' values where 'dice' is below the threshold
+        #    cases_below_threshold = filtered_df["case"].tolist()
+        #    print('Number of cases below threshold:',len(cases_below_threshold))
+        #    print('Cases below threshold:',cases_below_threshold)
+            
         if dice_list is not None:
             import pandas as pd
             print('Loading dice list:',dice_list)
             df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
 
             #change dice threshold according to mean and std of dice in list
-            a=df['dice'].mean()-df['dice'].std()
+            #a=df['dice'].mean()-df['dice'].std()
             #order dice in ascending order and get the 100th value
-            b=df['dice'].sort_values().iloc[100]
-            dice_threshold=max(dice_threshold,min(a,b))
-            dice_threshold=min(dice_threshold,dice_threshold_max)
-            print('Dice threshold re-defined to:',dice_threshold)
+            #b=df['dice'].sort_values().iloc[100]
+            #dice_th=max(dice_th,min(a,b))
+            dice_th=min(df['dice'].mean()-df['dice'].std(),dice_threshold_max)
+            print('Dice threshold re-defined to:',dice_th)
 
-            filtered_df = df[df["dice"] < dice_threshold]
+            filtered_df = df[df["dice"] < dice_th]
             # Get the list of 'case' values where 'dice' is below the threshold
             cases_below_threshold = filtered_df["case"].tolist()
-            print('Number of cases below threshold:',len(cases_below_threshold))
-            print('Cases below threshold:',cases_below_threshold)
+            cases_high_dice=df[df["dice"] >= 0.95]["case"].tolist()
+            if len(cases_below_threshold)<min_cases:
+                #if too few cases, get 100 lowest dice cases to compare
+                dice_th=df['dice'].sort_values().iloc[min_cases]
+                #dice_th=min(dice_th,dice_threshold_max)
+                #filtered_df = df[df["dice"] < dice_th]
+                # Get the list of 'case' values where 'dice' is below the threshold
+                cases_below_threshold = filtered_df["case"].tolist()
+            if len( cases_below_threshold)>max_cases:
+                #limit to 10% of dataset
+                dice_th=df['dice'].sort_values().iloc[500]
+                filtered_df = df[df["dice"] < dice_th]
+                # Get the list of 'case' values where 'dice' is below the threshold
+                cases_below_threshold = filtered_df["case"].tolist()
 
+            print('Number of cases to check:',len(cases_below_threshold))
 
         answers=[]
         labels=[]
@@ -1776,7 +1808,7 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                                     good_examples_path=None,bad_examples_path=None,
                                     limit=None,skip_good=False,skip_bad=False,
                                     csv_file=None,restart=False,dice_list=None,
-                                    shapeless=False):
+                                    shapeless=False,min_cases=100,max_cases=10000):
         
         if shapeless:
             organ_descriptions=DescriptionsErrorDetectShapeless
@@ -1799,23 +1831,56 @@ def FewShotErrorDetectionSystematicEvalLMDeploy(pth,n,
                     writer = csv.writer(file)
                     writer.writerow(column_names)
 
+
+        #if dice_list is not None:
+        #    import pandas as pd
+        #    print('Loading dice list:',dice_list)
+        #    df=pd.read_csv(dice_list,header=None, names=["case", "dice"])#
+
+            #change dice threshold according to mean and std of dice in list
+        #    a=df['dice'].mean()-df['dice'].std()
+        #    #order dice in ascending order and get the 100th value
+        #    b=df['dice'].sort_values().iloc[100]
+        #    dice_threshold=max(dice_threshold,min(a,b))
+        #    dice_threshold=min(dice_threshold,dice_threshold_max)
+        #    print('Dice threshold re-defined to:',dice_threshold)
+
+        #    filtered_df = df[df["dice"] < dice_threshold]
+        #    # Get the list of 'case' values where 'dice' is below the threshold
+        #    cases_below_threshold = filtered_df["case"].tolist()
+        #    print('Number of cases below threshold:',len(cases_below_threshold))
+        #    print('Cases below threshold:',cases_below_threshold)
+            
         if dice_list is not None:
             import pandas as pd
             print('Loading dice list:',dice_list)
             df=pd.read_csv(dice_list,header=None, names=["case", "dice"])
 
             #change dice threshold according to mean and std of dice in list
-            a=df['dice'].mean()-df['dice'].std()
+            #a=df['dice'].mean()-df['dice'].std()
             #order dice in ascending order and get the 100th value
-            b=df['dice'].sort_values().iloc[100]
-            dice_threshold=max(dice_threshold,min(a,b))
-            dice_threshold=min(dice_threshold,dice_threshold_max)
-            print('Dice threshold re-defined to:',dice_threshold)
+            #b=df['dice'].sort_values().iloc[100]
+            #dice_th=max(dice_th,min(a,b))
+            dice_th=min(df['dice'].mean()-df['dice'].std(),dice_threshold_max)
+            print('Dice threshold re-defined to:',dice_th)
 
-            filtered_df = df[df["dice"] < dice_threshold]
+            filtered_df = df[df["dice"] < dice_th]
             # Get the list of 'case' values where 'dice' is below the threshold
             cases_below_threshold = filtered_df["case"].tolist()
-            print('Number of cases below threshold:',len(cases_below_threshold))
+            cases_high_dice=df[df["dice"] >= 0.95]["case"].tolist()
+            if len(cases_below_threshold)<min_cases:
+                #if too few cases, get 100 lowest dice cases to compare
+                dice_th=df['dice'].sort_values().iloc[min_cases]
+                #dice_th=min(dice_th,dice_threshold_max)
+                #filtered_df = df[df["dice"] < dice_th]
+                # Get the list of 'case' values where 'dice' is below the threshold
+                cases_below_threshold = filtered_df["case"].tolist()
+            if len( cases_below_threshold)>max_cases:
+                #limit to 10% of dataset
+                dice_th=df['dice'].sort_values().iloc[500]
+                filtered_df = df[df["dice"] < dice_th]
+                # Get the list of 'case' values where 'dice' is below the threshold
+                cases_below_threshold = filtered_df["case"].tolist()
 
         answers=[]
         labels=[]
@@ -5010,7 +5075,7 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
                             csv_file=None,restart=True,
                             examples=0,dice_list=None,
                             shapeless=False,simple_prompt_ablation=False,
-                            min_cases=100,max_cases=500):
+                            min_cases=100,max_cases=10000):
 
         if examples>0:
             text_compare=Compare2ImagesInContext
@@ -5067,13 +5132,13 @@ def SystematicComparisonLMDeploySepFigures(pth,base_url='http://0.0.0.0:8000/v1'
             cases_high_dice=df[df["dice"] >= 0.95]["case"].tolist()
             if len(cases_below_threshold)<min_cases:
                 #if too few cases, get 100 lowest dice cases to compare
-                dice_th=df['dice'].sort_values().iloc[100]
+                dice_th=df['dice'].sort_values().iloc[min_cases]
                 filtered_df = df[df["dice"] < dice_th]
                 # Get the list of 'case' values where 'dice' is below the threshold
                 cases_below_threshold = filtered_df["case"].tolist()
             if len( cases_below_threshold)>max_cases:
                 #limit to 10% of dataset
-                dice_th=df['dice'].sort_values().iloc[500]
+                dice_th=df['dice'].sort_values().iloc[max_cases]
                 filtered_df = df[df["dice"] < dice_th]
                 # Get the list of 'case' values where 'dice' is below the threshold
                 cases_below_threshold = filtered_df["case"].tolist()

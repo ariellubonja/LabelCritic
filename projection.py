@@ -146,7 +146,8 @@ def load_ct_and_mask(pid, organ, datapath,
     mask_nii = nib.Nifti1Image(resampled, affine=mask_nii.affine, header=mask_nii.header)
 
     # Apply the same transformation to the mask data
-    mask = apply_transform(mask_nii.get_fdata(), transform).astype(np.uint8)
+    #mask = apply_transform(mask_nii.get_fdata(), transform).astype(np.uint8)
+    mask = apply_transform(mask_nii.get_fdata(), get_orientation_transform(mask_nii)).astype(np.uint8)
 
     return ct, mask
 def get_orientation_transform(nii, orientation=('L', 'A', 'S')):

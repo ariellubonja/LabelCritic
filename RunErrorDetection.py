@@ -103,7 +103,7 @@ for organ in organs:
             simple_prompt_ablation=args.simple_prompt_ablation
             )
     else:
-        if args.simplified_prompt_ablation:
+        if args.simple_prompt_ablation:
             raise ValueError('Simplified prompt ablation is not compatible with few-shot error detection.')
         print('Few-shot')
         ed.FewShotErrorDetectionSystematicEvalLMDeploy(
