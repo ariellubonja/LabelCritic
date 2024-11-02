@@ -1,12 +1,11 @@
 # Author: Qilong Wu
 # Institute: JHU CCVL, NUS
-# Description: Use this to run error detection on the baseline LLaVA-Med model.
-# Use case: CUDA_VISIBLE_DEVICES=0 python run_llavamed.py --task 4 --organs liver kidneys
+# Description: Use this to run error detection on the baseline LLaVA model.
+# Use case: CUDA_VISIBLE_DEVICES=0 python run_llava.py --task 4 --organs liver kidneys
 
 #############################################################################
-# from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 import argparse
-from platform import processor
+from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 import torch, os, csv, json
 from tqdm import tqdm
 import nibabel as nib
@@ -43,7 +42,7 @@ tasks = [
         "file": "../tasks/AbdomenAtlas.json",
         "part": "AbdomenAtlas",
         "subpart": "y1",
-        "path": "/mnt/ccvl15/qwu59/project/Error_Detection/AnnotationVLM/data/projections_AtlasBench_beta_pro",
+        "path": "/mnt/data/qwu59/project/Error_Detection/AnnotationVLM/data/projections_AtlasBench_beta_pro",
         "label2": "Uncertain",
     },
     # task5, new atlas y2, label2 good or bad?
@@ -51,7 +50,7 @@ tasks = [
         "file": "../tasks/AbdomenAtlas.json",
         "part": "AbdomenAtlas",
         "subpart": "y2",
-        "path": "/mnt/ccvl15/qwu59/project/Error_Detection/AnnotationVLM/data/projections_AtlasBench_beta_pro",
+        "path": "/mnt/data/qwu59/project/Error_Detection/AnnotationVLM/data/projections_AtlasBench_beta_pro",
         "label2": "Uncertain",
     },
     # task6, new jhh y1, label2 good or bad?
@@ -59,7 +58,7 @@ tasks = [
         "file": "../tasks/JHH.json",
         "part": "JHH",
         "subpart": "y1",
-        "path": "/mnt/sdh/pedro/projections_JHHBench_nnUnet_JHH",
+        "path": "/mnt/data/qwu59/projections_JHHBench_nnUnet_JHH",
         "label2": "Uncertain",
     },
     # task7, new jhh y2, label2 good or bad?
@@ -67,7 +66,7 @@ tasks = [
         "file": "../tasks/JHH.json",
         "part": "JHH",
         "subpart": "y2",
-        "path": "/mnt/sdh/pedro/projections_JHHBench_nnUnet_JHH",
+        "path": "/mnt/data/qwu59/projections_JHHBench_nnUnet_JHH",
         "label2": "Uncertain",
     }
 ]
@@ -76,55 +75,60 @@ def step_1_q(organ):
     return (
         "The image I am sending is frontal projections of one CT scan, focusing on showing the bone. "
         "Look at it carefully, and answer the questions below:\n\n"
-
-        f"Is the {organ} present within this image limits? Answer Yes or No."
+        "Q1- Which bones are on the top of the image? Bones are on its bottom?\n"
+        "Q2- Which of the following landmarks are present in the image? Answer ‘yes’ or ‘no’ using the template below, substituting _ by Yes or No:\n"
+        "skull = _ "
+        "neck = _ "
+        "trachea = "
+        "_ribs = _ "
+        "lumbar spine = _ "
+        "pelvis = _ "
+        "femurs = _ \n"
+        "Q3- Considering these landmarks and the bones on the image top and bottom, "
+        "give me a complete list of all organs (not bones) usually contained within this image "
+        "limits (just list their names).\n"
+        f"Q4- Based on your answer to Q3, is the {organ} usually present within this image limits? "
+        "Answer ‘yes’ or ‘no’ using the template below, substituting  _ by Yes or No:\n"
+        "Q4 = _"
     )
 
 def step_2_q(organ):
     return (
-        "The image is a frontal projection of a CT scan. "
-        "The left side of the image represents the right side of the human body. "
-        f"Do you think the red overlay in the image is {organ}? Answer yes or no."
+        "The image I am sending is a frontal projection of a CT scan. "
+        "It is not a CT slice, we have transparency and can see through the entire body, "
+        "like a X-ray. The left side of the image represents the right side of the human body. "
+        f"The {organ} region in the image should be marked in red, "
+        "using an overlay. However, I am not sure if the red overlay correctly "
+        f"or incorrectly marks the {organ}. Please following these instructions:\n\n"
+        f"1. Check if the red region is coherent with the expected shape and location of a {organ}."
+        "Show your reasoning in the answer.\n"
+        "2. After checking, you should give an final judge in the end of your answer, substituting _ by Good or Bad:\n"
+        "Annotation = _"
     )
 
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
-from llava.conversation import conv_templates, SeparatorStyle
-from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria, process_images
-def inference(image_path, question, device, processor, mute=True):
-    qs = question
-    if model.config.mm_use_im_start_end:
-        qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
-    else:
-        qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
-
-    conv = conv_templates["mistral_instruct"].copy()
-    conv.append_message(conv.roles[0], qs)
-    conv.append_message(conv.roles[1], None)
-    prompt = conv.get_prompt()
-
-    input_ids = tokenizer_image_token(
-        prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda().to(device)
+def inference(image_path, question, device, mute=True):
     image = Image.open(image_path)
-    image_tensor = process_images([image], processor, model.config)[0]
+    conversation = [
+        {
+          "role": "user",
+          "content": [
+              {"type": "text", "text": question},
+              {"type": "image"},
+            ],
+        },
+    ]
+    prompt = processor.apply_chat_template(conversation, add_generation_prompt=True)
+    inputs = processor(images=image, text=prompt, return_tensors="np")
+    for k, v in inputs.items():
+        if k != "pixel_values":
+            inputs[k] = torch.tensor(v, dtype=torch.int).to(device)
+        else:
+            inputs[k] = torch.tensor(v, dtype=torch.float32).to(device)
 
-    stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
-    keywords = [stop_str]
-    stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+    # autoregressively complete prompt
+    output = model.generate(**inputs, max_new_tokens=256)
+    answer = processor.decode(output[0], skip_special_tokens=True).split("[/INST]")[1].strip()
 
-    with torch.inference_mode():
-        output_ids = model.generate(
-            input_ids,
-            images=image_tensor.unsqueeze(0).half().cuda(),
-            do_sample=True,
-            # if args.temperature > 0 else False,
-            temperature=0.8,
-            # top_p=args.top_p,
-            num_beams=3,
-            max_new_tokens=256,
-            use_cache=True)
-    output = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
-    answer = output
-    
     if not mute:
         print("*" * 80)
         print("Question:")
@@ -137,19 +141,19 @@ def inference(image_path, question, device, processor, mute=True):
 
 def check_step1(answer):
     try:
-        # judge = answer.split("Q4")[1].lower()
-        return "present" if "yes" in answer.lower() else "no"
+        judge = answer.split("Q4")[1].lower()
+        return "present" if "yes" in judge else "no"
     except:
         return "no"
 
 def check_step2(answer):
     try:
-        # judge = answer.split("Annotation")[1].lower()
-        return "Correct" if "yes" in answer.lower() else "Incorrect"
+        judge = answer.split("Annotation")[1].lower()
+        return "Correct" if "good" in judge else "Incorrect"
     except:
         return "Incorrect"
     
-def check_step1_label(case, organ, path="/mnt/T8/AbdomenAtlasPre"):
+def check_step1_label(case, organ, path="/mnt/data/zzhou82/data/AbdomenAtlasPro"):
     if organ == "kidneys":
         temp1 = nib.load(os.path.join(path, case, "segmentations", "kidney_left.nii.gz")).get_fdata()
         temp2 = nib.load(os.path.join(path, case, "segmentations", "kidney_right.nii.gz")).get_fdata()
@@ -162,7 +166,7 @@ def check_step1_label(case, organ, path="/mnt/T8/AbdomenAtlasPre"):
 
 def append_dict_to_csv(dict_data, csv_path):
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    with open(csv_path, mode='a', newline='', encoding='utf-8') as file:
+    with open(csv_path, mode='a', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=dict_data.keys())
         if file.tell() == 0:
             writer.writeheader()
@@ -171,14 +175,14 @@ def append_dict_to_csv(dict_data, csv_path):
 def get_one_result(task, case, organ):
     question1 = step_1_q(organ)
     question2 = step_2_q(organ)
-    # try:
-    image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1.png")
-    answer1 = inference(image1_path, question1, device, processor)
-    # except:
-    #     image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1_{organ}.png")
-    #     answer1 = inference(image1_path, question1, device, processor)
+    try:
+        image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1.png")
+        answer1 = inference(image1_path, question1, device)
+    except:
+        image1_path = os.path.join(task["path"], organ, f"{case}_ct_window_bone_axis_1_{organ}.png")
+        answer1 = inference(image1_path, question1, device)
     image2_path = os.path.join(task["path"], organ, f"{case}_overlay_window_bone_axis_1_{organ}_{task['subpart']}.png")
-    answer2 = inference(image2_path, question2, device, processor)
+    answer2 = inference(image2_path, question2, device)
     judge1 = check_step1(answer1)
     judge2 = check_step2(answer2)
     label1 = check_step1_label(case, organ) # "BDMAP_00000055"
@@ -207,7 +211,7 @@ def get_one_result(task, case, organ):
 if __name__ == "__main__":
     # Organs: ['postcava', 'kidney_right', 'liver', 'pancreas', 'stomach', 'kidneys', 'kidney_left', 'spleen', 'gall_bladder', 'aorta']
     # ***** Example: *****
-    # CUDA_VISIBLE_DEVICES=0 python run_llavamed.py --task 4 --organs liver kidneys
+    # CUDA_VISIBLE_DEVICES=0 python run_llava.py --task 4 --organs liver kidneys
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", type=str, default="cuda") # cuda:1
@@ -216,19 +220,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     device = args.device
-    model_path = '/mnt/sdh/qwu59/ckpts/llava-med-v1.5-mistral-7b'
-    result_path = "../results/llava-med/"
+    model_path = '/scratch/qwu59/llava-v1.6-mistral-7b-hf'
+    result_path = "../results/llava/"
     
-    # processor = LlavaNextProcessor.from_pretrained(model_path)
-    # model = LlavaNextForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True)
-    from llava.model.builder import load_pretrained_model
-    tokenizer, model, processor, context_len = load_pretrained_model(
-        model_path=model_path,
-        model_base=None,
-        model_name='llava-med-v1.5-mistral-7b',
-        device=device,
-    )
-    # model = model.to(device)
+    processor = LlavaNextProcessor.from_pretrained(model_path)
+    model = LlavaNextForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True) 
+    model = model.to(device)
     
     for i, j in enumerate(tasks):
         if args.task == i + 1:
@@ -239,12 +236,16 @@ if __name__ == "__main__":
         task_data = json.load(f)
         
     for organ in tqdm(task_data):
+        print("Organ:", organ)
+        if organ not in args.organs:
+            continue
         for case in tqdm(task_data[organ]):
             # check whether the case exists in the final csv
             check_table = os.path.join(result_path, "final", f"{task['part']}_{task['subpart']}.csv")
             skip_sign = False
             if os.path.exists(check_table):
-                with open(check_table, mode='r') as file:
+                with open(check_table, mode='r', encoding="utf-8", errors="ignore") as file:
+                    reader = (line.replace("\x00", "") for line in file)  # 去除 NUL 字符
                     reader = csv.DictReader(file)
                     for row in reader:
                         if row["sample"] == case and row["organ"] == organ:
