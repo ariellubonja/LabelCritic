@@ -62,3 +62,7 @@ Or, for running over all datasets:
 ```bash
 bash /mnt/sdg/pedro/AnnotationVLM/RunED.sh --organ postcava --port 8000 --annotation_vlm_root /mnt/sdg/pedro/AnnotationVLM/ --error_detection_root /mnt/sdg/pedro/
 ```
+
+# Citation
+
+Comming soon.
