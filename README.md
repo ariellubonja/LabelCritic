@@ -1,4 +1,4 @@
-# Use VLM to compare the per-voxel organ annotations of 2 semantic segmenters
+# Label Critic: Using LVLMs to Compare Medical Segmentations and Correct Label Errors
 
 <p align="center">
   <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCritic.png" alt="Project Logo" width="250"/>
