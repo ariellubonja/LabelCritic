@@ -1,14 +1,11 @@
 # Label Critic: Using LVLMs to Compare Medical Segmentations and Correct Label Errors
 
 <p align="center">
-  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCritic.png" alt="Project Logo" width="150"/>
-</p>
-
-Label Critic is an automated tool for selecting the best AI-generated annotations among multiple options to streamline medical dataset labeling and revise existing datasets, substituting low-quality labels by better alternatives. Leveraging pre-trained Large Vision-Language Models (LVLMs) to perform pair-wise label comparisons, Label Critic achieves 96.5% accuracy in choosing the optimal label for each CT scan and class. Label Critic can also assess the quality of single AI annotations, flagging lower-quality cases for further review if necessary. Label Critic provides class-tailored prompts for evaluating and comparing CT's per-voxel annotations for pancreas, liver, stomach, spleen, gallbladder, kidneys, aorta and postcava. It also provides efortless adaptation to new classes.
-
-<p align="center">
   <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCriticModel.png" alt="Project Logo" width="900"/>
 </p>
+
+
+Label Critic is an automated tool for selecting the best AI-generated annotations among multiple options to streamline medical dataset labeling and revise existing datasets, substituting low-quality labels by better alternatives. Leveraging pre-trained Large Vision-Language Models (LVLMs) to perform pair-wise label comparisons, Label Critic achieves 96.5% accuracy in choosing the optimal label for each CT scan and class. Label Critic can also assess the quality of single AI annotations, flagging lower-quality cases for further review if necessary. Label Critic provides class-tailored prompts for evaluating and comparing CT's per-voxel annotations for pancreas, liver, stomach, spleen, gallbladder, kidneys, aorta and postcava. It also provides efortless adaptation to new classes.
 
 ### Installation and running
 
@@ -71,4 +68,21 @@ bash /mnt/sdg/pedro/AnnotationVLM/RunED.sh --organ postcava --port 8000 --annota
 
 # Citation
 
-Comming soon.
+Bassi, Pedro & Wu, Qilong & Li, Wenxuan & Decherchi, Sergio & Cavalli, Andrea & Yuille, Alan & Zhou, Zongwei. (2024). Label Critic: Design Data Before Models. 10.48550/arXiv.2411.02753. 
+
+```
+@misc{bassi2024labelcriticdesigndata,
+      title={Label Critic: Design Data Before Models}, 
+      author={Pedro R. A. S. Bassi and Qilong Wu and Wenxuan Li and Sergio Decherchi and Andrea Cavalli and Alan Yuille and Zongwei Zhou},
+      year={2024},
+      eprint={2411.02753},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2411.02753}, 
+}
+```
+
+<p align="center">
+  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCritic.png" alt="Project Logo" width="150"/>
+</p>
+
