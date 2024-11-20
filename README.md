@@ -1,10 +1,14 @@
 # Label Critic: Using LVLMs to Compare Medical Segmentations and Correct Label Errors
 
 <p align="center">
-  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCritic.png" alt="Project Logo" width="250"/>
+  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCritic.png" alt="Project Logo" width="150"/>
 </p>
 
 Label Critic is an automated tool for selecting the best AI-generated annotations among multiple options to streamline medical dataset labeling and revise existing datasets, substituting low-quality labels by better alternatives. Leveraging pre-trained Large Vision-Language Models (LVLMs) to perform pair-wise label comparisons, Label Critic achieves 96.5% accuracy in choosing the optimal label for each CT scan and class. Label Critic can also assess the quality of single AI annotations, flagging lower-quality cases for further review if necessary. Label Critic provides class-tailored prompts for evaluating and comparing CT's per-voxel annotations for pancreas, liver, stomach, spleen, gallbladder, kidneys, aorta and postcava. It also provides efortless adaptation to new classes.
+
+<p align="center">
+  <img src="https://github.com/PedroRASB/Cerberus/blob/main/misc/LabelCriticModel.png" alt="Project Logo" width="900"/>
+</p>
 
 ### Installation and running
 
