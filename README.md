@@ -7,6 +7,10 @@
 
 Label Critic is an automated tool for selecting the best AI-generated annotations among multiple options to streamline medical dataset labeling and revise existing datasets, substituting low-quality labels by better alternatives. Leveraging pre-trained Large Vision-Language Models (LVLMs) to perform pair-wise label comparisons, Label Critic achieves 96.5% accuracy in choosing the optimal label for each CT scan and class. Label Critic can also assess the quality of single AI annotations, flagging lower-quality cases for further review if necessary. Label Critic provides class-tailored prompts for evaluating and comparing CT's per-voxel annotations for pancreas, liver, stomach, spleen, gallbladder, kidneys, aorta and postcava. It also provides efortless adaptation to new classes.
 
+### Paper
+
+The paper was accepted for ISBI 2025. A preprint is available at https://arxiv.org/abs/2411.02753
+
 ### Installation and running
 
 <details>
